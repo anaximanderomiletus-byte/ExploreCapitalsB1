@@ -30,6 +30,9 @@ const ScrollToTop = () => {
 const App: React.FC = () => {
   return (
     <LayoutProvider>
+      <div style={{ zIndex: 9999, position: 'fixed', top: 0, left: 0, background: 'red' }}>
+         TESTING: IF YOU SEE THIS, REACT IS WORKING
+      </div>
       <Router>
         <ScrollToTop />
         <div className="min-h-screen flex flex-col">
