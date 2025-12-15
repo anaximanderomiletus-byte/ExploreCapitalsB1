@@ -272,6 +272,7 @@ export default function CapitalConnection() {
                         disabled={card.isMatched}
                         // Mobile optimized: shorter height (h-24), smaller text (text-xs/sm), tighter padding (p-2)
                         className={`h-24 md:h-32 rounded-xl md:rounded-2xl p-2 md:p-4 flex flex-col items-center justify-center text-center transition-all duration-200 ${cardStyle}`}
+                        style={{ WebkitTapHighlightColor: 'transparent' }}
                     >
                         <div className={`mb-1 md:mb-2 transform scale-75 md:scale-100 ${card.type === 'country' ? '' : 'opacity-50'}`}>
                             {card.icon}

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Timer, Trophy, ArrowLeft, RefreshCw, Flag, Check, X } from 'lucide-react';
@@ -229,6 +230,7 @@ export default function FlagFrenzy() {
                     onClick={() => handleAnswer(option.name)}
                     disabled={!!selectedAnswer}
                     className={`relative p-4 rounded-xl font-semibold text-lg transition-all duration-200 flex items-center justify-center min-h-[64px] ${btnStyle} ${!selectedAnswer ? 'shadow-sm hover:shadow-md active:translate-y-[4px] active:shadow-none shadow-[0_4px_0_#E5E7EB]' : ''}`}
+                    style={{ WebkitTapHighlightColor: 'transparent' }}
                   >
                     <span className="z-10">{option.name}</span>
                     {icon && <div className="absolute right-4 z-10">{icon}</div>}

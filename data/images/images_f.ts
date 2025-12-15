@@ -2,7 +2,7 @@ export const imagesF: Record<string, string> = {
   // --- Fiji ---
   "Fiji": "https://anaximanderomiletus-byte.github.io/Explore-Capitals-PNGs/FIJI/suva-fiji.png",
   "Sri Siva Subramaniya Swami Temple": "https://anaximanderomiletus-byte.github.io/Explore-Capitals-PNGs/FIJI/sri-siva-subramaniya-temple.png",
-  "Beqa Lagoon": "https://anaximanderomiletus-byte.github.io/Explore-Capitals-PNGs/FIJI/beqa-lagoon-firewalking.png",
+  "Beqa Lagoon": "https://anaximanderomiletus-byte.github.io/Explore-Capitals-PNGs/FIJI/beqa-lagoon.png",
   "The Garden of the Sleeping Giant": "https://anaximanderomiletus-byte.github.io/Explore-Capitals-PNGs/FIJI/garden-sleeping-giant.png",
   "Cloud 9": "https://anaximanderomiletus-byte.github.io/Explore-Capitals-PNGs/FIJI/cloud-9-floating-bar.png",
   "Levuka": "https://anaximanderomiletus-byte.github.io/Explore-Capitals-PNGs/FIJI/levuka-historical-port.png",

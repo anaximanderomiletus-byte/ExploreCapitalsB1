@@ -52,7 +52,7 @@ export const imagesE: Record<string, string> = {
   "Mlilwane Wildlife Sanctuary": "https://anaximanderomiletus-byte.github.io/Explore-Capitals-PNGs/ESWATINI/mlilwane-wildlife-sanctuary.png",
   "Sibebe Rock": "https://anaximanderomiletus-byte.github.io/Explore-Capitals-PNGs/ESWATINI/sibebe-rock.png",
   "Hlane Royal National Park": "https://anaximanderomiletus-byte.github.io/Explore-Capitals-PNGs/ESWATINI/hlane-royal-national-park.png",
-  "Ludzidzini Royal Village": "https://anaximanderomiletus-byte.github.io/Explore-Capitals-PNGs/ESWATINI/reed-dance-ceremony.png",
+  "Ludzidzini Royal Village": "https://anaximanderomiletus-byte.github.io/Explore-Capitals-PNGs/ESWATINI/ludzidzini-royal-village.png",
   "Ngwenya Mine": "https://anaximanderomiletus-byte.github.io/Explore-Capitals-PNGs/ESWATINI/ngwenya-mine.png",
 
   // --- Ethiopia ---

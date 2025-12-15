@@ -200,6 +200,7 @@ export default function PopulationPursuit() {
                  key={country.id}
                  onClick={() => handleChoice(country)}
                  className={`relative rounded-3xl shadow-premium p-8 flex flex-col items-center justify-center transition-all duration-300 border-2 border-transparent ${cardStyle}`}
+                 style={{ WebkitTapHighlightColor: 'transparent' }}
                >
                  <div className="text-9xl mb-6 drop-shadow-md select-none">{country.flag}</div>
                  <h3 className="text-3xl font-bold text-text mb-2 text-center">{country.name}</h3>

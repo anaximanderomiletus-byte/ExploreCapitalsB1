@@ -10,6 +10,13 @@ import SEO from '../components/SEO';
 // Define regions for filtering
 const REGIONS = ['All', 'Africa', 'Asia', 'Europe', 'North America', 'South America', 'Oceania'];
 
+// Helper to get ISO code for flags
+const getCountryCode = (emoji: string) => {
+    return Array.from(emoji)
+        .map(char => String.fromCharCode(char.codePointAt(0)! - 127397).toLowerCase())
+        .join('');
+};
+
 const MapPage: React.FC = () => {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<any>(null);
@@ -29,11 +36,14 @@ const MapPage: React.FC = () => {
 
   // Function to create custom HTML content for popups
   const createPopupContent = (country: Country) => {
+    const flagCode = getCountryCode(country.flag);
+    const flagUrl = `https://flagcdn.com/w80/${flagCode}.png`;
+    
     return `
       <div class="flex flex-col min-w-[240px] font-sans p-5 bg-white">
-        <div class="flex items-center gap-3">
-           <div class="text-4xl leading-none select-none">
-             ${country.flag}
+        <div class="flex items-center gap-3 mb-2">
+           <div class="w-10 h-7 shrink-0 overflow-hidden rounded shadow-sm border border-gray-200">
+             <img src="${flagUrl}" alt="${country.name} Flag" class="w-full h-full object-cover" />
            </div>
            <h3 class="font-display font-bold text-lg text-gray-800 leading-tight m-0">${country.name}</h3>
         </div>
@@ -76,7 +86,8 @@ const MapPage: React.FC = () => {
         zoomControl: false, // Custom zoom controls
         attributionControl: false,
         minZoom: 2,
-        worldCopyJump: true
+        worldCopyJump: true,
+        preferCanvas: true, // CRITICAL: This ensures all vector layers use a single canvas renderer
       });
 
       // CartoDB Voyager Tiles - Clean and Minimal
@@ -132,8 +143,6 @@ const MapPage: React.FC = () => {
       ? MOCK_COUNTRIES 
       : MOCK_COUNTRIES.filter(c => c.region === selectedRegion);
 
-    const markers: any[] = [];
-
     filteredCountries.forEach(country => {
       // Fix for Oceania splitting across dateline
       let displayLng = country.lng;
@@ -141,31 +150,37 @@ const MapPage: React.FC = () => {
         displayLng += 360;
       }
 
-      // Create Custom Icon
-      const icon = L.divIcon({
-        className: 'bg-transparent',
-        html: `<div class="w-4 h-4 bg-primary border-2 border-white rounded-full shadow-lg hover:bg-accent hover:scale-125 transition-all duration-300 cursor-pointer marker-pulse"></div>`,
-        iconSize: [16, 16],
-        iconAnchor: [8, 8],
-        popupAnchor: [0, -10]
-      });
-
-      const marker = L.marker([country.lat, displayLng], { icon })
-        .bindPopup(createPopupContent(country), {
+      // Optimization: Do NOT pass renderer: L.canvas() here.
+      // Rely on map-level preferCanvas: true to use the shared renderer.
+      const marker = L.circleMarker([country.lat, displayLng], {
+        radius: 6,
+        fillColor: '#77B6EA', // Primary color
+        color: '#FFFFFF',     // White border
+        weight: 2,
+        opacity: 1,
+        fillOpacity: 0.9,
+      }).bindPopup(createPopupContent(country), {
           closeButton: false,
           className: 'custom-popup'
-        });
+      });
 
       // Add ID to marker for easy lookup later
       (marker as any).countryId = country.id;
 
-      markers.push(marker);
+      // Add simple hover effect via event listeners since we aren't using CSS classes anymore
+      marker.on('mouseover', function (this: any) {
+        this.setStyle({ radius: 9, fillColor: '#5ba4e5' }); 
+      });
+      marker.on('mouseout', function (this: any) {
+        this.setStyle({ radius: 6, fillColor: '#77B6EA' });
+      });
+
       markersLayerRef.current.addLayer(marker);
     });
 
     // Fit bounds to markers if region is selected (and it's not 'All' initially to keep world view)
-    if (selectedRegion !== 'All' && markers.length > 0) {
-      const group = L.featureGroup(markers);
+    if (selectedRegion !== 'All' && markersLayerRef.current.getLayers().length > 0) {
+      const group = L.featureGroup(markersLayerRef.current.getLayers());
       mapInstanceRef.current.fitBounds(group.getBounds().pad(0.1));
     } else if (selectedRegion === 'All' && mapReady && !searchParams.get('country')) {
        // Only reset view if we aren't trying to deep link to a country
@@ -255,7 +270,7 @@ const MapPage: React.FC = () => {
     ? MOCK_COUNTRIES.filter(c => 
         normalizeText(c.name).includes(normalizeText(searchQuery)) || 
         normalizeText(c.capital).includes(normalizeText(searchQuery))
-      )
+      ).slice(0, 20) 
     : [];
 
   // Reset selection index when search changes
@@ -329,10 +344,10 @@ const MapPage: React.FC = () => {
              padding: 10px !important;
           }
           
-          /* Flag Emoji */
-          .leaflet-popup-content .text-4xl {
-             font-size: 1.5rem !important; /* 24px */
-             line-height: 1 !important;
+          /* Flag Image in Popup */
+          .leaflet-popup-content .w-10 {
+             width: 24px !important;
+             height: 18px !important;
           }
           
           /* Country Name */
@@ -413,21 +428,26 @@ const MapPage: React.FC = () => {
                   >
                       {filteredSearchResults.length > 0 ? (
                           <ul className="py-0">
-                              {filteredSearchResults.map((country, index) => (
-                                  <li key={country.id} id={`search-result-desktop-${index}`}>
-                                      <button 
-                                          onClick={() => handleResultClick(country)}
-                                          onMouseEnter={() => setSelectedIndex(index)}
-                                          className={`w-full text-left px-4 py-3 flex items-center gap-3 transition-colors border-b border-gray-100 last:border-none ${index === selectedIndex ? 'bg-blue-50' : 'hover:bg-blue-50/50'}`}
-                                      >
-                                          <span className="text-xl shadow-sm rounded-sm overflow-hidden">{country.flag}</span>
-                                          <div>
-                                              <p className="text-sm font-bold text-text">{country.name}</p>
-                                              <p className="text-xs text-gray-500">{country.region}</p>
-                                          </div>
-                                      </button>
-                                  </li>
-                              ))}
+                              {filteredSearchResults.map((country, index) => {
+                                  const flagCode = getCountryCode(country.flag);
+                                  return (
+                                    <li key={country.id} id={`search-result-desktop-${index}`}>
+                                        <button 
+                                            onClick={() => handleResultClick(country)}
+                                            onMouseEnter={() => setSelectedIndex(index)}
+                                            className={`w-full text-left px-4 py-3 flex items-center gap-3 transition-colors border-b border-gray-100 last:border-none ${index === selectedIndex ? 'bg-blue-50' : 'hover:bg-blue-50/50'}`}
+                                        >
+                                            <div className="w-8 h-6 shrink-0 overflow-hidden rounded shadow-sm border border-gray-100">
+                                              <img src={`https://flagcdn.com/w40/${flagCode}.png`} alt="" className="w-full h-full object-cover" />
+                                            </div>
+                                            <div>
+                                                <p className="text-sm font-bold text-text">{country.name}</p>
+                                                <p className="text-xs text-gray-500">{country.region}</p>
+                                            </div>
+                                        </button>
+                                    </li>
+                                  );
+                              })}
                           </ul>
                       ) : (
                           <div className="p-4 text-center text-xs text-gray-500 font-medium">
@@ -557,23 +577,28 @@ const MapPage: React.FC = () => {
                       >
                           {filteredSearchResults.length > 0 ? (
                               <ul className="py-0">
-                                  {filteredSearchResults.map((country, index) => (
-                                      <li key={country.id}>
-                                          <button 
-                                              onClick={() => handleResultClick(country)}
-                                              className={`w-full text-left px-4 py-3 flex items-center gap-3 transition-colors border-b border-gray-100 last:border-none active:bg-blue-50`}
-                                          >
-                                              <span className="text-xl shadow-sm rounded-sm overflow-hidden">{country.flag}</span>
-                                              <div>
-                                                  <p className="text-sm font-bold text-text">{country.name}</p>
-                                                  <p className="text-xs text-gray-500">{country.region}</p>
-                                              </div>
-                                              <div className="ml-auto text-gray-300">
-                                                 <ChevronRight size={16} />
-                                              </div>
-                                          </button>
-                                      </li>
-                                  ))}
+                                  {filteredSearchResults.map((country, index) => {
+                                      const flagCode = getCountryCode(country.flag);
+                                      return (
+                                        <li key={country.id}>
+                                            <button 
+                                                onClick={() => handleResultClick(country)}
+                                                className={`w-full text-left px-4 py-3 flex items-center gap-3 transition-colors border-b border-gray-100 last:border-none active:bg-blue-50`}
+                                            >
+                                                <div className="w-8 h-6 shrink-0 overflow-hidden rounded shadow-sm border border-gray-100">
+                                                  <img src={`https://flagcdn.com/w40/${flagCode}.png`} alt="" className="w-full h-full object-cover" />
+                                                </div>
+                                                <div>
+                                                    <p className="text-sm font-bold text-text">{country.name}</p>
+                                                    <p className="text-xs text-gray-500">{country.region}</p>
+                                                </div>
+                                                <div className="ml-auto text-gray-300">
+                                                   <ChevronRight size={16} />
+                                                </div>
+                                            </button>
+                                        </li>
+                                      );
+                                  })}
                               </ul>
                           ) : (
                               <div className="p-6 text-center text-sm text-gray-500 font-medium">

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { Timer, Trophy, ArrowLeft, RefreshCw, Map as MapIcon, Globe, CheckCircle2, XCircle, Compass } from 'lucide-react';
@@ -124,7 +125,8 @@ export default function MapDash() {
       attributionControl: false,
       minZoom: 2,
       maxZoom: 18,
-      worldCopyJump: true
+      worldCopyJump: true,
+      preferCanvas: true, // PERFORMANCE FIX: Use canvas rendering for all vector layers
     });
 
     // 2. Add Tile Layer (No Labels for difficulty)
@@ -148,6 +150,8 @@ export default function MapDash() {
       // but for the game mechanics, keeping raw coords is often safer unless using a specific world-wrapping plugin.
       // We will use raw coords here.
 
+      // Optimization: Do NOT pass renderer: L.canvas() here.
+      // Rely on map-level preferCanvas: true to use the shared renderer.
       const marker = L.circleMarker([country.lat, country.lng], {
         radius: 6,
         fillColor: '#77B6EA', // Primary Blue
@@ -155,7 +159,7 @@ export default function MapDash() {
         weight: 2,
         opacity: 1,
         fillOpacity: 0.8,
-        className: 'transition-all duration-300 cursor-pointer'
+        className: 'cursor-pointer'
       });
 
       // Bind Click Event
@@ -188,6 +192,11 @@ export default function MapDash() {
           // Red Style
           marker.setStyle({ fillColor: '#ef4444', color: '#b91c1c', radius: 8 });
           
+          // Auto dismiss wrong feedback after 1.5s
+          setTimeout(() => {
+             setFeedback(prev => (prev?.type === 'error' && prev.countryName === country.name ? null : prev));
+          }, 1500);
+          
           // Reset this specific marker after a bit
           setTimeout(() => {
              marker.setStyle({ fillColor: '#77B6EA', color: '#FFFFFF', radius: 6 });
@@ -208,6 +217,14 @@ export default function MapDash() {
 
       marker.addTo(markersGroup);
     });
+
+    // 6. Interaction Listeners to Dismiss Feedback
+    const clearFeedback = () => setFeedback(prev => prev ? null : prev);
+    
+    // Clear feedback if user moves map (implies they are looking again) or clicks empty space
+    map.on('movestart', clearFeedback);
+    map.on('zoomstart', clearFeedback);
+    map.on('click', clearFeedback);
 
     // Cleanup
     return () => {

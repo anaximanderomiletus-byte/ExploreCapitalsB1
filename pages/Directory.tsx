@@ -39,17 +39,34 @@ const SortHeader: React.FC<SortHeaderProps> = ({ label, field, align = 'left', s
   );
 };
 
-// Helper component for Flag Icons (using Emojis)
-const FlagIcon = ({ country, size = 'small' }: { country: Country, size?: 'small' | 'large' | 'card' }) => {
-  let fontSize = "text-3xl";
+// Helper to calculate ISO code from emoji flag
+const getCountryCode = (emoji: string) => {
+    return Array.from(emoji)
+        .map(char => String.fromCharCode(char.codePointAt(0)! - 127397).toLowerCase())
+        .join('');
+};
 
-  if (size === 'large' || size === 'card') {
-      fontSize = "text-5xl";
+// Helper component for Flag Icons (using Images for Cross-Platform Consistency)
+const FlagIcon = ({ country, size = 'small' }: { country: Country, size?: 'small' | 'large' | 'card' }) => {
+  const code = getCountryCode(country.flag);
+  
+  let dims = "w-8 h-6"; // Small (Table)
+  
+  if (size === 'card') {
+      dims = "w-12 h-9"; // Mobile Card
+  } else if (size === 'large') {
+      dims = "w-16 h-12";
   }
 
   return (
-    <div className="flex items-center justify-center select-none transition-transform hover:scale-110 origin-center">
-      <span className={`${fontSize} leading-none filter drop-shadow-sm`}>{country.flag}</span>
+    <div className={`flex items-center justify-center select-none overflow-hidden rounded-[4px] shadow-sm border border-gray-200 bg-gray-100 shrink-0 ${dims} transform transition-transform hover:scale-105`}>
+      <img 
+        src={`https://flagcdn.com/w80/${code}.png`}
+        srcSet={`https://flagcdn.com/w160/${code}.png 2x`}
+        alt={`${country.name} Flag`}
+        className="w-full h-full object-cover"
+        loading="lazy"
+      />
     </div>
   );
 };
@@ -221,13 +238,14 @@ const Directory: React.FC = () => {
           </div>
         </div>
 
-        {/* Mobile/Tablet Card View */}
+        {/* Mobile/Tablet Card View - Updated for consistency */}
         <div className="lg:hidden grid grid-cols-1 md:grid-cols-2 gap-4">
           {processedCountries.map((country) => (
             <div 
               key={country.id}
               onClick={() => setSelectedCountry(country)}
-              className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 active:scale-[0.98] transition-all hover:shadow-md cursor-pointer flex flex-col"
+              className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 active:scale-[0.98] transition-all hover:shadow-md cursor-pointer flex flex-col transform-gpu backface-hidden"
+              style={{ WebkitMaskImage: '-webkit-radial-gradient(white, black)' }}
             >
               <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center gap-3">

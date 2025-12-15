@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useParams, Link, useNavigate } from 'react-router-dom';
@@ -694,6 +695,7 @@ const CountryExploration: React.FC = () => {
                              disabled={!!selectedOption}
                              // Removed line-clamp-1 to allow text wrapping, added leading-snug
                              className={`w-full text-left px-5 py-3 md:py-4 rounded-xl border-2 transition-all duration-200 font-medium text-base leading-snug flex justify-between items-center ${stateStyles}`}
+                             style={{ WebkitTapHighlightColor: 'transparent' }}
                            >
                              <span className="leading-snug">{option}</span>
                              {icon}

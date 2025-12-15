@@ -1,5 +1,4 @@
 
-
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Timer, Trophy, ArrowLeft, RefreshCw, Search, Check, X, Eye, EyeOff, Globe2, Banknote, Languages, MapPin } from 'lucide-react';
@@ -226,7 +225,11 @@ export default function GlobalDetective() {
                     </div>
 
                     {/* Clue 4: Capital (Hidden) */}
-                    <div className={`p-4 rounded-xl border transition-all duration-300 relative overflow-hidden ${isCapitalRevealed ? 'bg-amber-50 border-amber-200' : 'bg-gray-800 border-gray-900 cursor-pointer group hover:bg-gray-700'}`} onClick={revealCapital}>
+                    <div 
+                        className={`p-4 rounded-xl border transition-all duration-300 relative overflow-hidden ${isCapitalRevealed ? 'bg-amber-50 border-amber-200' : 'bg-gray-800 border-gray-900 cursor-pointer group hover:bg-gray-700'}`} 
+                        onClick={revealCapital}
+                        style={{ WebkitTapHighlightColor: 'transparent' }}
+                    >
                          <div className={`flex items-center gap-2 text-xs font-bold uppercase mb-1 ${isCapitalRevealed ? 'text-amber-700' : 'text-gray-400'}`}>
                             <MapPin size={14} /> Capital City
                         </div>
@@ -277,6 +280,7 @@ export default function GlobalDetective() {
                          onClick={() => handleAnswer(option.name)}
                          disabled={!!selectedAnswer}
                          className={`relative p-4 rounded-xl font-semibold text-lg transition-all duration-200 flex items-center justify-center min-h-[64px] ${btnStyle} ${!selectedAnswer ? 'shadow-sm hover:shadow-md active:translate-y-[4px] active:shadow-none shadow-[0_4px_0_#E5E7EB]' : ''}`}
+                         style={{ WebkitTapHighlightColor: 'transparent' }}
                        >
                          <span className="z-10">{option.name}</span>
                          {icon && <div className="absolute right-4 z-10">{icon}</div>}

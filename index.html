@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -56,6 +57,43 @@
       }
     </script>
     <style>
+      /* Global Font Smoothing */
+      body {
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+
+      /* Custom Scrollbar */
+      .custom-scrollbar::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+      }
+      .custom-scrollbar::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 4px;
+      }
+      .custom-scrollbar::-webkit-scrollbar-thumb {
+        background: #C7D3DD;
+        border-radius: 4px;
+      }
+      .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+        background: #77B6EA;
+      }
+      /* Firefox Scrollbar */
+      .custom-scrollbar {
+        scrollbar-width: thin;
+        scrollbar-color: #C7D3DD #f1f1f1;
+      }
+
+      /* No Scrollbar Utility */
+      .no-scrollbar::-webkit-scrollbar {
+        display: none;
+      }
+      .no-scrollbar {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+      }
+
       /* Custom Leaflet Overrides for Premium Look */
       .leaflet-popup-content-wrapper {
         border-radius: 1rem;
@@ -146,6 +184,5 @@
 </head>
   <body class="bg-surface text-text antialiased selection:bg-primary selection:text-white">
     <div id="root"></div>
-    <script type="module" src="/index.tsx"></script>
   </body>
 </html>

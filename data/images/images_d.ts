@@ -27,7 +27,7 @@ export const imagesD: Record<string, string> = {
   "Dominica": "https://anaximanderomiletus-byte.github.io/Explore-Capitals-PNGs/DOMINICA/roseau-dominica.png",
   "Boiling Lake": "https://anaximanderomiletus-byte.github.io/Explore-Capitals-PNGs/DOMINICA/boiling-lake.png",
   "Trafalgar Falls": "https://anaximanderomiletus-byte.github.io/Explore-Capitals-PNGs/DOMINICA/trafalgar-falls.png",
-  "Champagne Reef": "https://anaximanderomiletus-byte.github.io/Explore-Capitals-PNGs/DOMINICA/champagne-reefs.png",
+  "Champagne Reef": "https://anaximanderomiletus-byte.github.io/Explore-Capitals-PNGs/DOMINICA/champagne-reef.png",
   "Titou Gorge": "https://anaximanderomiletus-byte.github.io/Explore-Capitals-PNGs/DOMINICA/titou-gorge.png",
   "The Kalinago Territory": "https://anaximanderomiletus-byte.github.io/Explore-Capitals-PNGs/DOMINICA/kalinago-territory.png",
 

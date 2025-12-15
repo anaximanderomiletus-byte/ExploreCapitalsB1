@@ -24,7 +24,7 @@ const CountryModal: React.FC<CountryModalProps> = ({ country, onClose }) => {
   // Calculate ISO code from emoji flag
   const countryCode = useMemo(() => {
     return Array.from(country.flag)
-        .map(char => String.fromCharCode(char.codePointAt(0)! - 127397).toLowerCase())
+        .map((char: any) => String.fromCharCode(char.codePointAt(0)! - 127397).toLowerCase())
         .join('');
   }, [country.flag]);
 
