@@ -25,6 +25,9 @@ export default function MapDash() {
   const [timeLeft, setTimeLeft] = useState(60);
   const [targetCountry, setTargetCountry] = useState<Country | null>(null);
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error' | 'info'; message: string; countryName?: string } | null>(null);
+  
+  // Transition State for Animation
+  const [isTransitioning, setIsTransitioning] = useState(false);
 
   // --- Refs (For accessing mutable state inside Leaflet closures) ---
   const mapRef = useRef<HTMLDivElement>(null);
@@ -34,9 +37,13 @@ export default function MapDash() {
   // Synced Refs to avoid stale closures in event listeners
   const gameStateRef = useRef(gameState);
   const targetCountryRef = useRef(targetCountry);
+  const feedbackRef = useRef(feedback);
+  const isTransitioningRef = useRef(isTransitioning);
 
   useEffect(() => { gameStateRef.current = gameState; }, [gameState]);
   useEffect(() => { targetCountryRef.current = targetCountry; }, [targetCountry]);
+  useEffect(() => { feedbackRef.current = feedback; }, [feedback]);
+  useEffect(() => { isTransitioningRef.current = isTransitioning; }, [isTransitioning]);
 
   // --- Timer Logic ---
   useEffect(() => {
@@ -73,6 +80,20 @@ export default function MapDash() {
     setFeedback(null); // Clear feedback for new round
   }, []);
 
+  const resetMarkerStyles = () => {
+    const L = (window as any).L;
+    if (!markersLayerRef.current || !L) return;
+
+    markersLayerRef.current.eachLayer((layer: any) => {
+      layer.setStyle({
+        fillColor: '#77B6EA',
+        color: '#FFFFFF',
+        radius: 6,
+        fillOpacity: 0.8
+      });
+    });
+  };
+
   const startGame = () => {
     setScore(0);
     setTimeLeft(60);
@@ -98,19 +119,13 @@ export default function MapDash() {
     }
   };
 
-  const resetMarkerStyles = () => {
-    const L = (window as any).L;
-    if (!markersLayerRef.current || !L) return;
-
-    markersLayerRef.current.eachLayer((layer: any) => {
-      layer.setStyle({
-        fillColor: '#77B6EA',
-        color: '#FFFFFF',
-        radius: 6,
-        fillOpacity: 0.8
-      });
-    });
-  };
+  // --- Reset Markers on Feedback Clear ---
+  // This ensures that if the user manually dismisses the popup, the marker resets immediately
+  useEffect(() => {
+    if (feedback === null) {
+        resetMarkerStyles();
+    }
+  }, [feedback]);
 
   // --- Map Initialization ---
   useEffect(() => {
@@ -163,26 +178,39 @@ export default function MapDash() {
       });
 
       // Bind Click Event
-      marker.on('click', () => {
+      marker.on('click', (e: any) => {
+        // CRITICAL FIX: Stop propagation so the map's click handler doesn't immediately dismiss the feedback
+        L.DomEvent.stopPropagation(e);
+        
         const currentTarget = targetCountryRef.current;
         const currentGameState = gameStateRef.current;
+        const currentFeedback = feedbackRef.current;
+        const isCurrentlyTransitioning = isTransitioningRef.current;
 
-        if (currentGameState !== 'playing' || !currentTarget) return;
+        // Ignore clicks if not playing, target not set, or already transitioning to next question
+        if (currentGameState !== 'playing' || !currentTarget || isCurrentlyTransitioning) return;
+
+        // Prevent clicking if we already successfully found the country (waiting for next round)
+        if (currentFeedback?.type === 'success') return;
 
         if (country.id === currentTarget.id) {
           // --- CORRECT ---
           setScore(s => s + 50);
           setFeedback({ type: 'success', message: 'Correct!', countryName: country.name });
           
+          // Trigger Transition Animation
+          setIsTransitioning(true);
+          
           // Green Style
           marker.setStyle({ fillColor: '#22c55e', color: '#15803d', radius: 10 });
           marker.bringToFront();
 
-          // Next Round Delay
+          // Next Round Delay - Increased to 800ms for smoother visual transition
           setTimeout(() => {
             generateTarget();
-            resetMarkerStyles();
-          }, 1000);
+            // resetMarkerStyles(); // Handled by useEffect when feedback becomes null in generateTarget
+            setIsTransitioning(false);
+          }, 800);
 
         } else {
           // --- INCORRECT ---
@@ -192,15 +220,13 @@ export default function MapDash() {
           // Red Style
           marker.setStyle({ fillColor: '#ef4444', color: '#b91c1c', radius: 8 });
           
-          // Auto dismiss wrong feedback after 1.5s
+          const WRONG_DURATION = 1200;
+
+          // Auto dismiss wrong feedback after 1.2s
+          // The marker reset is handled by the useEffect watching `feedback`
           setTimeout(() => {
              setFeedback(prev => (prev?.type === 'error' && prev.countryName === country.name ? null : prev));
-          }, 1500);
-          
-          // Reset this specific marker after a bit
-          setTimeout(() => {
-             marker.setStyle({ fillColor: '#77B6EA', color: '#FFFFFF', radius: 6 });
-          }, 800);
+          }, WRONG_DURATION);
         }
       });
 
@@ -219,11 +245,19 @@ export default function MapDash() {
     });
 
     // 6. Interaction Listeners to Dismiss Feedback
-    const clearFeedback = () => setFeedback(prev => prev ? null : prev);
+    const clearFeedback = () => {
+        // Only clear feedback if it is NOT success. 
+        // If it is success, we want it to stick until the next round starts.
+        if (feedbackRef.current?.type !== 'success') {
+            setFeedback(prev => prev ? null : prev);
+        }
+    };
     
     // Clear feedback if user moves map (implies they are looking again) or clicks empty space
     map.on('movestart', clearFeedback);
     map.on('zoomstart', clearFeedback);
+    
+    // This handler will clear feedback on map background click, but NOT on marker click due to stopPropagation above
     map.on('click', clearFeedback);
 
     // Cleanup
@@ -247,6 +281,11 @@ export default function MapDash() {
           .map-dash-container .leaflet-control-zoom {
             display: none !important;
           }
+        }
+        /* Fix mobile tap highlight for map markers */
+        .leaflet-interactive {
+          -webkit-tap-highlight-color: transparent;
+          outline: none;
         }
       `}</style>
 
@@ -309,7 +348,11 @@ export default function MapDash() {
               
               {/* Target Card */}
               {targetCountry && (
-                <div className="pointer-events-auto bg-white/95 backdrop-blur-xl rounded-2xl md:rounded-3xl shadow-2xl border border-white/50 p-5 md:p-6 pb-6 md:pb-8 text-center w-full max-w-[90%] md:w-auto md:min-w-[300px] animate-in slide-in-from-bottom-10 duration-500 relative overflow-hidden">
+                <div 
+                  className={`pointer-events-auto bg-white/95 backdrop-blur-xl rounded-2xl md:rounded-3xl shadow-2xl border border-white/50 p-5 md:p-6 pb-6 md:pb-8 text-center w-full max-w-[90%] md:w-auto md:min-w-[300px] relative overflow-hidden transition-all duration-300 ease-in-out transform ${
+                    isTransitioning ? 'translate-y-20 opacity-0 scale-95' : 'translate-y-0 opacity-100 scale-100'
+                  }`}
+                >
                   {/* Abstract BG */}
                   <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-primary to-accent"></div>
                   
@@ -330,8 +373,13 @@ export default function MapDash() {
 
           {/* Feedback Overlay (Toast) */}
           {feedback && (
-             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-30 pointer-events-none w-full px-4 text-center">
-               <div className={`inline-flex flex-col items-center justify-center p-6 rounded-3xl shadow-2xl backdrop-blur-md animate-in zoom-in fade-in duration-300 ${
+             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[1000] pointer-events-none w-full px-4 text-center">
+               <div 
+                 onClick={() => {
+                   // Only dismiss on click if it is NOT success/green state
+                   if (feedback.type !== 'success') setFeedback(null);
+                 }}
+                 className={`pointer-events-auto inline-flex flex-col items-center justify-center p-6 rounded-3xl shadow-2xl backdrop-blur-md animate-in zoom-in fade-in duration-300 ${feedback.type !== 'success' ? 'cursor-pointer' : ''} ${
                  feedback.type === 'success' ? 'bg-green-500/90 text-white' : 'bg-red-500/90 text-white'
                }`}>
                  {feedback.type === 'success' ? <CheckCircle2 size={48} className="mb-2" /> : <XCircle size={48} className="mb-2" />}
