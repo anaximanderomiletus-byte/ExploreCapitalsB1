@@ -1,7 +1,8 @@
 
+import { GoogleGenAI } from "@google/genai";
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { Timer, Trophy, ArrowLeft, Map as MapIcon, CheckCircle2, XCircle, AlertCircle } from 'lucide-react';
+import { Timer, Trophy, ArrowLeft, Map as MapIcon } from 'lucide-react';
 import { MOCK_COUNTRIES } from '../constants';
 import Button from '../components/Button';
 import { Country } from '../types';
@@ -12,7 +13,6 @@ export default function MapDash() {
   const [score, setScore] = useState(0);
   const [timeLeft, setTimeLeft] = useState(60);
   const [targetCountry, setTargetCountry] = useState<Country | null>(null);
-  const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const [isTransitioning, setIsTransitioning] = useState(false);
 
   const mapRef = useRef<HTMLDivElement>(null);
@@ -22,12 +22,10 @@ export default function MapDash() {
   
   const gameStateRef = useRef(gameState);
   const targetCountryRef = useRef(targetCountry);
-  const feedbackRef = useRef(feedback);
   const isTransitioningRef = useRef(isTransitioning);
 
   useEffect(() => { gameStateRef.current = gameState; }, [gameState]);
   useEffect(() => { targetCountryRef.current = targetCountry; }, [targetCountry]);
-  useEffect(() => { feedbackRef.current = feedback; }, [feedback]);
   useEffect(() => { isTransitioningRef.current = isTransitioning; }, [isTransitioning]);
 
   useEffect(() => {
@@ -42,6 +40,8 @@ export default function MapDash() {
           return prev - 1;
         });
       }, 1000);
+    } else if (timeLeft === 0) {
+      setGameState('finished');
     }
     return () => clearInterval(timer);
   }, [gameState, timeLeft]);
@@ -65,7 +65,6 @@ export default function MapDash() {
   const generateTarget = useCallback(() => {
     const random = MOCK_COUNTRIES[Math.floor(Math.random() * MOCK_COUNTRIES.length)];
     setTargetCountry(random);
-    setFeedback(null);
     resetAllMarkerStyles();
   }, [resetAllMarkerStyles]);
 
@@ -117,25 +116,42 @@ export default function MapDash() {
         if (gameStateRef.current !== 'playing' || !currentTarget || isTransitioningRef.current) return;
 
         const el = marker.getElement();
-        if (country.id === currentTarget.id) {
+        const isCorrect = country.id === currentTarget.id;
+        
+        // Compact feedback popup positioned closer to marker but not touching
+        const popup = L.popup({
+          closeButton: false,
+          autoClose: true,
+          className: `map-dash-feedback-popup ${isCorrect ? 'popup-success' : 'popup-error'}`,
+          offset: [0, -12], // Decreased from -18 to bring it closer to the dot
+          minWidth: 10,
+          maxWidth: 240
+        })
+        .setLatLng([country.lat, country.lng])
+        .setContent(isCorrect ? 'Correct!' : country.name)
+        .openOn(map);
+
+        // Auto-remove popup after 0.7s for tight gameplay loop
+        setTimeout(() => {
+          map.closePopup(popup);
+        }, 700);
+
+        if (isCorrect) {
           setScore(s => s + 50);
-          setFeedback({ type: 'success', message: 'Correct!' });
           setIsTransitioning(true);
           if (el) el.classList.add('marker-correct');
           
           setTimeout(() => { 
             generateTarget(); 
             setIsTransitioning(false); 
-          }, 1200);
+          }, 700);
         } else {
           setScore(s => Math.max(0, s - 10));
-          setFeedback({ type: 'error', message: 'Wrong selection, keep searching' });
           if (el) el.classList.add('marker-incorrect');
           
           setTimeout(() => { 
-            setFeedback(null); 
             if (el) el.classList.remove('marker-incorrect');
-          }, 1500);
+          }, 1000);
         }
       });
 
@@ -154,8 +170,47 @@ export default function MapDash() {
       <SEO title="Map Dash" description="Locate the nation on the map." />
       
       <style>{`
-        .marker-correct .marker-pin { background-color: #22c55e !important; border-color: white !important; transform: scale(1.5); }
-        .marker-incorrect .marker-pin { background-color: #ef4444 !important; border-color: white !important; transform: scale(1.2); }
+        .marker-correct .marker-pin { background-color: #22c55e !important; border-color: white !important; transform: scale(1.4); }
+        .marker-incorrect .marker-pin { background-color: #ef4444 !important; border-color: white !important; transform: scale(1.1); }
+        
+        /* Ultra minimal popup styling with dynamic width */
+        .map-dash-feedback-popup.leaflet-popup {
+          margin-bottom: 0;
+          pointer-events: none;
+        }
+        .map-dash-feedback-popup .leaflet-popup-content-wrapper {
+          background: rgba(55, 57, 58, 0.95);
+          backdrop-filter: blur(4px);
+          color: white;
+          font-family: 'Inter', sans-serif;
+          font-weight: 800;
+          font-size: 11px;
+          border-radius: 6px;
+          padding: 0;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+          border: none;
+          text-align: center;
+          width: fit-content !important;
+          margin: 0 auto;
+          display: inline-block;
+          white-space: nowrap;
+        }
+        .map-dash-feedback-popup .leaflet-popup-content {
+          margin: 6px 12px;
+          line-height: 1;
+          width: auto !important;
+          white-space: nowrap;
+          display: inline-block;
+        }
+        .map-dash-feedback-popup .leaflet-popup-tip-container {
+          display: none;
+        }
+        .popup-success .leaflet-popup-content-wrapper {
+          background: rgba(34, 197, 94, 1);
+        }
+        .popup-error .leaflet-popup-content-wrapper {
+          background: rgba(239, 68, 68, 1);
+        }
       `}</style>
 
       <div ref={mapRef} className="absolute inset-0 z-0 focus:outline-none" />
@@ -183,22 +238,12 @@ export default function MapDash() {
             </div>
           </div>
 
-          {/* Feedback Popup */}
-          {feedback && (
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[3000] pointer-events-none animate-in zoom-in fade-in duration-300">
-               <div className={`px-8 py-4 rounded-2xl shadow-2xl flex items-center gap-3 border-4 ${feedback.type === 'success' ? 'bg-green-50 border-green-500 text-green-700' : 'bg-red-50 border-red-500 text-red-700'}`}>
-                 {feedback.type === 'success' ? <CheckCircle2 size={32} /> : <AlertCircle size={32} />}
-                 <span className="text-xl font-display font-bold">{feedback.message}</span>
-               </div>
-            </div>
-          )}
-
           {/* Target Country Card */}
           <div className="absolute bottom-6 left-1/2 -translate-x-1/2 w-full max-w-sm px-4 z-20 pointer-events-none">
             {targetCountry && (
               <div className={`pointer-events-auto bg-white rounded-2xl shadow-xl border-4 border-gray-100 p-4 text-center transition-all duration-300 transform ${isTransitioning ? 'translate-y-10 opacity-0 scale-95' : 'translate-y-0 opacity-100 scale-100'}`}>
                 <div className="absolute top-0 left-0 w-full h-1 bg-primary rounded-t-xl"></div>
-                <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1 font-sans">Find this Location</p>
+                <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1 font-sans">Locate on map</p>
                 <div className="flex flex-col items-center gap-1">
                   <span className="text-4xl">{targetCountry.flag}</span>
                   <h2 className="text-xl md:text-2xl font-display font-bold text-text leading-tight">{targetCountry.name}</h2>
