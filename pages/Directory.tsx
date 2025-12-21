@@ -6,6 +6,7 @@ import { MOCK_COUNTRIES } from '../constants';
 import { Country } from '../types';
 import CountryModal from '../components/CountryModal';
 import SEO from '../components/SEO';
+import { useLayout } from '../context/LayoutContext';
 
 type SortKey = 'name' | 'capital' | 'region' | 'population' | 'area';
 type SortDirection = 'asc' | 'desc';
@@ -76,6 +77,11 @@ const Directory: React.FC = () => {
   const [sortConfig, setSortConfig] = useState<{ key: SortKey; direction: SortDirection } | null>(null);
   const [selectedCountry, setSelectedCountry] = useState<Country | null>(null);
   const [searchParams, setSearchParams] = useSearchParams();
+  const { setPageLoading } = useLayout();
+
+  useEffect(() => {
+    setPageLoading(false);
+  }, [setPageLoading]);
 
   // Effect to handle URL parameter for deep-linking (e.g., from MapPage)
   useEffect(() => {

@@ -1,11 +1,40 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Map, Trophy, BookOpen, ArrowRight, Compass, Globe2, Sparkles, GraduationCap, Zap } from 'lucide-react';
+import { Trophy, BookOpen, ArrowRight, Compass, Globe2, GraduationCap, Zap, Plane } from 'lucide-react';
 import Button from '../components/Button';
 import SEO from '../components/SEO';
+import { useLayout } from '../context/LayoutContext';
 
 const Home: React.FC = () => {
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+  const [scrollY, setScrollY] = useState(0);
+  const { setPageLoading } = useLayout();
+
+  useEffect(() => {
+    // Immediately tell the transition handler we are ready
+    setPageLoading(false);
+
+    const handleMouseMove = (e: MouseEvent) => {
+      setMousePos({
+        x: (e.clientX / window.innerWidth - 0.5) * 15,
+        y: (e.clientY / window.innerHeight - 0.5) * 15,
+      });
+    };
+
+    const handleScroll = () => {
+      setScrollY(window.scrollY);
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, []);
+
   const structuredData = {
     "@context": "https://schema.org",
     "@type": "WebSite",
@@ -27,32 +56,49 @@ const Home: React.FC = () => {
       />
 
       {/* Hero Section */}
-      <section className="relative min-h-[95vh] flex items-center justify-center overflow-hidden pt-24 pb-16">
-         {/* Background Elements */}
+      <section className="relative min-h-[80vh] flex flex-col items-center justify-start overflow-hidden pt-44 pb-20">
+         {/* Layered Background Elements */}
          <div className="absolute inset-0 bg-gradient-to-b from-blue-50/80 to-surface z-0"></div>
          
-         {/* Decorative Grid Pattern */}
+         {/* Precision Grid Pattern with Parallax */}
          <div 
-            className="absolute top-0 left-0 w-full h-full opacity-[0.05] pointer-events-none z-0" 
+            className="absolute inset-0 opacity-[0.15] z-0 will-change-transform" 
             style={{ 
-                backgroundImage: 'radial-gradient(#37393A 0.5px, transparent 0.5px)', 
-                backgroundSize: '30px 30px' 
+              backgroundImage: 'radial-gradient(#37393A 0.5px, transparent 0.5px)', 
+              backgroundSize: '32px 32px',
+              transform: `translateY(${scrollY * 0.1}px)` 
             }}
          ></div>
+
+         {/* Massive Background Map Silhouette with Parallax */}
+         <div 
+            className="absolute inset-0 z-0 opacity-[0.05] pointer-events-none flex items-center justify-center scale-110 select-none will-change-transform"
+            style={{ transform: `translateY(${scrollY * 0.25}px) scale(1.1)` }}
+         >
+            <svg viewBox="0 0 800 400" xmlns="http://www.w3.org/2000/svg" className="w-full h-full fill-current text-text">
+               {/* Simplified Rounded Continents */}
+               <path d="M120,80 Q140,70 180,80 T240,80 T230,150 T180,180 T120,130 Z" />
+               <path d="M180,200 Q210,190 240,210 T250,300 T190,340 T160,240 Z" />
+               <path d="M350,60 Q450,40 600,40 T780,100 T750,180 T580,200 T380,150 Z" />
+               <path d="M380,180 Q450,170 520,190 T530,300 T410,310 Z" />
+               <path d="M680,280 Q740,270 760,300 T740,340 T670,300 Z" />
+               <circle cx="220" cy="30" r="15" />
+            </svg>
+         </div>
          
-         {/* Cinematic Floating Blobs */}
-         <div className="absolute top-1/4 -left-20 w-80 h-80 bg-primary/20 rounded-full blur-[100px] animate-float opacity-70"></div>
-         <div className="absolute bottom-1/4 -right-20 w-96 h-96 bg-accent/20 rounded-full blur-[100px] animate-float opacity-70" style={{ animationDelay: '3s' }}></div>
+         {/* Parallax Blobs for Depth */}
+         <div 
+            className="absolute top-1/4 -left-20 w-80 h-80 bg-primary/20 rounded-full blur-[120px] opacity-40 transition-transform duration-1000 ease-out pointer-events-none"
+            style={{ transform: `translate(${mousePos.x * -1}px, ${mousePos.y * -1}px)` }}
+         ></div>
+         <div 
+            className="absolute bottom-1/4 -right-20 w-96 h-96 bg-accent/20 rounded-full blur-[120px] opacity-40 transition-transform duration-1000 ease-out pointer-events-none" 
+            style={{ transform: `translate(${mousePos.x * 0.8}px, ${mousePos.y * 0.8}px)` }}
+         ></div>
 
          <div className="relative z-10 max-w-6xl mx-auto px-6 text-center">
-            {/* Feature Badge */}
-            <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-white/90 backdrop-blur-md border border-white shadow-premium mb-10 animate-in fade-in slide-in-from-bottom-4 duration-700 mx-auto hover:scale-105 transition-transform cursor-default select-none group">
-               <Sparkles className="text-primary group-hover:rotate-12 transition-transform" size={16} />
-               <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-gray-500">Global Knowledge Redefined</span>
-            </div>
-
             {/* Main Headline */}
-            <h1 className="text-5xl md:text-8xl lg:text-9xl font-display font-black mb-8 text-text tracking-tight leading-[0.95] animate-in fade-in slide-in-from-bottom-6 duration-1000 delay-100">
+            <h1 className="text-6xl md:text-8xl lg:text-9xl font-display font-black mb-8 text-text tracking-tighter leading-[0.9] animate-in fade-in slide-in-from-bottom-4 duration-1000">
               The Atlas <br/>
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-blue-400 to-primary bg-[length:200%_auto] animate-shimmer">
                 Unlocked.
@@ -60,144 +106,162 @@ const Home: React.FC = () => {
             </h1>
 
             {/* Subtext */}
-            <p className="text-lg md:text-2xl text-gray-500 max-w-3xl mx-auto mb-12 leading-relaxed animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-200">
-              Master every capital, explore high-fidelity maps, and uncover the demographic stories of over 190 nations through a premium gamified experience.
+            <p className="text-lg md:text-xl text-gray-500 max-w-xl mx-auto mb-12 leading-relaxed animate-in fade-in slide-in-from-bottom-6 duration-1000 delay-100">
+              A high-fidelity interactive experience designed to help you master 195 nations through data and exploration.
             </p>
 
             {/* Primary Action Group */}
-             <div className="flex flex-col sm:flex-row gap-5 justify-center items-center animate-in fade-in slide-in-from-bottom-10 duration-1000 delay-300 w-full px-4">
-                <Link to="/games" className="w-full sm:w-auto group">
-                   <Button variant="primary" size="lg" className="w-full h-16 text-xl">
-                     Begin Journey <ArrowRight className="ml-2 group-hover:translate-x-1 transition-transform" size={24} />
+             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-200">
+                <Link to="/games" className="w-full sm:w-auto">
+                   <Button variant="primary" size="lg" className="w-full h-14 px-12 text-lg">
+                     Start Journey <ArrowRight className="ml-2" size={20} />
                    </Button>
                 </Link>
                 <Link to="/map" className="w-full sm:w-auto">
-                   <Button variant="secondary" size="lg" className="w-full h-16 text-xl bg-white/60 border border-white backdrop-blur-md hover:bg-white/90 text-gray-600">
-                     Interactive Map
+                   <Button variant="secondary" size="lg" className="w-full h-14 px-12 text-lg bg-white/40 border border-white/60 backdrop-blur-md hover:bg-white/80">
+                     Explore Map
                    </Button>
                 </Link>
              </div>
              
-             {/* Institutional Trust Bar */}
-             <div className="mt-20 pt-12 border-t border-gray-200/40 flex flex-wrap justify-center gap-12 md:gap-24 opacity-0 animate-in fade-in slide-in-from-bottom-4 duration-1000 delay-500 fill-mode-forwards">
-                 <div className="flex flex-col items-center group cursor-default">
-                    <div className="text-3xl md:text-5xl font-display font-bold text-text group-hover:text-primary transition-colors">195+</div>
-                    <div className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mt-2">Sovereign Nations</div>
+             {/* Institutional Trust Bar - Minimalized */}
+             <div className="mt-20 pt-10 border-t border-gray-200/40 flex flex-wrap justify-center gap-10 md:gap-20 opacity-0 animate-in fade-in slide-in-from-bottom-4 duration-1000 delay-400 fill-mode-forwards">
+                 <div className="flex flex-col items-center">
+                    <div className="text-3xl md:text-4xl font-display font-bold text-text">195</div>
+                    <div className="text-[9px] font-bold uppercase tracking-widest text-gray-400 mt-1">Nations</div>
                  </div>
-                 <div className="flex flex-col items-center group cursor-default">
-                    <div className="text-3xl md:text-5xl font-display font-bold text-text group-hover:text-accent transition-colors">7</div>
-                    <div className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mt-2">Specialized Labs</div>
+                 <div className="flex flex-col items-center">
+                    <div className="text-3xl md:text-4xl font-display font-bold text-text">7</div>
+                    <div className="text-[9px] font-bold uppercase tracking-widest text-gray-400 mt-1">Modules</div>
                  </div>
-                 <div className="flex flex-col items-center group cursor-default">
-                    <div className="text-3xl md:text-5xl font-display font-bold text-text group-hover:text-secondary transition-colors">60s</div>
-                    <div className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mt-2">Rapid Challenges</div>
+                 <div className="flex flex-col items-center">
+                    <div className="text-3xl md:text-4xl font-display font-bold text-text">60s</div>
+                    <div className="text-[9px] font-bold uppercase tracking-widest text-gray-400 mt-1">Blitz Quizzes</div>
                  </div>
              </div>
          </div>
       </section>
 
       {/* Bento-Grid Feature Ecosystem */}
-      <section className="py-24 px-6 relative z-10 bg-white rounded-t-[4rem] shadow-[0_-20px_60px_rgba(0,0,0,0.03)]">
+      <section className="py-24 px-6 relative z-10 bg-white rounded-t-[3rem] shadow-[0_-15px_50px_rgba(0,0,0,0.02)]">
          <div className="max-w-7xl mx-auto">
             <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-6">
                 <div className="text-center md:text-left">
-                    <h2 className="text-4xl md:text-5xl font-display font-bold text-text tracking-tight">The Ecosystem</h2>
-                    <p className="text-gray-400 text-lg mt-3 max-w-lg">A multi-modal approach to mastering global geography.</p>
+                    <h2 className="text-3xl md:text-4xl font-display font-bold text-text tracking-tight">The Ecosystem</h2>
+                    <p className="text-gray-400 text-lg mt-2 max-w-lg">Mastering geography through design and interaction.</p>
                 </div>
                 <div className="flex gap-4 justify-center md:justify-start">
-                   <div className="flex items-center gap-2 text-xs font-bold text-primary bg-primary/5 px-4 py-2 rounded-full border border-primary/10">
-                      <Zap size={14} /> High Performance
+                   <div className="flex items-center gap-2 text-[10px] font-bold text-primary bg-primary/5 px-4 py-2 rounded-full border border-primary/10 uppercase tracking-wider">
+                      <Zap size={12} /> High Performance
                    </div>
-                   <div className="flex items-center gap-2 text-xs font-bold text-secondary bg-secondary/5 px-4 py-2 rounded-full border border-secondary/10">
-                      <GraduationCap size={14} /> Academic Authority
+                   <div className="flex items-center gap-2 text-[10px] font-bold text-secondary bg-secondary/5 px-4 py-2 rounded-full border border-secondary/10 uppercase tracking-wider">
+                      <GraduationCap size={12} /> Academic Authority
                    </div>
                 </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
-                {/* Featured: Map - Spans 8 cols */}
-                <div className="md:col-span-8 bg-gradient-to-br from-surface to-white rounded-[2.5rem] p-10 md:p-12 border border-gray-100 shadow-premium hover:shadow-premium-hover transition-all duration-500 group overflow-hidden relative min-h-[420px] flex flex-col justify-center">
-                   <div className="relative z-10 max-w-md">
-                      <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center mb-8 text-primary shadow-premium border border-gray-50 group-hover:scale-110 group-hover:rotate-6 transition-all duration-500">
-                         <Globe2 size={32} />
-                      </div>
-                      <h3 className="text-4xl font-display font-bold text-text mb-4 group-hover:text-primary transition-colors">Precision Mapping</h3>
-                      <p className="text-gray-500 text-lg leading-relaxed mb-10">
-                        Explore every corner of the globe with our high-fidelity interactive engine. Click any region to reveal flags, demographics, and curated field reports.
-                      </p>
-                      <Link to="/map" className="inline-flex items-center gap-3 font-bold text-text bg-white px-8 py-4 rounded-2xl shadow-premium border border-gray-100 hover:bg-primary hover:text-white hover:border-primary transition-all group-hover:translate-x-1">
-                        Launch Map <ArrowRight size={20} />
-                      </Link>
+                {/* Featured: Map */}
+                <div className="md:col-span-8 bg-surface/30 rounded-[2rem] p-10 md:p-12 border border-gray-100 shadow-premium group overflow-hidden relative min-h-[400px] flex flex-col justify-center">
+                   {/* High-Fidelity Recognized Minimal World Map SVG Background */}
+                   <div className="absolute inset-0 z-0 opacity-[0.08] group-hover:opacity-[0.12] transition-opacity duration-700 pointer-events-none flex items-center justify-center p-8">
+                      <svg viewBox="0 0 800 400" xmlns="http://www.w3.org/2000/svg" className="w-full h-full fill-current text-primary">
+                        {/* North America */}
+                        <path d="M120,80 L140,70 L180,80 L220,60 L240,80 L230,120 L210,150 L180,180 L150,170 L120,130 Z" />
+                        {/* South America */}
+                        <path d="M180,200 L210,190 L240,210 L250,250 L220,320 L190,340 L170,300 L160,240 Z" />
+                        {/* Eurasia */}
+                        <path d="M350,60 L450,40 L600,40 L750,60 L780,100 L750,180 L680,220 L580,200 L500,180 L420,200 L380,150 L350,100 Z" />
+                        {/* Africa */}
+                        <path d="M380,180 L450,170 L520,190 L530,240 L500,320 L450,340 L410,310 L380,250 Z" />
+                        {/* Australia */}
+                        <path d="M680,280 L740,270 L760,300 L740,340 L690,330 L670,300 Z" />
+                        {/* Greenland */}
+                        <path d="M220,30 L250,20 L280,35 L260,60 L225,55 Z" />
+                        {/* Madagascar */}
+                        <path d="M540,280 L560,285 L555,310 L540,315 Z" />
+                        {/* Island Clusters */}
+                        <circle cx="280" cy="180" r="5" />
+                        <circle cx="310" cy="200" r="4" />
+                        <circle cx="620" cy="240" r="4" />
+                        <circle cx="650" cy="260" r="3" />
+                      </svg>
                    </div>
-                   
-                   {/* Abstract Map Graphic */}
-                   <div className="absolute right-[-10%] bottom-[-10%] w-[60%] opacity-[0.07] pointer-events-none group-hover:opacity-[0.12] group-hover:scale-110 transition-all duration-1000 hidden md:block">
-                        <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" className="w-full h-full fill-current text-primary">
-                          <path d="M37.5,-64.7C48.6,-57.8,57.7,-47.8,64.3,-36.3C70.9,-24.8,75,-12.4,74.7,-0.2C74.3,12,69.6,24.1,62.2,34.8C54.7,45.4,44.6,54.7,33,60.8C21.4,66.8,8.2,69.7,-4.8,61.4C-17.8,53,-30.5,33.4,-41.8,17.2C-53.1,1.1,-63,-11.5,-63.9,-24.5C-64.8,-37.5,-56.7,-51,-44.6,-57.6C-32.5,-64.3,-16.2,-64.1,-1,-62.4C14.2,-60.7,26.4,-71.5,37.5,-64.7Z" transform="translate(100 100)" />
-                        </svg>
+
+                   <div className="relative z-10 max-w-md">
+                      <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center mb-6 text-primary shadow-sm border border-gray-50 group-hover:rotate-3 transition-transform duration-500">
+                         <Globe2 size={28} />
+                      </div>
+                      <h3 className="text-3xl font-display font-bold text-text mb-4">Precision Mapping</h3>
+                      <p className="text-gray-500 text-base leading-relaxed mb-8">
+                        Explore every corner of the globe with our high-fidelity interactive engine. Reveal flags, demographics, and curated reports.
+                      </p>
+                      <Link to="/map">
+                        <Button variant="outline" size="md" className="rounded-xl border-gray-200 text-gray-600 hover:bg-white hover:shadow-sm">
+                          Launch Interface
+                        </Button>
+                      </Link>
                    </div>
                 </div>
 
-                {/* Featured: Games - Spans 4 cols, tall */}
-                <div className="md:col-span-4 bg-primary rounded-[2.5rem] p-10 text-white shadow-xl hover:-translate-y-2 transition-all duration-500 group relative overflow-hidden flex flex-col min-h-[420px]">
-                    <div className="absolute top-0 right-0 w-72 h-72 bg-white/10 rounded-full blur-[80px] -mr-20 -mt-20"></div>
+                {/* Featured: Games */}
+                <div className="md:col-span-4 bg-primary rounded-[2rem] p-10 text-white shadow-lg group relative overflow-hidden flex flex-col min-h-[400px]">
+                    <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-[70px] -mr-20 -mt-20"></div>
                     
                     <div className="relative z-10 flex flex-col h-full">
-                       <div className="w-16 h-16 bg-white/20 backdrop-blur-lg rounded-2xl flex items-center justify-center mb-8 text-white border border-white/20 group-hover:rotate-12 transition-transform duration-500">
-                          <Trophy size={32} />
+                       <div className="w-14 h-14 bg-white/20 backdrop-blur-lg rounded-2xl flex items-center justify-center mb-6 text-white border border-white/20 group-hover:rotate-12 transition-transform duration-500">
+                          <Trophy size={28} />
                        </div>
-                       <h3 className="text-4xl font-display font-bold mb-4">Arcade Mode</h3>
-                       <p className="text-blue-100 text-lg mb-10 leading-relaxed">
-                         Competitive learning designed to stick. Battle the clock in 7 specialized game modes.
+                       <h3 className="text-3xl font-display font-bold mb-4">Arcade Mode</h3>
+                       <p className="text-blue-50 text-base mb-8 leading-relaxed">
+                         Competitive learning with 7 blitz game modes designed to stick.
                        </p>
                        
-                       <div className="space-y-3 flex-grow">
-                          {['Capital Quiz', 'Map Dash', 'Flag Frenzy', 'Population Pursuit'].map((game, i) => (
-                             <div key={game} className="flex items-center gap-4 p-4 bg-white/10 rounded-2xl border border-white/10 backdrop-blur-sm hover:bg-white/20 transition-all cursor-default translate-y-0 hover:-translate-x-1" style={{ transitionDelay: `${i * 50}ms` }}>
-                                <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center font-display font-bold text-sm">
-                                    {String(i + 1).padStart(2, '0')}
+                       <div className="space-y-2 mt-auto">
+                          {['Capital Quiz', 'Map Dash', 'Flag Frenzy'].map((game, i) => (
+                             <div key={game} className="flex items-center gap-3 p-3 bg-white/10 rounded-xl border border-white/5 backdrop-blur-sm">
+                                <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center font-display font-bold text-xs">
+                                    0{i + 1}
                                 </div>
-                                <span className="font-bold text-sm tracking-wide opacity-90">{game}</span>
+                                <span className="font-bold text-xs tracking-wide opacity-90">{game}</span>
                              </div>
                           ))}
                        </div>
-                       
-                       <Link to="/games" className="mt-10">
-                          <Button variant="secondary" className="w-full border-none bg-white text-primary hover:bg-blue-50 shadow-xl py-5 text-xl">
-                             Play Now
+                       <Link to="/games" className="mt-8">
+                          <Button variant="secondary" size="md" className="w-full">
+                             View Center
                           </Button>
                        </Link>
                     </div>
                 </div>
 
-                {/* Secondary: Directory - Spans 6 cols */}
-                <div className="md:col-span-6 bg-surface rounded-[2.5rem] p-10 border border-gray-200/50 shadow-premium hover:shadow-xl hover:-translate-y-1 transition-all duration-500 group flex flex-col md:flex-row items-center gap-8">
-                    <div className="w-24 h-24 bg-accent/20 rounded-[2rem] flex-shrink-0 flex items-center justify-center text-amber-800/60 group-hover:scale-110 group-hover:-rotate-6 transition-all duration-500">
-                        <BookOpen size={48} />
+                {/* Secondary Features */}
+                <div className="md:col-span-6 bg-white rounded-[2rem] p-10 border border-gray-100 shadow-premium flex flex-col md:flex-row items-center gap-8">
+                    <div className="w-20 h-20 bg-accent/15 rounded-2xl flex-shrink-0 flex items-center justify-center text-accent">
+                        <BookOpen size={36} />
                     </div>
                     <div>
-                        <h3 className="text-2xl font-display font-bold text-text mb-2 group-hover:text-primary transition-colors">Data Directory</h3>
-                        <p className="text-gray-500 mb-6 leading-relaxed">
-                            A search-first database of global statistics. Access population, currency, and language data for every nation.
+                        <h3 className="text-xl font-display font-bold text-text mb-2">Data Directory</h3>
+                        <p className="text-gray-500 text-sm mb-4 leading-relaxed">
+                            Access population, currency, and language data for every nation.
                         </p>
-                        <Link to="/directory" className="inline-flex items-center text-sm font-bold text-gray-500 group-hover:text-primary transition-colors gap-2">
-                            Access Database <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
+                        <Link to="/directory" className="inline-flex items-center text-xs font-bold text-primary gap-1 group">
+                            Open Database <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
                         </Link>
                     </div>
                 </div>
 
-                {/* Secondary: Tours - Spans 6 cols */}
-                <div className="md:col-span-6 bg-surface rounded-[2.5rem] p-10 border border-gray-200/50 shadow-premium hover:shadow-xl hover:-translate-y-1 transition-all duration-500 group flex flex-col md:flex-row items-center gap-8">
-                    <div className="w-24 h-24 bg-secondary/40 rounded-[2rem] flex-shrink-0 flex items-center justify-center text-slate-700 group-hover:scale-110 group-hover:rotate-6 transition-all duration-500">
-                        <Compass size={48} />
+                <div className="md:col-span-6 bg-white rounded-[2rem] p-10 border border-gray-100 shadow-premium flex flex-col md:flex-row items-center gap-8">
+                    <div className="w-20 h-20 bg-secondary/30 rounded-2xl flex-shrink-0 flex items-center justify-center text-text/60">
+                        <Compass size={36} />
                     </div>
                     <div>
-                        <h3 className="text-2xl font-display font-bold text-text mb-2 group-hover:text-primary transition-colors">Virtual Tours</h3>
-                        <p className="text-gray-500 mb-6 leading-relaxed">
-                            Immersive, high-fidelity journeys curated for every nation. Uncover the stories behind the borders.
+                        <h3 className="text-xl font-display font-bold text-text mb-2">Virtual Tours</h3>
+                        <p className="text-gray-500 text-sm mb-4 leading-relaxed">
+                            Immersive, high-fidelity journeys curated for every sovereign nation.
                         </p>
-                        <Link to="/map" className="inline-flex items-center text-sm font-bold text-gray-500 group-hover:text-primary transition-colors gap-2">
-                            Explore Now <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
+                        <Link to="/map" className="inline-flex items-center text-xs font-bold text-primary gap-1 group">
+                            Explore Now <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
                         </Link>
                     </div>
                 </div>
@@ -205,27 +269,31 @@ const Home: React.FC = () => {
          </div>
       </section>
 
-      {/* Global Action CTA */}
-      <section className="py-32 px-6 bg-white relative overflow-hidden border-t border-gray-50">
-         <div className="absolute top-0 left-0 w-full h-full opacity-[0.2] pointer-events-none" 
-              style={{ backgroundImage: 'radial-gradient(#C7D3DD 1px, transparent 1px)', backgroundSize: '40px 40px' }}>
-         </div>
-         
+      {/* Global Action CTA - Clean Background without Dots */}
+      <section className="py-32 px-6 bg-[#2D3133] relative overflow-hidden">
+         {/* Glowing Auras - Depth without noise */}
+         <div className="absolute -top-24 -left-24 w-96 h-96 bg-primary/20 rounded-full blur-[120px] pointer-events-none"></div>
+         <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-accent/10 rounded-full blur-[120px] pointer-events-none"></div>
+
          <div className="max-w-4xl mx-auto text-center relative z-10">
-            <h2 className="text-5xl md:text-7xl font-display font-black text-text mb-8 tracking-tighter">
+            <h2 className="text-4xl md:text-6xl font-display font-black text-white mb-8 tracking-tighter">
                Ready to go global?
             </h2>
-            <p className="text-gray-400 text-xl md:text-2xl mb-14 max-w-2xl mx-auto leading-relaxed">
-               Join a global community of learners mastering the atlas through design-led education.
+            <p className="text-blue-100/60 text-lg md:text-xl mb-12 max-w-2xl mx-auto leading-relaxed">
+               Join a global community of learners mastering the atlas through design-led education and immersive interaction.
             </p>
-            <div className="flex flex-col sm:flex-row gap-6 justify-center">
-                <Link to="/games">
-                   <Button variant="primary" size="lg" className="h-18 px-14 text-2xl">
-                      Launch Application
+            <div className="flex flex-col sm:flex-row gap-4 justify-center items-stretch">
+                <Link to="/games" className="flex">
+                   <Button variant="primary" size="lg" className="h-16 px-14 text-xl w-full">
+                      Play Games
                    </Button>
                 </Link>
-                <Link to="/about">
-                    <Button variant="secondary" size="lg" className="h-18 px-14 text-2xl bg-surface/50 border border-gray-200">
+                <Link to="/about" className="flex">
+                    <Button 
+                      variant="secondary" 
+                      size="lg" 
+                      className="h-16 px-14 text-xl bg-white/10 border-white/20 text-white shadow-[0_4px_0_rgba(0,0,0,0.3)] hover:bg-white/20 active:shadow-none active:translate-y-[4px] w-full"
+                    >
                         About Project
                     </Button>
                 </Link>

@@ -1,13 +1,35 @@
 
-
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Play, Clock, Lock } from 'lucide-react';
 import Button from '../components/Button';
 import { GAMES } from '../constants';
 import SEO from '../components/SEO';
+import { useLayout } from '../context/LayoutContext';
 
 const Games: React.FC = () => {
+  const { setPageLoading } = useLayout();
+
+  useEffect(() => {
+    // Start Preloading Images
+    const imageUrls = GAMES.map(game => game.image);
+    
+    // Create an array of image load promises
+    const loadPromises = imageUrls.map(src => {
+      return new Promise((resolve) => {
+        const img = new Image();
+        img.src = src;
+        img.onload = resolve;
+        img.onerror = resolve; // Resolve even on error to avoid hanging the UI
+      });
+    });
+
+    // Wait for all images, then signal that the page is ready
+    Promise.all(loadPromises).then(() => {
+      setPageLoading(false);
+    });
+  }, [setPageLoading]);
+
   return (
     <div className="pt-28 pb-20 px-6 bg-surface min-h-screen">
       <SEO 

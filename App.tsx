@@ -1,7 +1,7 @@
 
-
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { HashRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
+import { Globe } from 'lucide-react';
 import Navigation from './components/Navigation';
 import Home from './pages/Home';
 import Games from './pages/Games';
@@ -17,25 +17,113 @@ import GlobalDetective from './pages/GlobalDetective';
 import CapitalConnection from './pages/CapitalConnection';
 import CountryExploration from './pages/CountryExploration';
 import Footer from './components/Footer';
-import { LayoutProvider } from './context/LayoutContext';
+import { LayoutProvider, useLayout } from './context/LayoutContext';
 
-const ScrollToTop = () => {
-  const { pathname } = useLocation();
-  React.useEffect(() => {
-    window.scrollTo(0, 0);
-  }, [pathname]);
-  return null;
+/**
+ * PageTransitionHandler
+ * Detects location changes and manages a multi-stage transition.
+ * It waits for the isPageLoading flag to flip to false before opening the curtain.
+ * Handles scroll reset invisibly while the curtain is closed.
+ */
+const PageTransitionHandler: React.FC<{ children: (location: any) => React.ReactNode }> = ({ children }) => {
+  const location = useLocation();
+  const { isTransitioning, setIsTransitioning, isPageLoading, setPageLoading } = useLayout();
+  const [displayLocation, setDisplayLocation] = useState(location);
+  const [transitionState, setTransitionState] = useState<'idle' | 'entering' | 'waiting' | 'exiting'>('idle');
+  const [navId, setNavId] = useState(0);
+
+  // Transition Phase 1: Navigation Triggered
+  useEffect(() => {
+    if (location.key !== displayLocation.key) {
+      setIsTransitioning(true);
+      setPageLoading(true); // Default to true until the new page says otherwise
+      setTransitionState('entering');
+      setNavId(prev => prev + 1);
+
+      // Phase 2: Curtain covers the screen (400ms)
+      const enterTimer = setTimeout(() => {
+        // RESET SCROLL HERE: The curtain is now fully covering the viewport
+        window.scrollTo(0, 0);
+        
+        setDisplayLocation(location);
+        setTransitionState('waiting');
+      }, 400);
+
+      return () => clearTimeout(enterTimer);
+    }
+  }, [location, displayLocation.key]);
+
+  // Transition Phase 3: Wait for assets to be ready
+  useEffect(() => {
+    if (transitionState === 'waiting' && !isPageLoading) {
+      // Small buffer to ensure browser render cycle finishes
+      const waitTimer = setTimeout(() => {
+        setTransitionState('exiting');
+      }, 100);
+      return () => clearTimeout(waitTimer);
+    }
+  }, [transitionState, isPageLoading]);
+
+  // Transition Phase 4: Curtain opens (400ms)
+  useEffect(() => {
+    if (transitionState === 'exiting') {
+      const exitTimer = setTimeout(() => {
+        setIsTransitioning(false);
+        setTransitionState('idle');
+      }, 400);
+      return () => clearTimeout(exitTimer);
+    }
+  }, [transitionState]);
+
+  // Safety Timeout: Don't stay stuck forever if something fails
+  useEffect(() => {
+    if (transitionState === 'waiting') {
+      const safetyTimer = setTimeout(() => {
+        setPageLoading(false);
+      }, 3000);
+      return () => clearTimeout(safetyTimer);
+    }
+  }, [transitionState]);
+
+  return (
+    <>
+      {/* The visible routes, pointing to the buffered location */}
+      {children(displayLocation)}
+
+      {/* Full-screen Wipe Overlay */}
+      {isTransitioning && (
+        <div 
+          key={`wipe-overlay-${navId}`}
+          className="fixed inset-0 z-[9999] pointer-events-none overflow-hidden"
+        >
+          <div 
+            className={`w-full h-full bg-primary flex items-center justify-center ${
+              transitionState === 'entering' ? 'animate-wipe-in' : 
+              transitionState === 'exiting' ? 'animate-wipe-out' : 
+              'translate-x-0'
+            }`}
+          >
+             <div className="text-white flex flex-col items-center gap-4">
+                <Globe className="w-16 h-16 animate-spin" strokeWidth={1.5} />
+                <span className="font-display font-bold text-xl uppercase tracking-[0.2em] opacity-80">
+                  Exploring
+                </span>
+             </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
 };
 
-const App: React.FC = () => {
+const AppContent: React.FC = () => {
   return (
-    <LayoutProvider>
-      <Router>
-        <ScrollToTop />
-        <div className="min-h-screen flex flex-col">
-          <Navigation />
-          <div className="flex-grow">
-            <Routes>
+    <div className="min-h-screen flex flex-col">
+      <Navigation />
+      <div className="flex-grow">
+        <PageTransitionHandler>
+          {(location) => (
+            <Routes location={location}>
               <Route path="/" element={<Home />} />
               <Route path="/games" element={<Games />} />
               <Route path="/games/capital-quiz" element={<CapitalQuiz />} />
@@ -50,28 +138,31 @@ const App: React.FC = () => {
               <Route path="/about" element={<About />} />
               <Route path="/explore/:id" element={<CountryExploration />} />
             </Routes>
-          </div>
-          {/* Footer is rendered globally here, but CountryExploration needs to opt-out or manage it. 
-              Ideally we rely on pages to render footer if complex logic is needed, 
-              but for now we will keep it here and hide it via CSS or keep as is.
-              The user specifically asked to remove footer from the CountryExploration page.
-              We will hide it based on route in the Footer component or here.
-          */}
-          <ConditionalFooter />
-        </div>
+          )}
+        </PageTransitionHandler>
+      </div>
+      <ConditionalFooter />
+    </div>
+  );
+};
+
+const App: React.FC = () => {
+  return (
+    <LayoutProvider>
+      <Router>
+        <AppContent />
       </Router>
     </LayoutProvider>
   );
 };
 
-// Helper to conditionally render footer based on route
 const ConditionalFooter: React.FC = () => {
   const location = useLocation();
-  // Hide global footer on exploration pages as they handle their own layout/footer needs
-  // or user specifically requested removal.
   const isExploration = location.pathname.startsWith('/explore/');
+  const isMap = location.pathname === '/map';
+  const isGame = location.pathname.startsWith('/games/');
   
-  if (isExploration) return null;
+  if (isExploration || isMap || isGame) return null;
   
   return <Footer />;
 };

@@ -7,34 +7,17 @@ import Button from '../components/Button';
 import { Country } from '../types';
 import SEO from '../components/SEO';
 
-// Define viewports for quick navigation
-const REGION_VIEWPORTS: { [key: string]: { center: [number, number], zoom: number } } = {
-  'World': { center: [20, 0], zoom: 2.5 },
-  'Africa': { center: [2, 18], zoom: 3.4 },
-  'Asia': { center: [30, 85], zoom: 3 },
-  'Europe': { center: [50, 15], zoom: 4 },
-  'N. America': { center: [45, -100], zoom: 3 },
-  'S. America': { center: [-20, -60], zoom: 3.2 },
-  'Oceania': { center: [-25, 135], zoom: 3.5 },
-};
-
 export default function MapDash() {
-  // --- State ---
   const [gameState, setGameState] = useState<'start' | 'playing' | 'finished'>('start');
   const [score, setScore] = useState(0);
   const [timeLeft, setTimeLeft] = useState(60);
   const [targetCountry, setTargetCountry] = useState<Country | null>(null);
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error' | 'info'; message: string; countryName?: string } | null>(null);
-  
-  // Transition State for Animation
   const [isTransitioning, setIsTransitioning] = useState(false);
 
-  // --- Refs (For accessing mutable state inside Leaflet closures) ---
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<any>(null);
   const markersLayerRef = useRef<any>(null);
-  
-  // Synced Refs to avoid stale closures in event listeners
   const gameStateRef = useRef(gameState);
   const targetCountryRef = useRef(targetCountry);
   const feedbackRef = useRef(feedback);
@@ -45,7 +28,6 @@ export default function MapDash() {
   useEffect(() => { feedbackRef.current = feedback; }, [feedback]);
   useEffect(() => { isTransitioningRef.current = isTransitioning; }, [isTransitioning]);
 
-  // --- Timer Logic ---
   useEffect(() => {
     let timer: any;
     if (gameState === 'playing' && timeLeft > 0) {
@@ -62,7 +44,6 @@ export default function MapDash() {
     return () => clearInterval(timer);
   }, [gameState, timeLeft]);
 
-  // --- Helper: Format Time ---
   const formatTime = (seconds: number) => {
     if (seconds < 60) return `${seconds}s`;
     const m = Math.floor(seconds / 60);
@@ -70,20 +51,15 @@ export default function MapDash() {
     return `${m}:${s.toString().padStart(2, '0')}`;
   };
 
-  // --- Game Logic ---
-
   const generateTarget = useCallback(() => {
-    // Filter out tiny countries if needed, or just random
-    // For better gameplay, ensuring we pick countries that actually have markers on the map
     const random = MOCK_COUNTRIES[Math.floor(Math.random() * MOCK_COUNTRIES.length)];
     setTargetCountry(random);
-    setFeedback(null); // Clear feedback for new round
+    setFeedback(null); 
   }, []);
 
   const resetMarkerStyles = () => {
     const L = (window as any).L;
     if (!markersLayerRef.current || !L) return;
-
     markersLayerRef.current.eachLayer((layer: any) => {
       layer.setStyle({
         fillColor: '#77B6EA',
@@ -99,40 +75,17 @@ export default function MapDash() {
     setTimeLeft(60);
     setGameState('playing');
     generateTarget();
-
-    // Reset map view
     if (mapInstanceRef.current) {
       mapInstanceRef.current.flyTo([20, 0], 2.5, { duration: 1.5 });
-      // Reset all marker styles
       resetMarkerStyles();
-      // Trigger resize to ensure layout is correct
-      setTimeout(() => {
-        mapInstanceRef.current.invalidateSize();
-      }, 100);
+      setTimeout(() => mapInstanceRef.current.invalidateSize(), 100);
     }
   };
 
-  const jumpToRegion = (regionName: string) => {
-    const viewport = REGION_VIEWPORTS[regionName];
-    if (mapInstanceRef.current && viewport) {
-      mapInstanceRef.current.flyTo(viewport.center, viewport.zoom, { duration: 1.5 });
-    }
-  };
-
-  // --- Reset Markers on Feedback Clear ---
-  // This ensures that if the user manually dismisses the popup, the marker resets immediately
-  useEffect(() => {
-    if (feedback === null) {
-        resetMarkerStyles();
-    }
-  }, [feedback]);
-
-  // --- Map Initialization ---
   useEffect(() => {
     const L = (window as any).L;
     if (!L || !mapRef.current || mapInstanceRef.current) return;
 
-    // 1. Init Map
     const map = L.map(mapRef.current, {
       center: [20, 0],
       zoom: 2.5,
@@ -141,35 +94,18 @@ export default function MapDash() {
       minZoom: 2,
       maxZoom: 18,
       worldCopyJump: true,
-      preferCanvas: true, // PERFORMANCE FIX: Use canvas rendering for all vector layers
+      preferCanvas: true,
     });
 
-    // 2. Add Tile Layer (No Labels for difficulty)
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager_nolabels/{z}/{x}/{y}{r}.png', {
-      subdomains: 'abcd',
-      maxZoom: 20
-    }).addTo(map);
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager_nolabels/{z}/{x}/{y}{r}.png', { subdomains: 'abcd', maxZoom: 20 }).addTo(map);
 
-    // 3. Add Controls
-    // Explicitly place zoom control in bottomright as requested
-    L.control.zoom({ position: 'bottomright' }).addTo(map);
-
-    // 4. Init Layer Group
-    const markersGroup = L.layerGroup().addTo(map);
-    markersLayerRef.current = markersGroup;
+    markersLayerRef.current = L.layerGroup().addTo(map);
     mapInstanceRef.current = map;
 
-    // 5. Add Markers
     MOCK_COUNTRIES.forEach(country => {
-      // Handle dateline crossing for Oceania visual consistency if needed, 
-      // but for the game mechanics, keeping raw coords is often safer unless using a specific world-wrapping plugin.
-      // We will use raw coords here.
-
-      // Optimization: Do NOT pass renderer: L.canvas() here.
-      // Rely on map-level preferCanvas: true to use the shared renderer.
       const marker = L.circleMarker([country.lat, country.lng], {
         radius: 6,
-        fillColor: '#77B6EA', // Primary Blue
+        fillColor: '#77B6EA', 
         color: '#FFFFFF',
         weight: 2,
         opacity: 1,
@@ -177,272 +113,106 @@ export default function MapDash() {
         className: 'cursor-pointer'
       });
 
-      // Bind Click Event
       marker.on('click', (e: any) => {
-        // CRITICAL FIX: Stop propagation so the map's click handler doesn't immediately dismiss the feedback
         L.DomEvent.stopPropagation(e);
-        
         const currentTarget = targetCountryRef.current;
-        const currentGameState = gameStateRef.current;
-        const currentFeedback = feedbackRef.current;
-        const isCurrentlyTransitioning = isTransitioningRef.current;
-
-        // Ignore clicks if not playing, target not set, or already transitioning to next question
-        if (currentGameState !== 'playing' || !currentTarget || isCurrentlyTransitioning) return;
-
-        // Prevent clicking if we already successfully found the country (waiting for next round)
-        if (currentFeedback?.type === 'success') return;
+        if (gameStateRef.current !== 'playing' || !currentTarget || isTransitioningRef.current || feedbackRef.current?.type === 'success') return;
 
         if (country.id === currentTarget.id) {
-          // --- CORRECT ---
           setScore(s => s + 50);
           setFeedback({ type: 'success', message: 'Correct!', countryName: country.name });
-          
-          // Trigger Transition Animation
           setIsTransitioning(true);
-          
-          // Green Style
-          marker.setStyle({ fillColor: '#22c55e', color: '#15803d', radius: 10 });
-          marker.bringToFront();
-
-          // Next Round Delay - Increased to 800ms for smoother visual transition
-          setTimeout(() => {
-            generateTarget();
-            // resetMarkerStyles(); // Handled by useEffect when feedback becomes null in generateTarget
-            setIsTransitioning(false);
-          }, 800);
-
+          marker.setStyle({ fillColor: '#22c55e', color: '#FFFFFF', radius: 10 });
+          setTimeout(() => { generateTarget(); setIsTransitioning(false); }, 800);
         } else {
-          // --- INCORRECT ---
           setScore(s => Math.max(0, s - 10));
           setFeedback({ type: 'error', message: 'Wrong!', countryName: country.name });
-          
-          // Red Style
-          marker.setStyle({ fillColor: '#ef4444', color: '#b91c1c', radius: 8 });
-          
-          const WRONG_DURATION = 1200;
-
-          // Auto dismiss wrong feedback after 1.2s
-          // The marker reset is handled by the useEffect watching `feedback`
-          setTimeout(() => {
-             setFeedback(prev => (prev?.type === 'error' && prev.countryName === country.name ? null : prev));
-          }, WRONG_DURATION);
+          marker.setStyle({ fillColor: '#ef4444', color: '#FFFFFF', radius: 8 });
+          setTimeout(() => { setFeedback(prev => (prev?.type === 'error' && prev.countryName === country.name ? null : prev)); }, 1200);
         }
       });
 
-      // Hover Effects
-      marker.on('mouseover', function (this: any) {
-        this.setStyle({ radius: 9, fillOpacity: 1 });
-      });
-      marker.on('mouseout', function (this: any) {
-        // Only reset if not the "active" correct/wrong one (simplified check by relying on global reset for correct)
-        // For simplicity, we reset to base unless it was just clicked. 
-        // Since click handles style immediately, we can just check basic properties or ignore for MVP.
-        this.setStyle({ radius: 6, fillOpacity: 0.8 });
-      });
-
-      marker.addTo(markersGroup);
+      marker.addTo(markersLayerRef.current);
     });
 
-    // 6. Interaction Listeners to Dismiss Feedback
-    const clearFeedback = () => {
-        // Only clear feedback if it is NOT success. 
-        // If it is success, we want it to stick until the next round starts.
-        if (feedbackRef.current?.type !== 'success') {
-            setFeedback(prev => prev ? null : prev);
-        }
-    };
-    
-    // Clear feedback if user moves map (implies they are looking again) or clicks empty space
-    map.on('movestart', clearFeedback);
-    map.on('zoomstart', clearFeedback);
-    
-    // This handler will clear feedback on map background click, but NOT on marker click due to stopPropagation above
-    map.on('click', clearFeedback);
-
-    // Cleanup
     return () => {
       map.remove();
       mapInstanceRef.current = null;
     };
-  }, [generateTarget]); // Dependencies mostly empty to run once, but generateTarget is stable
-
-  // --- Render Helpers ---
+  }, [generateTarget]);
 
   return (
-    <div className="relative w-full h-screen overflow-hidden bg-surface">
-      <SEO 
-        title="Map Dash"
-        description="Navigate the globe without borders. Find as many countries as you can in 1 minute in this challenging map game."
-      />
-      
-      <style>{`
-        @media (max-width: 768px) {
-          .map-dash-container .leaflet-control-zoom {
-            display: none !important;
-          }
-        }
-        /* Fix mobile tap highlight for map markers */
-        .leaflet-interactive {
-          -webkit-tap-highlight-color: transparent;
-          outline: none;
-        }
-      `}</style>
+    <div className="h-[100dvh] w-full overflow-hidden bg-surface relative flex flex-col font-sans">
+      <div ref={mapRef} className="absolute inset-0 z-0 focus:outline-none" />
 
-      {/* MAP BACKGROUND - Always mounted to prevent bugs */}
-      <div ref={mapRef} className="absolute inset-0 z-0 focus:outline-none map-dash-container" />
-
-      {/* --- HUD: Playing State --- */}
       {gameState === 'playing' && (
         <>
-          {/* Top Bar - Adjusted for mobile */}
-          <div className="absolute top-16 md:top-20 left-0 w-full p-3 md:p-6 z-20 pointer-events-none flex flex-col gap-4">
+          <div className="absolute top-16 md:top-20 left-0 w-full p-4 z-20 pointer-events-none flex justify-center">
             <div className="flex justify-between items-start max-w-7xl mx-auto w-full">
-              
-              {/* Left: Exit & Score */}
-              <div className="flex gap-2 md:gap-3 pointer-events-auto">
+              <div className="flex gap-2 pointer-events-auto">
                 <Link to="/games">
-                  <button className="w-10 h-10 md:w-12 md:h-12 bg-white/90 backdrop-blur-md rounded-xl md:rounded-2xl shadow-premium hover:scale-105 transition-transform flex items-center justify-center text-gray-500 hover:text-primary">
+                  <button className="w-10 h-10 bg-white/90 backdrop-blur-md rounded-xl shadow-sm border border-white/50 flex items-center justify-center text-gray-500 active:scale-95 transition-transform">
                     <ArrowLeft size={20} />
                   </button>
                 </Link>
-                <div className="h-10 md:h-12 px-3 md:px-5 bg-white/90 backdrop-blur-md rounded-xl md:rounded-2xl shadow-premium flex items-center gap-2 md:gap-3 animate-in fade-in slide-in-from-top-4">
-                  <Trophy size={18} className="text-yellow-500" />
-                  <span className="font-display font-bold text-lg md:text-xl text-text">{score}</span>
+                <div className="h-10 px-4 bg-white/90 backdrop-blur-md rounded-xl shadow-sm border border-white/50 flex items-center gap-2">
+                  <Trophy size={16} className="text-yellow-500" />
+                  <span className="font-display font-bold text-lg text-text tabular-nums">{score}</span>
                 </div>
               </div>
-
-              {/* Right: Timer */}
-              <div className={`h-10 md:h-12 px-3 md:px-5 bg-white/90 backdrop-blur-md rounded-xl md:rounded-2xl shadow-premium flex items-center gap-2 md:gap-3 animate-in fade-in slide-in-from-top-4 ${timeLeft <= 10 ? 'ring-2 ring-red-400' : ''}`}>
-                <Timer size={18} className={timeLeft <= 10 ? "text-red-500 animate-pulse" : "text-primary"} />
-                <span className={`font-display font-bold text-lg md:text-xl tabular-nums ${timeLeft <= 10 ? 'text-red-500' : 'text-text'}`}>
-                  {formatTime(timeLeft)}
-                </span>
+              <div className={`h-10 px-4 bg-white/90 backdrop-blur-md rounded-xl shadow-sm border border-white/50 flex items-center gap-2 pointer-events-auto ${timeLeft <= 10 ? 'ring-2 ring-red-400' : ''}`}>
+                <Timer size={16} className={timeLeft <= 10 ? "text-red-500 animate-pulse" : "text-primary"} />
+                <span className={`font-display font-bold text-lg tabular-nums ${timeLeft <= 10 ? 'text-red-500' : 'text-text'}`}>{formatTime(timeLeft)}</span>
               </div>
             </div>
           </div>
 
-          {/* Left Sidebar: Quick Jump - HIDDEN ON MOBILE to save space */}
-          <div className="hidden md:block absolute top-1/2 left-4 -translate-y-1/2 z-20 pointer-events-none">
-            <div className="bg-white/80 backdrop-blur-md p-2 rounded-2xl shadow-premium border border-white/50 pointer-events-auto flex flex-col gap-1 animate-in slide-in-from-left-10 fade-in duration-500">
-               <div className="text-[10px] font-bold text-gray-400 uppercase tracking-wider text-center py-1 border-b border-gray-200/50 mb-1">
-                 Quick Jump
-               </div>
-               {Object.keys(REGION_VIEWPORTS).map(region => (
-                 <button
-                   key={region}
-                   onClick={() => jumpToRegion(region)}
-                   className="group flex items-center justify-between w-28 px-3 py-2 text-xs font-semibold text-gray-600 hover:bg-primary hover:text-white rounded-xl transition-all"
-                 >
-                   <span>{region}</span>
-                   <Compass size={12} className="opacity-0 group-hover:opacity-100 transition-opacity" />
-                 </button>
-               ))}
-            </div>
-          </div>
-
-          {/* Bottom Bar: Target */}
-          {/* Modified: Centered container with max-width to avoid covering bottom-right corner where zoom control is */}
-          <div className="absolute bottom-6 md:bottom-8 left-1/2 -translate-x-1/2 w-full max-w-2xl px-4 md:px-6 z-20 pointer-events-none">
-            <div className="flex items-end justify-center gap-4 relative">
-              
-              {/* Target Card */}
-              {targetCountry && (
-                <div 
-                  className={`pointer-events-auto bg-white/95 backdrop-blur-xl rounded-2xl md:rounded-3xl shadow-2xl border border-white/50 p-5 md:p-6 pb-6 md:pb-8 text-center w-full max-w-[90%] md:w-auto md:min-w-[300px] relative overflow-hidden transition-all duration-300 ease-in-out transform ${
-                    isTransitioning ? 'translate-y-20 opacity-0 scale-95' : 'translate-y-0 opacity-100 scale-100'
-                  }`}
-                >
-                  {/* Abstract BG */}
-                  <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-primary to-accent"></div>
-                  
-                  <p className="text-[10px] md:text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Find this Location</p>
-                  <div className="flex flex-col items-center justify-center gap-2">
-                    <span className="text-5xl md:text-6xl drop-shadow-sm filter hover:scale-110 transition-transform duration-300 cursor-default">
-                      {targetCountry.flag}
-                    </span>
-                    <h2 className="text-2xl md:text-3xl font-display font-bold text-text leading-none mt-2">
-                      {targetCountry.name}
-                    </h2>
-                  </div>
+          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 w-full max-w-sm px-4 z-20 pointer-events-none">
+            {targetCountry && (
+              <div className={`pointer-events-auto bg-white rounded-2xl shadow-xl border border-white/50 p-4 text-center transition-all duration-300 transform ${isTransitioning ? 'translate-y-10 opacity-0 scale-95' : 'translate-y-0 opacity-100 scale-100'}`}>
+                <div className="absolute top-0 left-0 w-full h-1 bg-primary"></div>
+                <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1 font-sans">Find this Location</p>
+                <div className="flex flex-col items-center gap-1">
+                  <span className="text-4xl drop-shadow-sm">{targetCountry.flag}</span>
+                  <h2 className="text-xl md:text-2xl font-display font-bold text-text leading-tight">{targetCountry.name}</h2>
                 </div>
-              )}
-
-            </div>
+              </div>
+            )}
           </div>
-
-          {/* Feedback Overlay (Toast) */}
-          {feedback && (
-             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[1000] pointer-events-none w-full px-4 text-center">
-               <div 
-                 onClick={() => {
-                   // Only dismiss on click if it is NOT success/green state
-                   if (feedback.type !== 'success') setFeedback(null);
-                 }}
-                 className={`pointer-events-auto inline-flex flex-col items-center justify-center p-6 rounded-3xl shadow-2xl backdrop-blur-md animate-in zoom-in fade-in duration-300 ${feedback.type !== 'success' ? 'cursor-pointer' : ''} ${
-                 feedback.type === 'success' ? 'bg-green-500/90 text-white' : 'bg-red-500/90 text-white'
-               }`}>
-                 {feedback.type === 'success' ? <CheckCircle2 size={48} className="mb-2" /> : <XCircle size={48} className="mb-2" />}
-                 <h3 className="text-2xl md:text-3xl font-display font-bold">{feedback.message}</h3>
-                 {feedback.type === 'error' && <p className="mt-1 opacity-90 text-base md:text-lg">That was {feedback.countryName}</p>}
-                 {feedback.type === 'success' && <p className="mt-1 opacity-90 text-base md:text-lg">+50 Points</p>}
-               </div>
-             </div>
-          )}
         </>
       )}
 
-      {/* --- START SCREEN Overlay --- */}
       {gameState === 'start' && (
-        <div className="absolute inset-0 z-50 flex items-center justify-center bg-surface/60 backdrop-blur-sm p-4 animate-in fade-in duration-500">
-          <div className="bg-white rounded-3xl shadow-2xl p-8 md:p-10 max-w-md w-full text-center border border-gray-100">
-            <div className="w-16 h-16 md:w-20 md:h-20 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-6 text-primary">
-              <MapIcon size={32} />
-            </div>
-            <h1 className="text-3xl md:text-4xl font-display font-bold text-text mb-3">Map Dash</h1>
-            <p className="text-gray-500 text-base md:text-lg mb-8 leading-relaxed">
-              Navigate the globe without borders. Find as many countries as you can in 1 minute.
-            </p>
-            
-            <div className="flex flex-col gap-3">
-              <Button onClick={startGame} size="lg" className="w-full">
-                Start Game
-              </Button>
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4 animate-in fade-in duration-500">
+          <div className="bg-white rounded-3xl shadow-2xl p-8 max-w-sm w-full text-center border border-gray-100">
+            <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-4 text-primary"><MapIcon size={32} /></div>
+            <h1 className="text-3xl font-display font-bold text-text mb-2">Map Dash</h1>
+            <p className="text-gray-500 text-sm mb-8 leading-relaxed font-sans">Locate the highlighted countries on the empty map.</p>
+            <div className="flex flex-col gap-6">
+              <Button onClick={startGame} size="lg" className="w-full h-14">Play</Button>
               <Link to="/games" className="w-full">
-                <Button variant="secondary" size="lg" className="w-full">Back to Games</Button>
+                 <Button variant="secondary" size="md" className="w-full h-12">Back to Games</Button>
               </Link>
             </div>
           </div>
         </div>
       )}
 
-      {/* --- GAME OVER Overlay --- */}
       {gameState === 'finished' && (
-        <div className="absolute inset-0 z-50 flex items-center justify-center bg-surface/80 backdrop-blur-md p-4 animate-in fade-in duration-500">
-          <div className="bg-white rounded-3xl shadow-2xl p-8 md:p-10 max-w-md w-full text-center border border-gray-100 transform transition-all hover:scale-105 duration-300">
-            <div className="w-20 h-20 md:w-24 md:h-24 bg-accent/10 rounded-full flex items-center justify-center mx-auto mb-6 text-accent ring-8 ring-accent/5">
-              <Trophy size={40} />
-            </div>
-            <h2 className="text-xl md:text-2xl font-bold text-gray-400 uppercase tracking-wider mb-1">Final Score</h2>
-            <div className="text-6xl md:text-7xl font-display font-bold text-primary mb-2 tracking-tight">
-              {score}
-            </div>
-            <p className="text-gray-500 mb-8">
-              Well played!
-            </p>
-
-            <div className="flex flex-col gap-3">
-              <Button onClick={startGame} size="lg" className="w-full">
-                <RefreshCw size={20} className="mr-2" /> Play Again
-              </Button>
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-md p-4 animate-in fade-in duration-500">
+          <div className="bg-white rounded-3xl shadow-2xl p-8 max-w-sm w-full text-center border border-gray-100">
+            <div className="w-16 h-16 bg-accent/10 rounded-full flex items-center justify-center mx-auto mb-6 text-accent"><Trophy size={32} /></div>
+            <h2 className="text-lg font-bold text-gray-400 uppercase tracking-widest mb-1 font-sans">Score</h2>
+            <div className="text-6xl font-display font-bold text-primary mb-10">{score}</div>
+            <div className="flex flex-col gap-6">
+              <Button onClick={startGame} size="lg" className="w-full h-14">Play Again</Button>
               <Link to="/games" className="w-full">
-                <Button variant="secondary" size="lg" className="w-full">Exit to Menu</Button>
+                <Button variant="secondary" size="md" className="w-full h-12">Back to Games</Button>
               </Link>
             </div>
           </div>
         </div>
       )}
-
     </div>
   );
 }

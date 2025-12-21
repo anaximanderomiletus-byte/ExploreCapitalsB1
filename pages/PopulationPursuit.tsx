@@ -7,7 +7,6 @@ import Button from '../components/Button';
 import { Country } from '../types';
 import SEO from '../components/SEO';
 
-// Helper to parse numeric strings (e.g. "67.3M" or "500K")
 const getNumericValue = (str: string) => {
   const value = parseFloat(str.replace(/[^0-9.]/g, ''));
   if (str.includes('B')) return value * 1_000_000_000;
@@ -20,13 +19,10 @@ export default function PopulationPursuit() {
   const [gameState, setGameState] = useState<'start' | 'playing' | 'finished'>('start');
   const [score, setScore] = useState(0);
   const [timeLeft, setTimeLeft] = useState(60);
-  
-  // Game State
   const [countryA, setCountryA] = useState<Country | null>(null);
   const [countryB, setCountryB] = useState<Country | null>(null);
   const [result, setResult] = useState<'correct' | 'incorrect' | null>(null);
 
-  // Timer
   useEffect(() => {
     let timer: any;
     if (gameState === 'playing' && timeLeft > 0) {
@@ -39,21 +35,11 @@ export default function PopulationPursuit() {
     return () => clearInterval(timer);
   }, [gameState, timeLeft]);
 
-  // Helper: Format Time
-  const formatTime = (seconds: number) => {
-    if (seconds < 60) return `${seconds}s`;
-    const m = Math.floor(seconds / 60);
-    const s = seconds % 60;
-    return `${m}:${s.toString().padStart(2, '0')}`;
-  };
-
   const generateRound = () => {
     setResult(null);
     const idxA = Math.floor(Math.random() * MOCK_COUNTRIES.length);
     let idxB = Math.floor(Math.random() * MOCK_COUNTRIES.length);
-    while (idxB === idxA) {
-      idxB = Math.floor(Math.random() * MOCK_COUNTRIES.length);
-    }
+    while (idxB === idxA) idxB = Math.floor(Math.random() * MOCK_COUNTRIES.length);
     setCountryA(MOCK_COUNTRIES[idxA]);
     setCountryB(MOCK_COUNTRIES[idxB]);
   };
@@ -67,47 +53,26 @@ export default function PopulationPursuit() {
 
   const handleChoice = (selected: Country) => {
     if (result || !countryA || !countryB) return;
-
     const popA = getNumericValue(countryA.population);
     const popB = getNumericValue(countryB.population);
     const selectedPop = getNumericValue(selected.population);
-
-    const maxPop = Math.max(popA, popB);
-    const isCorrect = selectedPop === maxPop;
-
+    const isCorrect = selectedPop === Math.max(popA, popB);
     setResult(isCorrect ? 'correct' : 'incorrect');
-
-    if (isCorrect) {
-      setScore(s => s + 10);
-    }
-
-    setTimeout(() => {
-      generateRound();
-    }, 1500);
+    if (isCorrect) setScore(s => s + 10);
+    setTimeout(generateRound, 1500);
   };
 
   if (gameState === 'start') {
     return (
-      <div className="min-h-screen bg-surface pt-24 pb-12 px-6 flex items-center justify-center">
-        <SEO 
-            title="Population Pursuit"
-            description="Which country has more people? Test your demographics knowledge."
-        />
-        <div className="max-w-lg w-full bg-white rounded-3xl shadow-premium p-8 text-center border border-gray-100 animate-in fade-in zoom-in duration-300">
-          <div className="w-20 h-20 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-6 text-primary">
-            <Users size={40} />
-          </div>
-          <h1 className="text-4xl font-display font-bold text-text mb-4">Population Pursuit</h1>
-          <p className="text-gray-500 text-lg mb-8">
-            Choose the country with the larger population. You have 1 minute.
-          </p>
-          <div className="flex flex-col gap-4">
-            <Button onClick={startGame} size="lg" className="w-full">
-              Start Game
-            </Button>
-            <Link to="/games" className="w-full">
-              <Button variant="secondary" size="lg" className="w-full">Back to Games</Button>
-            </Link>
+      <div className="h-[100dvh] bg-surface flex items-center justify-center px-4 overflow-hidden font-sans">
+        <SEO title="Population Pursuit" description="Which country has more people?" />
+        <div className="max-w-md w-full bg-white rounded-3xl shadow-premium p-8 text-center border border-gray-100 animate-in fade-in zoom-in duration-300">
+          <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-4 text-primary"><Users size={32} /></div>
+          <h1 className="text-3xl font-display font-bold text-text mb-4">Population Pursuit</h1>
+          <p className="text-gray-500 text-sm mb-8 leading-relaxed font-sans">Select the nation with the larger population count.</p>
+          <div className="flex flex-col gap-6">
+            <Button onClick={startGame} size="lg" className="w-full h-14">Play</Button>
+            <Link to="/games" className="w-full"><Button variant="secondary" size="md" className="w-full h-12">Back to Games</Button></Link>
           </div>
         </div>
       </div>
@@ -116,26 +81,15 @@ export default function PopulationPursuit() {
 
   if (gameState === 'finished') {
     return (
-      <div className="min-h-screen bg-surface pt-24 pb-12 px-6 flex items-center justify-center">
-        <SEO title="Population Pursuit Results" description="See your score." />
-        <div className="max-w-lg w-full bg-white rounded-3xl shadow-premium p-8 text-center border border-gray-100 animate-in fade-in zoom-in duration-300">
-          <div className="w-20 h-20 bg-accent/10 rounded-2xl flex items-center justify-center mx-auto mb-6 text-accent">
-            <Trophy size={40} />
-          </div>
-          <h1 className="text-3xl font-display font-bold text-text mb-2">Time's Up!</h1>
-          <p className="text-gray-500 mb-6">You scored</p>
-          
-          <div className="text-6xl font-display font-bold text-primary mb-8">
-            {score}
-            <span className="text-lg text-gray-400 font-medium ml-2">pts</span>
-          </div>
-
-          <div className="flex flex-col gap-4">
-            <Button onClick={startGame} size="lg" className="w-full">
-              <RefreshCw size={20} className="mr-2" /> Play Again
-            </Button>
+      <div className="h-[100dvh] bg-surface flex items-center justify-center px-4 overflow-hidden font-sans">
+        <div className="max-w-md w-full bg-white rounded-3xl shadow-premium p-10 text-center border border-gray-100 animate-in fade-in zoom-in duration-500">
+          <div className="w-16 h-16 bg-accent/10 rounded-full flex items-center justify-center mx-auto mb-6 text-accent"><Trophy size={32} /></div>
+          <h1 className="text-2xl font-display font-bold text-text mb-1">Time's Up!</h1>
+          <div className="text-6xl font-display font-bold text-primary mb-10">{score}</div>
+          <div className="flex flex-col gap-6">
+            <Button onClick={startGame} size="lg" className="w-full h-14">Play Again</Button>
             <Link to="/games" className="w-full">
-              <Button variant="secondary" size="lg" className="w-full">Exit</Button>
+               <Button variant="secondary" size="md" className="w-full h-12">Back to Games</Button>
             </Link>
           </div>
         </div>
@@ -146,97 +100,45 @@ export default function PopulationPursuit() {
   if (!countryA || !countryB) return null;
 
   return (
-    <div className="min-h-screen bg-surface pt-20 pb-4 px-4 flex flex-col">
-      <SEO 
-        title="Playing Population Pursuit"
-        description="Choose the country with the higher population."
-      />
-      
-      {/* Game Container - uses flex-1 to fill available vertical space */}
-      <div className="max-w-md md:max-w-4xl mx-auto w-full flex-1 flex flex-col h-full">
-        
-        {/* Header Bar - Fixed Height */}
-        <div className="flex shrink-0 items-center justify-between mb-3 bg-white p-3 rounded-2xl shadow-sm border border-gray-100">
-           <Link to="/games" className="p-2 hover:bg-gray-50 rounded-full text-gray-400 hover:text-gray-700 transition-colors">
-             <ArrowLeft size={20} />
-           </Link>
-           
-           <div className="flex items-center gap-4">
-             <div className="flex items-center gap-2">
-                <div className="p-1.5 bg-blue-50 rounded-md text-primary">
-                  <Trophy size={16} />
-                </div>
-                <span className="font-display font-bold text-lg text-text">{score}</span>
-             </div>
-             <div className="flex items-center gap-2">
-                <div className={`p-1.5 rounded-md ${timeLeft < 10 ? 'bg-red-50 text-red-500 animate-pulse' : 'bg-blue-50 text-primary'}`}>
-                  <Timer size={16} />
-                </div>
-                <span className={`font-display font-bold text-lg tabular-nums ${timeLeft < 10 ? 'text-red-500' : 'text-text'}`}>
-                  {formatTime(timeLeft)}
-                </span>
-             </div>
+    <div className="h-[100dvh] bg-surface flex flex-col p-4 overflow-hidden font-sans">
+      <SEO title="Playing Population Pursuit" description="Choose the larger population." />
+      <div className="max-w-4xl mx-auto w-full flex shrink-0 items-center justify-between mb-3 bg-white p-3 rounded-2xl shadow-sm border border-gray-100 mt-16 md:mt-20">
+         <Link to="/games" className="p-2 hover:bg-gray-50 rounded-full text-gray-400"><ArrowLeft size={20} /></Link>
+         <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest font-sans">Compare Populations</p>
+         <div className="flex items-center gap-6">
+           <div className="flex items-center gap-2">
+              <Trophy size={18} className="text-primary" /><span className="font-display font-bold text-xl text-text tabular-nums">{score}</span>
            </div>
-        </div>
+           <div className={`flex items-center gap-2 px-3 py-1 rounded-xl shadow-inner ${timeLeft < 10 ? 'bg-red-50 text-red-500 animate-pulse' : 'bg-blue-50 text-primary'}`}>
+              <Timer size={18} /><span className="font-display font-bold text-xl tabular-nums min-w-[30px]">{timeLeft}</span>
+           </div>
+         </div>
+      </div>
 
-        <div className="text-center mb-3 shrink-0">
-           <h2 className="text-lg md:text-2xl font-display font-bold text-text">Which country has more people?</h2>
-        </div>
-
-        {/* Comparison Grid 
-            - Flex-1 and min-h-0 ensure it fills remaining height without overflow 
-            - grid-cols-1 on mobile (stacked), grid-cols-2 on desktop
-        */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-8 flex-1 min-h-0">
-           {[countryA, countryB].map((country) => {
-             const isSelected = result && getNumericValue(country.population) === Math.max(getNumericValue(countryA!.population), getNumericValue(countryB!.population));
-             const isLoser = result && !isSelected;
-             
-             let cardStyle = "bg-white hover:border-primary/50 hover:shadow-lg cursor-pointer transform hover:-translate-y-1";
+      <div className="flex-1 max-w-5xl mx-auto w-full flex flex-col md:flex-row gap-4 min-h-0 pb-6 overflow-hidden">
+           {[countryA, countryB].map((country, idx) => {
+             const other = idx === 0 ? countryB : countryA;
+             const isWinner = getNumericValue(country.population) >= getNumericValue(other!.population);
+             let cardStyle = "bg-white border-2 border-transparent hover:border-primary/40 shadow-sm";
              if (result) {
-                if (isSelected) {
-                   cardStyle = "bg-green-50 border-green-500 ring-4 ring-green-100 scale-105 z-10";
-                } else {
-                   cardStyle = "bg-gray-50 opacity-60 grayscale scale-95";
-                }
+                if (isWinner) cardStyle = "bg-green-50 border-green-500 ring-8 ring-green-500/10 z-10 scale-105";
+                else cardStyle = "bg-gray-50 opacity-40 grayscale scale-95 border-transparent";
              }
 
              return (
-               <div 
-                 key={country.id}
-                 onClick={() => handleChoice(country)}
-                 className={`relative rounded-2xl md:rounded-3xl shadow-premium p-4 md:p-8 flex flex-col items-center justify-center transition-all duration-300 border-2 border-transparent h-full w-full ${cardStyle}`}
-                 style={{ WebkitTapHighlightColor: 'transparent' }}
-               >
-                 <div className="text-7xl md:text-9xl mb-2 md:mb-6 drop-shadow-md select-none transform transition-transform group-hover:scale-110">{country.flag}</div>
-                 <h3 className="text-xl md:text-3xl font-bold text-text mb-1 text-center leading-tight">{country.name}</h3>
-                 
-                 {/* Reveal Population */}
-                 <div className={`transition-all duration-300 ${result ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
-                    <div className="flex items-center justify-center gap-1 md:gap-2 text-gray-500 uppercase font-bold text-[10px] md:text-xs tracking-widest mb-0.5 md:mb-1">
-                       <Users size={12} className="md:w-3.5 md:h-3.5" /> Population
-                    </div>
-                    <div className="text-xl md:text-4xl font-display font-bold text-primary text-center">
-                       {country.population}
-                    </div>
+               <div key={country.id} onClick={() => handleChoice(country)} className={`flex-1 relative rounded-[2.5rem] p-6 flex flex-col items-center justify-center transition-all duration-300 cursor-pointer active:bg-gray-50 ${cardStyle}`} style={{ WebkitTapHighlightColor: 'transparent' }}>
+                 <div className="text-7xl md:text-[8rem] mb-2 drop-shadow-xl select-none">{country.flag}</div>
+                 <h3 className="text-2xl md:text-3xl font-display font-bold text-text mb-4 text-center leading-tight px-4 break-words">{country.name}</h3>
+                 <div className={`transition-all duration-500 overflow-hidden flex flex-col items-center ${result ? 'max-h-24 opacity-100' : 'max-h-0 opacity-0'}`}>
+                    <div className="flex items-center gap-1 text-gray-400 uppercase font-bold text-[9px] tracking-widest mb-1 font-sans">Reported Population</div>
+                    <div className="text-3xl md:text-5xl font-display font-bold text-primary tracking-tighter tabular-nums">{country.population}</div>
                  </div>
-
-                 {/* Success/Fail Icon Overlay */}
-                 {result && isSelected && (
-                    <div className="absolute top-2 right-2 md:top-4 md:right-4 bg-green-100 text-green-600 p-1.5 md:p-2 rounded-full shadow-sm animate-in zoom-in">
-                       <Check size={20} className="md:w-6 md:h-6" />
-                    </div>
-                 )}
-                 {result && isLoser && (
-                    <div className="absolute top-2 right-2 md:top-4 md:right-4 bg-red-100 text-red-600 p-1.5 md:p-2 rounded-full shadow-sm animate-in zoom-in">
-                       <X size={20} className="md:w-6 md:h-6" />
-                    </div>
+                 {result && isWinner && (
+                    <div className="absolute top-6 right-6 bg-green-500 text-white p-2 rounded-full shadow-lg animate-in zoom-in"><Check size={28} strokeWidth={4} /></div>
                  )}
                </div>
              );
            })}
-        </div>
-
       </div>
     </div>
   );

@@ -6,6 +6,7 @@ import { MOCK_COUNTRIES } from '../constants';
 import Button from '../components/Button';
 import { Country } from '../types';
 import SEO from '../components/SEO';
+import { useLayout } from '../context/LayoutContext';
 
 // Define regions for filtering
 const REGIONS = ['All', 'Africa', 'Asia', 'Europe', 'North America', 'South America', 'Oceania'];
@@ -25,10 +26,12 @@ const MapPage: React.FC = () => {
   const [mapReady, setMapReady] = useState(false);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const { setPageLoading } = useLayout();
   
   // Search State
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(-1);
+  const [activeCountryId, setActiveCountryId] = useState<string | null>(null);
   
   // Create refs for both desktop and mobile result containers to handle scrolling if needed
   const desktopResultsRef = useRef<HTMLDivElement>(null);
@@ -86,8 +89,8 @@ const MapPage: React.FC = () => {
         zoomControl: false, // Custom zoom controls
         attributionControl: false,
         minZoom: 2,
-        worldCopyJump: true,
-        preferCanvas: true, // CRITICAL: This ensures all vector layers use a single canvas renderer
+        worldCopyJump: true, // This allows the map to seamlessly wrap horizontally
+        // preferCanvas: false, // Disabling canvas for markers to use DOM translate3d which is smoother for zoom
       });
 
       // CartoDB Voyager Tiles - Clean and Minimal
@@ -107,6 +110,10 @@ const MapPage: React.FC = () => {
       markersLayerRef.current = L.layerGroup().addTo(map);
       mapInstanceRef.current = map;
       setMapReady(true);
+      setPageLoading(false);
+
+      // Clear active state when clicking map background
+      map.on('click', () => setActiveCountryId(null));
     }
 
     // Global click listener for the popup buttons (delegation)
@@ -129,9 +136,9 @@ const MapPage: React.FC = () => {
         mapInstanceRef.current = null;
       }
     };
-  }, [navigate]);
+  }, [navigate, setPageLoading]);
 
-  // Update Markers when Region changes
+  // Update Markers when Region or active state changes
   useEffect(() => {
     const L = (window as any).L;
     if (!mapInstanceRef.current || !markersLayerRef.current || !L) return;
@@ -144,50 +151,39 @@ const MapPage: React.FC = () => {
       : MOCK_COUNTRIES.filter(c => c.region === selectedRegion);
 
     filteredCountries.forEach(country => {
-      // Fix for Oceania splitting across dateline
-      let displayLng = country.lng;
-      if (selectedRegion === 'Oceania' && country.lng < 0) {
-        displayLng += 360;
-      }
+      // Create a DOM-based custom icon
+      const isActive = activeCountryId === country.id;
+      const icon = L.divIcon({
+        className: `custom-map-marker ${isActive ? 'marker-active' : ''}`,
+        html: `<div class="marker-pin"></div>`,
+        iconSize: [20, 20],
+        iconAnchor: [10, 10]
+      });
 
-      // Optimization: Do NOT pass renderer: L.canvas() here.
-      // Rely on map-level preferCanvas: true to use the shared renderer.
-      const marker = L.circleMarker([country.lat, displayLng], {
-        radius: 6,
-        fillColor: '#77B6EA', // Primary color
-        color: '#FFFFFF',     // White border
-        weight: 2,
-        opacity: 1,
-        fillOpacity: 0.9,
+      const marker = L.marker([country.lat, country.lng], { 
+        icon: icon,
+        // No need to wrap lng manually as L.marker handles worldCopyJump effectively
       }).bindPopup(createPopupContent(country), {
           closeButton: false,
           className: 'custom-popup'
       });
 
-      // Add ID to marker for easy lookup later
       (marker as any).countryId = country.id;
 
-      // Add simple hover effect via event listeners since we aren't using CSS classes anymore
-      marker.on('mouseover', function (this: any) {
-        this.setStyle({ radius: 9, fillColor: '#5ba4e5' }); 
-      });
-      marker.on('mouseout', function (this: any) {
-        this.setStyle({ radius: 6, fillColor: '#77B6EA' });
+      marker.on('click', () => {
+        setActiveCountryId(country.id);
       });
 
       markersLayerRef.current.addLayer(marker);
     });
 
-    // Fit bounds to markers if region is selected (and it's not 'All' initially to keep world view)
+    // Fit bounds to markers if region is selected
     if (selectedRegion !== 'All' && markersLayerRef.current.getLayers().length > 0) {
       const group = L.featureGroup(markersLayerRef.current.getLayers());
       mapInstanceRef.current.fitBounds(group.getBounds().pad(0.1));
-    } else if (selectedRegion === 'All' && mapReady && !searchParams.get('country')) {
-       // Only reset view if we aren't trying to deep link to a country
-       mapInstanceRef.current.flyTo([20, 0], 2.5);
     }
 
-  }, [selectedRegion, mapReady]);
+  }, [selectedRegion, mapReady, activeCountryId]);
 
   // Handle URL Parameter Navigation
   useEffect(() => {
@@ -196,25 +192,17 @@ const MapPage: React.FC = () => {
       const country = MOCK_COUNTRIES.find(c => c.id === countryId);
       
       if (country) {
-        // Switch region if needed to ensure marker is visible
         if (selectedRegion !== 'All' && country.region !== selectedRegion) {
           setSelectedRegion('All'); 
         }
 
-        // Fly to location
+        setActiveCountryId(countryId);
         mapInstanceRef.current.flyTo([country.lat, country.lng], 6, { duration: 1.5 });
         
-        // Open popup after animation starts
         setTimeout(() => {
           markersLayerRef.current.eachLayer((layer: any) => {
             if (layer.countryId === countryId) {
               layer.openPopup();
-            } else {
-              // Also check lat/lng match as fallback if custom property fails
-              const latLng = layer.getLatLng();
-              if (Math.abs(latLng.lat - country.lat) < 0.001 && Math.abs(latLng.lng - country.lng) < 0.001) {
-                layer.openPopup();
-              }
             }
           });
         }, 1600);
@@ -241,19 +229,14 @@ const MapPage: React.FC = () => {
     const randomCountry = visibleCountries[Math.floor(Math.random() * visibleCountries.length)];
     
     if (mapInstanceRef.current && randomCountry) {
-      let targetLng = randomCountry.lng;
-      if (selectedRegion === 'Oceania' && randomCountry.lng < 0) {
-        targetLng += 360;
-      }
-
-      mapInstanceRef.current.flyTo([randomCountry.lat, targetLng], 6, {
+      setActiveCountryId(randomCountry.id);
+      mapInstanceRef.current.flyTo([randomCountry.lat, randomCountry.lng], 6, {
         duration: 2
       });
       
       setTimeout(() => {
         markersLayerRef.current.eachLayer((layer: any) => {
-          const latLng = layer.getLatLng();
-          if (Math.abs(latLng.lat - randomCountry.lat) < 0.001 && Math.abs(latLng.lng - targetLng) < 0.001) {
+          if (layer.countryId === randomCountry.id) {
             layer.openPopup();
           }
         });
@@ -261,11 +244,9 @@ const MapPage: React.FC = () => {
     }
   };
 
-  // Helper to normalize strings for search (removes accents/diacritics)
   const normalizeText = (text: string) => 
     text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
 
-  // --- Search Logic ---
   const filteredSearchResults = searchQuery.length > 0 
     ? MOCK_COUNTRIES.filter(c => 
         normalizeText(c.name).includes(normalizeText(searchQuery)) || 
@@ -273,7 +254,6 @@ const MapPage: React.FC = () => {
       ).slice(0, 20) 
     : [];
 
-  // Reset selection index when search changes
   useEffect(() => {
     setSelectedIndex(-1);
   }, [searchQuery]);
@@ -281,6 +261,7 @@ const MapPage: React.FC = () => {
   const handleResultClick = (country: Country) => {
       setSearchQuery('');
       setSelectedIndex(-1);
+      setActiveCountryId(country.id);
       if (selectedRegion !== 'All') {
           setSelectedRegion('All');
       }
@@ -289,8 +270,7 @@ const MapPage: React.FC = () => {
               mapInstanceRef.current.flyTo([country.lat, country.lng], 6, { duration: 2 });
               setTimeout(() => {
                   markersLayerRef.current.eachLayer((layer: any) => {
-                      const latLng = layer.getLatLng();
-                      if (Math.abs(latLng.lat - country.lat) < 0.1 && Math.abs(latLng.lng - country.lng) < 0.1) {
+                      if (layer.countryId === country.id) {
                           layer.openPopup();
                       }
                   });
@@ -321,72 +301,12 @@ const MapPage: React.FC = () => {
   };
 
   return (
-    // Fixed inset-0 ensures the map page takes the full viewport and does not scroll
-    // z-40 places it above standard content but below the z-50 Navbar
     <div className="fixed inset-0 z-40 bg-surface">
       <SEO 
         title="Interactive World Map"
         description="Explore the world with our high-fidelity interactive map. Click on countries to discover capitals, flags, and key demographics."
       />
       
-      {/* Styles for Rotated Mobile (Landscape) View - UPDATED */}
-      <style>{`
-        @media (max-height: 620px) {
-          /* CSS-based resizing instead of transform:scale to keep triangle attached */
-          .leaflet-popup-content {
-             width: auto !important;
-             margin: 0 !important;
-          }
-          
-          /* Override Tailwind classes inside the popup HTML string */
-          .leaflet-popup-content > div {
-             min-width: 200px !important;
-             padding: 10px !important;
-          }
-          
-          /* Flag Image in Popup */
-          .leaflet-popup-content .w-10 {
-             width: 24px !important;
-             height: 18px !important;
-          }
-          
-          /* Country Name */
-          .leaflet-popup-content h3 {
-             font-size: 0.9rem !important; /* ~14px */
-          }
-          
-          /* Description Text */
-          .leaflet-popup-content p {
-             font-size: 0.65rem !important; /* ~10px */
-             line-height: 1.3 !important;
-             margin-bottom: 0.5rem !important;
-             -webkit-line-clamp: 2 !important; /* Reduce lines */
-          }
-          
-          /* Stats Container */
-          .leaflet-popup-content .bg-gray-50 {
-             padding: 6px !important;
-             margin-bottom: 8px !important;
-          }
-          
-          /* Stats Labels */
-          .leaflet-popup-content .text-\[10px\] {
-             font-size: 0.5rem !important; /* 8px */
-          }
-          
-          /* Stats Values */
-          .leaflet-popup-content .font-semibold {
-             font-size: 0.7rem !important; /* 11px */
-          }
-          
-          /* Button */
-          .leaflet-popup-content button {
-             font-size: 0.65rem !important;
-          }
-        }
-      `}</style>
-      
-      {/* Map Container */}
       <div 
         id="map" 
         ref={mapRef} 
@@ -394,11 +314,11 @@ const MapPage: React.FC = () => {
         style={{ background: '#F8F9FA' }} 
       ></div>
 
-      {/* --- DESKTOP UI (Hidden on Mobile) --- */}
+      {/* --- DESKTOP UI --- */}
       <div className="hidden md:flex absolute top-24 left-6 w-80 flex-col gap-3 z-[1000] pointer-events-none">
           {/* Search Bar */}
           <div className="pointer-events-auto relative animate-in fade-in slide-in-from-top-4 duration-500">
-              <div className="bg-white/90 backdrop-blur-md rounded-xl shadow-premium border border-white/50 flex items-center px-4 py-3 transition-all focus-within:ring-2 focus-within:ring-primary/50 group">
+              <div className="bg-white/90 backdrop-blur-md rounded-xl shadow-premium border border-white/50 flex items-center px-4 py-3 focus-within:ring-2 focus-within:ring-primary/50 group">
                   <button 
                     onClick={() => filteredSearchResults.length > 0 && handleResultClick(filteredSearchResults[0])} 
                     className="mr-3 text-gray-400 hover:text-primary transition-colors focus:outline-none"
@@ -420,7 +340,6 @@ const MapPage: React.FC = () => {
                   )}
               </div>
               
-              {/* Desktop Search Results (Pop Down) */}
               {searchQuery && (
                   <div 
                     ref={desktopResultsRef}
@@ -431,7 +350,7 @@ const MapPage: React.FC = () => {
                               {filteredSearchResults.map((country, index) => {
                                   const flagCode = getCountryCode(country.flag);
                                   return (
-                                    <li key={country.id} id={`search-result-desktop-${index}`}>
+                                    <li key={country.id}>
                                         <button 
                                             onClick={() => handleResultClick(country)}
                                             onMouseEnter={() => setSelectedIndex(index)}
@@ -493,7 +412,6 @@ const MapPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Legend */}
           <div className="bg-white/90 backdrop-blur-md p-4 rounded-xl shadow-premium border border-white/50 pointer-events-auto animate-in fade-in slide-in-from-left-4 delay-100 duration-500">
             <div className="flex items-center gap-3 text-sm text-gray-600">
                <div className="w-3 h-3 rounded-full bg-primary border-2 border-white shadow-sm"></div>
@@ -517,7 +435,7 @@ const MapPage: React.FC = () => {
         </Button>
       </div>
 
-      {/* Desktop Zoom Controls (Hidden on tablets/mobile via lg:flex) */}
+      {/* Desktop Zoom Controls */}
       <div className="hidden lg:flex flex-col gap-2 absolute bottom-10 right-6 z-[1000]">
         <Button variant="secondary" onClick={handleZoomIn} className="w-10 h-10 p-0 rounded-xl" size="sm">
           <Plus size={20} />
@@ -527,23 +445,17 @@ const MapPage: React.FC = () => {
         </Button>
       </div>
 
-      {/* --- MOBILE UI (Shown on Mobile) --- */}
-      {/* Hide in Landscape Mode using media query: [@media(max-height:620px)]:hidden */}
+      {/* --- MOBILE UI --- */}
       <div className="md:hidden fixed bottom-0 left-0 w-full z-[1000] flex flex-col items-center pointer-events-none pb-6 px-4 gap-3 [@media(max-height:620px)]:hidden">
-          
-          {/* 1. Discover Button (Floating Pill) */}
           <button 
               onClick={flyToRandom}
-              className="pointer-events-auto shadow-premium-hover bg-white text-primary border border-white/40 backdrop-blur-md px-5 py-2.5 rounded-full flex items-center gap-2 transition-all active:scale-95 active:bg-gray-50 group hover:bg-gray-50 ring-1 ring-black/5"
+              className="pointer-events-auto shadow-premium-hover bg-white text-primary border border-white/40 backdrop-blur-md px-5 py-2.5 rounded-full flex items-center gap-2 transition-all active:scale-95 ring-1 ring-black/5"
           >
-              <Compass size={18} className="animate-spin-slow group-hover:rotate-180 transition-transform duration-700" />
+              <Compass size={18} className="animate-spin-slow" />
               <span className="font-display font-bold text-sm tracking-wide">Discover Random</span>
           </button>
 
-          {/* 2. Main Control Panel (Floating Card) */}
           <div className="w-full pointer-events-auto bg-white/95 backdrop-blur-xl border border-white/50 shadow-[0_8px_30px_rgb(0,0,0,0.12)] rounded-3xl p-4 flex flex-col gap-4 animate-in slide-in-from-bottom-20 duration-500">
-              
-              {/* Search Input Area */}
               <div className="relative z-20">
                    <div className="relative group bg-gray-100/50 rounded-2xl border border-gray-100 focus-within:bg-white focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary/50 transition-all duration-300 shadow-inner">
                       <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
@@ -558,18 +470,14 @@ const MapPage: React.FC = () => {
                           onKeyDown={handleKeyDown}
                       />
                       {searchQuery && (
-                          <button 
-                              onClick={() => setSearchQuery('')} 
-                              className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 active:scale-90 transition-transform"
-                          >
-                              <div className="bg-gray-200 rounded-full p-0.5 text-white hover:bg-gray-300 transition-colors">
+                          <button onClick={() => setSearchQuery('')} className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400">
+                              <div className="bg-gray-200 rounded-full p-0.5 text-white">
                                  <X size={14} strokeWidth={3} />
                               </div>
                           </button>
                       )}
                    </div>
 
-                   {/* Mobile Search Results (Pop Up above input) */}
                    {searchQuery && (
                       <div 
                         ref={mobileResultsRef}
@@ -577,13 +485,13 @@ const MapPage: React.FC = () => {
                       >
                           {filteredSearchResults.length > 0 ? (
                               <ul className="py-0">
-                                  {filteredSearchResults.map((country, index) => {
+                                  {filteredSearchResults.map((country) => {
                                       const flagCode = getCountryCode(country.flag);
                                       return (
                                         <li key={country.id}>
                                             <button 
                                                 onClick={() => handleResultClick(country)}
-                                                className={`w-full text-left px-4 py-3 flex items-center gap-3 transition-colors border-b border-gray-100 last:border-none active:bg-blue-50`}
+                                                className="w-full text-left px-4 py-3 flex items-center gap-3 transition-colors border-b border-gray-100 last:border-none active:bg-blue-50"
                                             >
                                                 <div className="w-8 h-6 shrink-0 overflow-hidden rounded shadow-sm border border-gray-100">
                                                   <img src={`https://flagcdn.com/w40/${flagCode}.png`} alt="" className="w-full h-full object-cover" />
@@ -591,9 +499,6 @@ const MapPage: React.FC = () => {
                                                 <div>
                                                     <p className="text-sm font-bold text-text">{country.name}</p>
                                                     <p className="text-xs text-gray-500">{country.region}</p>
-                                                </div>
-                                                <div className="ml-auto text-gray-300">
-                                                   <ChevronRight size={16} />
                                                 </div>
                                             </button>
                                         </li>
@@ -609,7 +514,6 @@ const MapPage: React.FC = () => {
                    )}
               </div>
 
-              {/* Filter Chips (Horizontal Scroll) */}
               <div className="w-full overflow-x-auto no-scrollbar" style={{ scrollbarWidth: 'none' }}>
                  <div className="flex gap-2.5 px-1 pb-1">
                    {REGIONS.map(region => (
@@ -629,22 +533,8 @@ const MapPage: React.FC = () => {
                    ))}
                  </div>
               </div>
-
           </div>
       </div>
-
-      {/* Landscape-Only Controls (Visible ONLY in landscape mode) */}
-      <div className="hidden [@media(max-height:620px)]:flex fixed bottom-4 right-4 z-[1000] gap-2">
-          <Button 
-            onClick={flyToRandom} 
-            variant="primary" 
-            className="w-14 h-14 p-0 rounded-full flex items-center justify-center shadow-lg" 
-            size="sm"
-          >
-            <Compass size={28} className="animate-spin-slow" />
-          </Button>
-      </div>
-
     </div>
   );
 };
