@@ -61,7 +61,7 @@ export default function CapitalConnection() {
         isMatched: false,
         isSelected: false,
         isWrong: false,
-        icon: <span className="text-2xl md:text-3xl leading-none drop-shadow-sm select-none">{country.flag}</span>
+        icon: <span className="text-2xl md:text-3xl leading-none select-none">{country.flag}</span>
       });
       newCards.push({
         id: `capital-${country.id}`,
@@ -126,7 +126,7 @@ export default function CapitalConnection() {
   if (gameState === 'start') {
     return (
       <div className="h-[100dvh] bg-surface flex items-center justify-center px-4 overflow-hidden font-sans">
-        <SEO title="Capital Connection" description="Match countries to their capitals." />
+        <SEO title="Capital Connection" description="Connect countries to their capitals." />
         <div className="max-w-md w-full bg-white rounded-3xl shadow-premium p-8 text-center border border-gray-100 animate-in fade-in zoom-in duration-300">
           <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-4 text-primary">
             <Network size={32} />
@@ -136,7 +136,7 @@ export default function CapitalConnection() {
           <div className="flex flex-col gap-6">
             <Button onClick={startGame} size="lg" className="w-full h-14">Play</Button>
             <Link to="/games" className="w-full">
-              <Button variant="secondary" size="md" className="w-full h-12">Back to Games</Button>
+              <Button variant="secondary" size="lg" className="w-full h-14">Back to Games</Button>
             </Link>
           </div>
         </div>
@@ -157,7 +157,7 @@ export default function CapitalConnection() {
           <div className="flex flex-col gap-6">
             <Button onClick={startGame} size="lg" className="w-full h-14">Play Again</Button>
             <Link to="/games" className="w-full">
-               <Button variant="secondary" size="md" className="w-full h-12">Back to Games</Button>
+               <Button variant="secondary" size="lg" className="w-full h-14">Back to Games</Button>
             </Link>
           </div>
         </div>
@@ -169,7 +169,7 @@ export default function CapitalConnection() {
     <div className="h-[100dvh] bg-surface flex flex-col p-4 overflow-hidden font-sans">
       <SEO title="Playing Capital Connection" description="Match the country to its capital." />
       <div className="max-w-4xl mx-auto w-full flex shrink-0 items-center justify-between mb-4 bg-white p-3 rounded-2xl shadow-sm border border-gray-100 mt-16 md:mt-20">
-         <Link to="/games" className="p-2 hover:bg-gray-50 rounded-full text-gray-400 transition-colors">
+         <Link to="/games" className="p-2 hover:bg-gray-50 rounded-full text-gray-400 transition-colors duration-75">
            <ArrowLeft size={18} />
          </Link>
          <div className="flex items-center gap-4">
@@ -182,11 +182,11 @@ export default function CapitalConnection() {
 
       <div className="flex-1 max-w-4xl mx-auto w-full grid grid-cols-3 lg:grid-cols-4 gap-2 md:gap-3 min-h-0 overflow-y-auto no-scrollbar pb-4">
           {cards.map(card => {
-              let cardStyle = "bg-white border-2 border-gray-100 text-text active:bg-gray-50";
+              let cardStyle = "bg-white border-2 border-gray-200 text-text active:bg-gray-50";
               if (card.isMatched) {
-                  cardStyle = "bg-green-50 border-2 border-green-500 opacity-40 cursor-default";
+                  cardStyle = "bg-green-50 border-4 border-[#22c55e] opacity-60 cursor-default";
               } else if (card.isWrong) {
-                  cardStyle = "bg-red-50 border-2 border-red-500 text-red-800 animate-pulse";
+                  cardStyle = "bg-red-50 border-4 border-red-600 text-red-800 animate-pulse";
               } else if (card.isSelected) {
                   cardStyle = "bg-blue-50 border-2 border-primary text-primary";
               }
@@ -196,7 +196,7 @@ export default function CapitalConnection() {
                       key={card.id}
                       onClick={() => handleCardClick(card.id)}
                       disabled={card.isMatched}
-                      className={`h-28 md:h-36 rounded-xl p-2 flex flex-col items-center justify-center text-center transition-all duration-100 ${cardStyle}`}
+                      className={`h-28 md:h-36 rounded-xl p-2 flex flex-col items-center justify-center text-center transition-all duration-75 ${cardStyle}`}
                       style={{ WebkitTapHighlightColor: 'transparent' }}
                   >
                       <div className={`mb-1 transform scale-90 ${card.type === 'country' ? '' : 'opacity-50'}`}>

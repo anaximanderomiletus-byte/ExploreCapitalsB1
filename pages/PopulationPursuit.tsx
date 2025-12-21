@@ -72,7 +72,7 @@ export default function PopulationPursuit() {
           <p className="text-gray-500 text-sm mb-8 leading-relaxed font-sans">Select the nation with the larger population count.</p>
           <div className="flex flex-col gap-6">
             <Button onClick={startGame} size="lg" className="w-full h-14">Play</Button>
-            <Link to="/games" className="w-full"><Button variant="secondary" size="md" className="w-full h-12">Back to Games</Button></Link>
+            <Link to="/games" className="w-full"><Button variant="secondary" size="lg" className="w-full h-14">Back to Games</Button></Link>
           </div>
         </div>
       </div>
@@ -89,7 +89,7 @@ export default function PopulationPursuit() {
           <div className="flex flex-col gap-6">
             <Button onClick={startGame} size="lg" className="w-full h-14">Play Again</Button>
             <Link to="/games" className="w-full">
-               <Button variant="secondary" size="md" className="w-full h-12">Back to Games</Button>
+               <Button variant="secondary" size="lg" className="w-full h-14">Back to Games</Button>
             </Link>
           </div>
         </div>
@@ -103,7 +103,6 @@ export default function PopulationPursuit() {
     <div className="h-[100dvh] bg-surface flex flex-col p-4 overflow-hidden font-sans">
       <SEO title="Playing Population Pursuit" description="Choose the larger population." />
       
-      {/* Header - Compacted top margin */}
       <div className="max-w-4xl mx-auto w-full flex shrink-0 items-center justify-between mb-4 bg-white p-2.5 rounded-2xl shadow-sm border border-gray-100 mt-12 md:mt-16">
          <Link to="/games" className="p-2 hover:bg-gray-50 rounded-full text-gray-400"><ArrowLeft size={20} /></Link>
          <div className="flex items-center gap-6">
@@ -117,51 +116,51 @@ export default function PopulationPursuit() {
          </div>
       </div>
 
-      <div className="flex-1 max-w-4xl mx-auto w-full flex flex-col min-h-0 pb-4 overflow-hidden">
-           {/* Question - Reduced margin */}
+      <div className="flex-1 max-w-4xl mx-auto w-full flex flex-col min-h-0 pb-4 overflow-visible">
            <div className="text-center mb-4 shrink-0">
              <h2 className="text-xl md:text-2xl font-display font-bold text-text tracking-tight animate-in fade-in slide-in-from-top-2 duration-500">
                Which country has a larger population?
              </h2>
            </div>
 
-           {/* Cards Container - Gap reduced for tighter vertical space */}
-           <div className="flex-1 flex flex-col md:flex-row gap-4 min-h-0">
+           <div className="flex-1 flex flex-col md:flex-row gap-4 min-h-0 overflow-visible">
                 {[countryA, countryB].map((country, idx) => {
                   const other = idx === 0 ? countryB : countryA;
                   const isWinner = getNumericValue(country.population) >= getNumericValue(other!.population);
-                  let cardStyle = "bg-white border-2 border-gray-100 hover:border-primary/40 shadow-sm";
+                  
+                  // Unified border approach: use a single border line, elevated z-index for scaling
+                  let cardStyle = "bg-white border-2 border-gray-200 hover:border-primary/40 shadow-sm z-0";
+                  
                   if (result) {
-                      if (isWinner) cardStyle = "bg-green-50 border-green-500 ring-4 ring-green-500/10 z-10 scale-[1.02]";
-                      else cardStyle = "bg-gray-50 opacity-40 grayscale scale-[0.98] border-transparent";
+                      if (isWinner) {
+                          cardStyle = "bg-green-50 border-4 border-[#22c55e] z-20 scale-[1.02] shadow-lg ring-0";
+                      } else {
+                          cardStyle = "bg-gray-50 opacity-40 grayscale scale-[0.98] border-2 border-gray-300 z-0";
+                      }
                   }
 
                   return (
                     <div 
                       key={country.id} 
                       onClick={() => handleChoice(country)} 
-                      className={`flex-1 relative rounded-[1.5rem] p-4 md:p-6 flex flex-col items-center justify-center transition-all duration-300 cursor-pointer active:bg-gray-50 ${cardStyle}`} 
+                      className={`flex-1 relative rounded-[1.5rem] p-4 md:p-6 flex flex-col items-center justify-center transition-all duration-75 cursor-pointer active:bg-gray-50 ${cardStyle}`} 
                       style={{ WebkitTapHighlightColor: 'transparent' }}
                     >
-                      {/* Flag - Responsive sizing to prevent overflow */}
-                      <div className="text-6xl md:text-7xl lg:text-[7.5rem] mb-2 drop-shadow-lg select-none transition-transform duration-500 hover:scale-105">
+                      <div className="text-6xl md:text-7xl lg:text-[7.5rem] mb-2 select-none transition-transform duration-75 hover:scale-105">
                         {country.flag}
                       </div>
                       
-                      {/* Name - Responsive sizing */}
                       <h3 className="text-lg md:text-2xl font-display font-bold text-text mb-2 text-center leading-tight px-2 break-words">
                         {country.name}
                       </h3>
 
-                      {/* Result Box - Absolute centering or controlled max-height */}
-                      <div className={`transition-all duration-500 overflow-hidden flex flex-col items-center ${result ? 'max-h-24 opacity-100 scale-100 mt-2' : 'max-h-0 opacity-0 scale-95'}`}>
+                      <div className={`transition-all duration-300 overflow-hidden flex flex-col items-center ${result ? 'max-h-24 opacity-100 scale-100 mt-2' : 'max-h-0 opacity-0 scale-95'}`}>
                           <div className="flex items-center gap-1 text-gray-400 uppercase font-bold text-[9px] tracking-widest mb-0.5 font-sans">Reported Population</div>
                           <div className="text-2xl md:text-4xl font-display font-bold text-primary tracking-tighter tabular-nums">{country.population}</div>
                       </div>
 
-                      {/* Floating Indicator */}
                       {result && isWinner && (
-                          <div className="absolute top-4 right-4 bg-green-500 text-white p-1.5 rounded-full shadow-lg animate-in zoom-in">
+                          <div className="absolute top-4 right-4 bg-[#22c55e] text-white p-1.5 rounded-full shadow-lg animate-in zoom-in duration-75">
                             <Check size={24} strokeWidth={4} />
                           </div>
                       )}

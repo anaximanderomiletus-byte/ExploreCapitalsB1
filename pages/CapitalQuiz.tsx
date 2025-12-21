@@ -86,7 +86,7 @@ export default function CapitalQuiz() {
           <div className="flex flex-col gap-6">
             <Button onClick={startGame} size="lg" className="w-full h-14">Play</Button>
             <Link to="/games" className="w-full">
-              <Button variant="secondary" size="md" className="w-full h-12">Back to Games</Button>
+              <Button variant="secondary" size="lg" className="w-full h-14">Back to Games</Button>
             </Link>
           </div>
         </div>
@@ -104,7 +104,7 @@ export default function CapitalQuiz() {
           <div className="flex flex-col gap-6">
             <Button onClick={startGame} size="lg" className="w-full h-14">Play Again</Button>
             <Link to="/games" className="w-full">
-               <Button variant="secondary" size="md" className="w-full h-12">Back to Games</Button>
+               <Button variant="secondary" size="lg" className="w-full h-14">Back to Games</Button>
             </Link>
           </div>
         </div>
@@ -118,7 +118,7 @@ export default function CapitalQuiz() {
     <div className="h-[100dvh] bg-surface flex flex-col p-4 overflow-hidden font-sans">
       <SEO title="Playing Capital Quiz" description="Select the correct capital city." />
       <div className="max-w-2xl mx-auto w-full flex shrink-0 items-center justify-between mb-3 bg-white p-3 rounded-2xl shadow-sm border border-gray-100 mt-16 md:mt-20">
-         <Link to="/games" className="p-2 hover:bg-gray-50 rounded-full text-gray-400">
+         <Link to="/games" className="p-2 hover:bg-gray-50 rounded-full text-gray-400 transition-colors duration-75">
            <ArrowLeft size={20} />
          </Link>
          <div className="flex items-center gap-6">
@@ -146,11 +146,11 @@ export default function CapitalQuiz() {
             {currentQuestion.options.map((option) => {
               const isSelected = selectedAnswer === option.capital;
               const isCorrect = option.capital === currentQuestion.country.capital;
-              let stateStyles = "bg-white border-2 border-gray-100 text-text active:bg-gray-50";
+              let stateStyles = "bg-white border-2 border-gray-200 text-text active:bg-gray-50";
               if (selectedAnswer) {
-                if (isCorrect) stateStyles = "bg-green-50 border-green-500 text-green-900";
-                else if (isSelected) stateStyles = "bg-red-50 border-red-500 text-red-900";
-                else stateStyles = "bg-gray-50 border-transparent text-gray-300 opacity-40";
+                if (isCorrect) stateStyles = "bg-green-50 border-4 border-[#22c55e] text-green-900";
+                else if (isSelected) stateStyles = "bg-red-50 border-4 border-red-600 text-red-900";
+                else stateStyles = "bg-gray-50 border-2 border-gray-400 text-gray-300 opacity-40";
               }
 
               return (
@@ -158,11 +158,11 @@ export default function CapitalQuiz() {
                   key={option.id}
                   onClick={() => handleAnswer(option.capital)}
                   disabled={!!selectedAnswer}
-                  className={`relative p-5 rounded-2xl font-display font-bold text-lg transition-all duration-200 flex items-center justify-center min-h-[72px] ${stateStyles}`}
+                  className={`relative p-5 rounded-2xl font-display font-bold text-lg transition-all duration-75 flex items-center justify-center min-h-[72px] ${stateStyles}`}
                   style={{ WebkitTapHighlightColor: 'transparent' }}
                 >
                   <span className="px-2 text-center leading-tight">{option.capital}</span>
-                  {selectedAnswer && isCorrect && <Check size={20} className="absolute right-4 text-green-600" />}
+                  {selectedAnswer && isCorrect && <Check size={20} className="absolute right-4 text-[#22c55e]" />}
                   {selectedAnswer && isSelected && !isCorrect && <X size={20} className="absolute right-4 text-red-600" />}
                 </button>
               );

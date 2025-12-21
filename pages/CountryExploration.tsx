@@ -198,19 +198,15 @@ const CountryExploration: React.FC = () => {
   const nextStop = () => {
     if (!tourData) return;
     setTransitionDirection('forward');
-    
+    setIsTransitioning(true);
+
     if (stepIndex < tourData.stops.length - 1) {
-      setIsTransitioning(true);
       setTimeout(() => {
         setStepIndex(prev => prev + 1);
         setScrollY(0);
         window.scrollTo({ top: 0 });
       }, 500); 
-      setTimeout(() => {
-        setIsTransitioning(false);
-      }, 1000); 
     } else {
-      setIsTransitioning(true);
       setTimeout(() => {
         setView('quiz');
         setStepIndex(0);
@@ -221,10 +217,11 @@ const CountryExploration: React.FC = () => {
         setFeedbackMessage(null);
         window.scrollTo({ top: 0 });
       }, 500);
-      setTimeout(() => {
-        setIsTransitioning(false);
-      }, 1000);
     }
+    
+    setTimeout(() => {
+      setIsTransitioning(false);
+    }, 1000); 
   };
 
   const prevStop = () => {
@@ -358,7 +355,7 @@ const CountryExploration: React.FC = () => {
                         return (
                           <div 
                             key={index} 
-                            className={`flex-shrink-0 w-32 h-40 md:w-36 md:h-48 rounded-xl overflow-hidden relative border-2 snap-center transition-transform hover:scale-105 ${isCorrect ? 'border-green-200 shadow-sm' : 'border-red-200 shadow-md'}`}
+                            className={`flex-shrink-0 w-32 h-40 md:w-36 md:h-48 rounded-xl overflow-hidden relative border-2 snap-center transition-transform hover:scale-105 duration-75 ${isCorrect ? 'border-green-200 shadow-sm' : 'border-red-200 shadow-md'}`}
                           >
                             <ExpeditionVisual src={image} alt={stop.stopName} className="w-full h-full object-cover" />
                             <div className={`absolute inset-0 flex flex-col items-center justify-center p-2 text-center ${isCorrect ? 'bg-green-900/30' : 'bg-red-900/40'}`}>
@@ -406,11 +403,14 @@ const CountryExploration: React.FC = () => {
                  {/* Gradient - Stronger to support text reading */}
                  <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/70 to-black/30"></div>
 
-                 {/* Return Button - Top Left of Image */}
+                 {/* REFINED GLASS BUBBLE "Back to Directory" Button - Top Left */}
                  <div className="absolute top-6 left-6 z-20">
-                    <Link to="/directory" className="flex items-center gap-2 bg-white/20 backdrop-blur-md border border-white/30 rounded-full px-4 py-2 text-white hover:bg-white/30 transition-all text-sm font-bold shadow-lg">
-                       <ArrowLeft size={16} />
-                       <span>Return to Directory</span>
+                    <Link 
+                      to="/directory" 
+                      className="inline-flex items-center gap-2 px-4 py-2 bg-white/20 backdrop-blur-md border border-white/30 rounded-full shadow-xl text-white hover:bg-white/40 transition-all duration-300 ease-out group"
+                    >
+                       <ArrowLeft size={18} className="drop-shadow-md" />
+                       <span className="text-[10px] font-bold uppercase tracking-widest drop-shadow-md">Back to Directory</span>
                     </Link>
                  </div>
                  
@@ -606,10 +606,13 @@ const CountryExploration: React.FC = () => {
                           </div>
                       )}
 
-                      <div className="flex flex-col-reverse md:flex-row justify-center items-center gap-4 pb-20">
-                          <Button onClick={prevStop} variant="secondary" size="lg" className="w-full md:w-auto min-w-[200px]">
-                              <ArrowLeft size={20} className="mr-2" /> Back
-                          </Button>
+                      <div className="flex flex-col-reverse md:flex-row justify-center items-center gap-8 pb-24">
+                          <button 
+                              onClick={prevStop} 
+                              className="flex items-center gap-2 px-6 py-3 text-gray-400 hover:text-gray-600 transition-colors font-display font-bold text-base group duration-75"
+                          >
+                              <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform duration-75" /> Back
+                          </button>
 
                           {isLastStop ? (
                               <Button onClick={nextStop} className="w-full md:w-auto min-w-[280px]" variant="accent" size="lg">
@@ -647,7 +650,7 @@ const CountryExploration: React.FC = () => {
                     {tourData.stops.map((_, i) => (
                       <div 
                         key={i} 
-                        className={`h-1.5 w-8 rounded-full transition-colors ${i === stepIndex ? 'bg-primary' : i < stepIndex ? 'bg-green-400' : 'bg-gray-200'}`} 
+                        className={`h-1.5 w-8 rounded-full transition-colors duration-75 ${i === stepIndex ? 'bg-primary' : i < stepIndex ? 'bg-green-400' : 'bg-gray-200'}`} 
                       />
                     ))}
                  </div>
@@ -694,7 +697,7 @@ const CountryExploration: React.FC = () => {
                              onClick={() => handleQuizAnswer(option)}
                              disabled={!!selectedOption}
                              // Removed line-clamp-1 to allow text wrapping, added leading-snug
-                             className={`w-full text-left px-5 py-3 md:py-4 rounded-xl border-2 transition-all duration-200 font-medium text-base leading-snug flex justify-between items-center ${stateStyles}`}
+                             className={`w-full text-left px-5 py-3 md:py-4 rounded-xl border-2 transition-all duration-75 font-medium text-base leading-snug flex justify-between items-center ${stateStyles}`}
                              style={{ WebkitTapHighlightColor: 'transparent' }}
                            >
                              <span className="leading-snug">{option}</span>
@@ -707,7 +710,7 @@ const CountryExploration: React.FC = () => {
               </div>
            </div>
 
-           <div className={`fixed bottom-0 left-0 right-0 z-50 bg-white transition-all duration-500 cubic-bezier(0.32,0.72,0,1) border-t-4 ${bottomSheetClasses} ${isCorrect ? 'border-green-500' : 'border-red-500'}`}>
+           <div className={`fixed bottom-0 left-0 right-0 z-50 bg-white transition-all duration-300 cubic-bezier(0.32,0.72,0,1) border-t-4 ${bottomSheetClasses} ${isCorrect ? 'border-green-500' : 'border-red-500'}`}>
               <div className="max-w-4xl mx-auto p-6 md:p-8 flex flex-col md:flex-row items-center justify-between gap-6">
                   <div className="flex-1 text-center md:text-left">
                       {selectedOption && (
@@ -733,6 +736,12 @@ const CountryExploration: React.FC = () => {
                       )}
                   </div>
                   <div className="w-full md:w-auto">
+                       <button 
+                         onClick={prevStop} 
+                         className="hidden md:flex items-center gap-2 px-6 py-3 text-gray-400 hover:text-gray-600 transition-colors duration-75 font-display font-bold text-sm mr-4"
+                       >
+                          <ArrowLeft size={16} /> Back to Content
+                       </button>
                        <Button 
                          onClick={nextQuestion} 
                          className="w-full md:min-w-[200px] flex items-center justify-center gap-2"
@@ -754,7 +763,7 @@ const CountryExploration: React.FC = () => {
   return (
     <>
       {isTransitioning && createPortal(
-        <div className={`fixed inset-0 z-[100] bg-primary flex items-center justify-center pointer-events-none ${transitionDirection === 'forward' ? 'animate-wipe-screen' : 'animate-wipe-screen-reverse'}`}>
+        <div className={`fixed inset-0 z-[100] bg-primary flex items-center justify-center pointer-events-none ${transitionDirection === 'forward' ? 'animate-wipe-forward' : 'animate-wipe-backward'}`}>
           <div className="text-white text-3xl font-display font-bold flex items-center gap-3">
             <Globe className="w-10 h-10 animate-spin" />
           </div>

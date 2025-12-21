@@ -51,6 +51,8 @@
               'color-pulse': 'color-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
               'wipe-in': 'wipe-in 0.4s cubic-bezier(0.65, 0, 0.35, 1) forwards',
               'wipe-out': 'wipe-out 0.4s cubic-bezier(0.65, 0, 0.35, 1) forwards',
+              'wipe-forward': 'wipe-forward 1s cubic-bezier(0.65, 0, 0.35, 1) forwards',
+              'wipe-backward': 'wipe-backward 1s cubic-bezier(0.65, 0, 0.35, 1) forwards',
               'float': 'float 6s ease-in-out infinite',
               'shimmer': 'shimmer 2s linear infinite',
             },
@@ -66,6 +68,18 @@
               'wipe-out': {
                 '0%': { transform: 'translateX(0)' },
                 '100%': { transform: 'translateX(-100%)' },
+              },
+              'wipe-forward': {
+                '0%': { transform: 'translateX(100%)' },
+                '35%': { transform: 'translateX(0)' },
+                '65%': { transform: 'translateX(0)' },
+                '100%': { transform: 'translateX(-100%)' },
+              },
+              'wipe-backward': {
+                '0%': { transform: 'translateX(-100%)' },
+                '35%': { transform: 'translateX(0)' },
+                '65%': { transform: 'translateX(0)' },
+                '100%': { transform: 'translateX(100%)' },
               },
               'float': {
                 '0%, 100%': { transform: 'translateY(0)' },
@@ -167,7 +181,8 @@
         border: 3px solid #FFFFFF;
         border-radius: 50%;
         box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-        transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        /* Snappy duration for almost instant hover feedback */
+        transition: all 0.1s cubic-bezier(0, 0, 0.2, 1);
         cursor: pointer;
       }
 

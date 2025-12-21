@@ -79,7 +79,7 @@ export default function GlobalDetective() {
           <div className="flex flex-col gap-6">
             <Button onClick={startGame} size="lg" className="w-full h-14">Play</Button>
             <Link to="/games" className="w-full">
-              <Button variant="secondary" size="md" className="w-full h-12">Back to Games</Button>
+              <Button variant="secondary" size="lg" className="w-full h-14">Back to Games</Button>
             </Link>
           </div>
         </div>
@@ -97,7 +97,7 @@ export default function GlobalDetective() {
           <div className="flex flex-col gap-6">
             <Button onClick={startGame} size="lg" className="w-full h-14">Play Again</Button>
             <Link to="/games" className="w-full">
-               <Button variant="secondary" size="md" className="w-full h-12">Back to Games</Button>
+               <Button variant="secondary" size="lg" className="w-full h-14">Back to Games</Button>
             </Link>
           </div>
         </div>
@@ -110,7 +110,7 @@ export default function GlobalDetective() {
   return (
     <div className="h-[100dvh] bg-surface flex flex-col p-4 overflow-hidden font-sans">
       <div className="max-w-2xl mx-auto w-full flex shrink-0 items-center justify-between mb-3 bg-white p-3 rounded-2xl shadow-sm border border-gray-100 mt-16 md:mt-20">
-         <Link to="/games" className="p-2 hover:bg-gray-50 rounded-full text-gray-400"><ArrowLeft size={20} /></Link>
+         <Link to="/games" className="p-2 hover:bg-gray-50 rounded-full text-gray-400 transition-colors duration-75"><ArrowLeft size={20} /></Link>
          <div className="flex items-center gap-4">
            <div className="flex items-center gap-1.5 font-bold"><Trophy size={14} className="text-primary" /> <span className="tabular-nums">{score}</span></div>
            <div className={`px-2 py-0.5 rounded font-bold tabular-nums ${timeLeft < 10 ? 'bg-red-50 text-red-500 animate-pulse' : 'bg-blue-50 text-primary'}`}>{timeLeft}</div>
@@ -124,26 +124,26 @@ export default function GlobalDetective() {
                     <div className="p-3 bg-surface/50 rounded-xl border border-secondary/20 flex justify-between items-center"><span className="text-[10px] font-bold text-gray-500 uppercase">Region</span><span className="text-sm font-bold text-text">{targetCountry.region}</span></div>
                     <div className="p-3 bg-surface/50 rounded-xl border border-secondary/20 flex justify-between items-center"><span className="text-[10px] font-bold text-gray-500 uppercase">Currency</span><span className="text-sm font-bold text-text truncate ml-2">{targetCountry.currency}</span></div>
                     <div className="p-3 bg-surface/50 rounded-xl border border-secondary/20 flex justify-between items-center"><span className="text-[10px] font-bold text-gray-500 uppercase">Language</span><span className="text-sm font-bold text-text">{targetCountry.languages[0]}</span></div>
-                    <div className={`p-3 rounded-xl border transition-all duration-300 relative overflow-hidden flex justify-between items-center ${isCapitalRevealed ? 'bg-amber-50 border-amber-200' : 'bg-gray-800 border-gray-900 cursor-pointer group active:bg-gray-700'}`} onClick={revealCapital}>
+                    <div className={`p-3 rounded-xl border transition-all duration-75 relative overflow-hidden flex justify-between items-center ${isCapitalRevealed ? 'bg-amber-50 border-4 border-amber-400' : 'bg-gray-800 border-gray-900 cursor-pointer group active:bg-gray-700'}`} onClick={revealCapital}>
                         <span className={`text-[10px] font-bold uppercase ${isCapitalRevealed ? 'text-amber-700' : 'text-gray-400'}`}>Capital</span>
-                        {isCapitalRevealed ? <span className="text-sm font-bold text-amber-900 animate-in fade-in">{targetCountry.capital}</span> : <div className="flex items-center gap-2"><span className="text-[10px] font-bold text-gray-500 tracking-widest">REDACTED</span><EyeOff size={14} className="text-gray-500" /></div>}
-                        {!isCapitalRevealed && <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity"><span className="text-white text-[9px] font-bold uppercase">Reveal (-5 pts)</span></div>}
+                        {isCapitalRevealed ? <span className="text-sm font-bold text-amber-900 animate-in fade-in duration-75">{targetCountry.capital}</span> : <div className="flex items-center gap-2"><span className="text-[10px] font-bold text-gray-500 tracking-widest">REDACTED</span><EyeOff size={14} className="text-gray-500" /></div>}
+                        {!isCapitalRevealed && <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-75"><span className="text-white text-[9px] font-bold uppercase">Reveal (-5 pts)</span></div>}
                     </div>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 shrink-0">
                     {options.map((option) => {
                          const isSelected = selectedAnswer === option.name;
                          const isCorrect = option.name === targetCountry.name;
-                         let btnStyle = "bg-white border-2 border-gray-100 text-text active:bg-gray-50";
+                         let btnStyle = "bg-white border-2 border-gray-200 text-text active:bg-gray-50";
                          if (selectedAnswer) {
-                           if (isCorrect) btnStyle = "bg-green-50 border-green-500 text-green-900";
-                           else if (isSelected) btnStyle = "bg-red-50 border-red-500 text-red-900";
-                           else btnStyle = "bg-gray-50 border-transparent text-gray-300 opacity-40";
+                           if (isCorrect) btnStyle = "bg-green-50 border-4 border-[#22c55e] text-green-900";
+                           else if (isSelected) btnStyle = "bg-red-50 border-4 border-red-600 text-red-900";
+                           else btnStyle = "bg-gray-50 border-2 border-gray-400 text-gray-300 opacity-40";
                          }
                          return (
-                           <button key={option.id} onClick={() => handleAnswer(option.name)} disabled={!!selectedAnswer} className={`relative p-3 rounded-xl font-display font-bold text-sm transition-all duration-200 flex items-center justify-center min-h-[56px] ${btnStyle}`}>
+                           <button key={option.id} onClick={() => handleAnswer(option.name)} disabled={!!selectedAnswer} className={`relative p-3 rounded-xl font-display font-bold text-sm transition-all duration-75 flex items-center justify-center min-h-[56px] ${btnStyle}`}>
                              <span className="text-center leading-tight">{option.name}</span>
-                             {selectedAnswer && isCorrect && <Check size={16} className="absolute right-3 text-green-600" />}
+                             {selectedAnswer && isCorrect && <Check size={16} className="absolute right-3 text-[#22c55e]" />}
                              {selectedAnswer && isSelected && !isCorrect && <X size={16} className="absolute right-3 text-red-600" />}
                            </button>
                          );
