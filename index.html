@@ -51,6 +51,34 @@
               'color-pulse': 'color-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
               'wipe-screen': 'wipe-screen 1s cubic-bezier(0.65, 0, 0.35, 1) forwards',
               'wipe-screen-reverse': 'wipe-screen-reverse 1s cubic-bezier(0.65, 0, 0.35, 1) forwards',
+              'float': 'float 6s ease-in-out infinite',
+              'shimmer': 'shimmer 2s linear infinite',
+            },
+            keyframes: {
+              'color-pulse': {
+                '0%, 100%': { color: '#77B6EA' },
+                '50%': { color: '#bfdbfe' },
+              },
+              'wipe-screen': {
+                '0%': { transform: 'translateX(100%)' },
+                '35%': { transform: 'translateX(0)' },
+                '65%': { transform: 'translateX(0)' },
+                '100%': { transform: 'translateX(-100%)' },
+              },
+              'wipe-screen-reverse': {
+                '0%': { transform: 'translateX(-100%)' },
+                '35%': { transform: 'translateX(0)' },
+                '65%': { transform: 'translateX(0)' },
+                '100%': { transform: 'translateX(100%)' },
+              },
+              'float': {
+                '0%, 100%': { transform: 'translateY(0)' },
+                '50%': { transform: 'translateY(-20px)' },
+              },
+              'shimmer': {
+                'from': { backgroundPosition: '0 0' },
+                'to': { backgroundPosition: '-200% 0' },
+              }
             }
           }
         }
@@ -184,6 +212,5 @@
 </head>
   <body class="bg-surface text-text antialiased selection:bg-primary selection:text-white">
     <div id="root"></div>
-    <script type="module" src="/index.tsx"></script>
   </body>
 </html>

@@ -146,44 +146,50 @@ export default function PopulationPursuit() {
   if (!countryA || !countryB) return null;
 
   return (
-    <div className="min-h-screen bg-surface pt-28 pb-12 px-4 md:px-6">
+    <div className="min-h-screen bg-surface pt-20 pb-4 px-4 flex flex-col">
       <SEO 
         title="Playing Population Pursuit"
         description="Choose the country with the higher population."
       />
-      <div className="max-w-4xl mx-auto h-full flex flex-col">
-        {/* Header Bar */}
-        <div className="flex items-center justify-between mb-6 bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
+      
+      {/* Game Container - uses flex-1 to fill available vertical space */}
+      <div className="max-w-md md:max-w-4xl mx-auto w-full flex-1 flex flex-col h-full">
+        
+        {/* Header Bar - Fixed Height */}
+        <div className="flex shrink-0 items-center justify-between mb-3 bg-white p-3 rounded-2xl shadow-sm border border-gray-100">
            <Link to="/games" className="p-2 hover:bg-gray-50 rounded-full text-gray-400 hover:text-gray-700 transition-colors">
-             <ArrowLeft size={24} />
+             <ArrowLeft size={20} />
            </Link>
            
-           <div className="flex items-center gap-6">
+           <div className="flex items-center gap-4">
              <div className="flex items-center gap-2">
                 <div className="p-1.5 bg-blue-50 rounded-md text-primary">
-                  <Trophy size={18} />
+                  <Trophy size={16} />
                 </div>
-                <span className="font-display font-bold text-xl text-text">{score}</span>
+                <span className="font-display font-bold text-lg text-text">{score}</span>
              </div>
              <div className="flex items-center gap-2">
                 <div className={`p-1.5 rounded-md ${timeLeft < 10 ? 'bg-red-50 text-red-500 animate-pulse' : 'bg-blue-50 text-primary'}`}>
-                  <Timer size={18} />
+                  <Timer size={16} />
                 </div>
-                <span className={`font-display font-bold text-xl tabular-nums ${timeLeft < 10 ? 'text-red-500' : 'text-text'}`}>
+                <span className={`font-display font-bold text-lg tabular-nums ${timeLeft < 10 ? 'text-red-500' : 'text-text'}`}>
                   {formatTime(timeLeft)}
                 </span>
              </div>
            </div>
         </div>
 
-        <div className="text-center mb-6">
-           <h2 className="text-xl md:text-2xl font-display font-bold text-text">Which country has more people?</h2>
+        <div className="text-center mb-3 shrink-0">
+           <h2 className="text-lg md:text-2xl font-display font-bold text-text">Which country has more people?</h2>
         </div>
 
-        {/* Comparison Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8 flex-1">
+        {/* Comparison Grid 
+            - Flex-1 and min-h-0 ensure it fills remaining height without overflow 
+            - grid-cols-1 on mobile (stacked), grid-cols-2 on desktop
+        */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-8 flex-1 min-h-0">
            {[countryA, countryB].map((country) => {
-             const isSelected = result && getNumericValue(country.population) === Math.max(getNumericValue(countryA.population), getNumericValue(countryB.population));
+             const isSelected = result && getNumericValue(country.population) === Math.max(getNumericValue(countryA!.population), getNumericValue(countryB!.population));
              const isLoser = result && !isSelected;
              
              let cardStyle = "bg-white hover:border-primary/50 hover:shadow-lg cursor-pointer transform hover:-translate-y-1";
@@ -199,31 +205,31 @@ export default function PopulationPursuit() {
                <div 
                  key={country.id}
                  onClick={() => handleChoice(country)}
-                 className={`relative rounded-3xl shadow-premium p-8 flex flex-col items-center justify-center transition-all duration-300 border-2 border-transparent ${cardStyle}`}
+                 className={`relative rounded-2xl md:rounded-3xl shadow-premium p-4 md:p-8 flex flex-col items-center justify-center transition-all duration-300 border-2 border-transparent h-full w-full ${cardStyle}`}
                  style={{ WebkitTapHighlightColor: 'transparent' }}
                >
-                 <div className="text-9xl mb-6 drop-shadow-md select-none">{country.flag}</div>
-                 <h3 className="text-3xl font-bold text-text mb-2 text-center">{country.name}</h3>
+                 <div className="text-7xl md:text-9xl mb-2 md:mb-6 drop-shadow-md select-none transform transition-transform group-hover:scale-110">{country.flag}</div>
+                 <h3 className="text-xl md:text-3xl font-bold text-text mb-1 text-center leading-tight">{country.name}</h3>
                  
                  {/* Reveal Population */}
                  <div className={`transition-all duration-300 ${result ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
-                    <div className="flex items-center gap-2 text-gray-500 uppercase font-bold text-xs tracking-widest mb-1">
-                       <Users size={14} /> Population
+                    <div className="flex items-center justify-center gap-1 md:gap-2 text-gray-500 uppercase font-bold text-[10px] md:text-xs tracking-widest mb-0.5 md:mb-1">
+                       <Users size={12} className="md:w-3.5 md:h-3.5" /> Population
                     </div>
-                    <div className="text-4xl font-display font-bold text-primary">
+                    <div className="text-xl md:text-4xl font-display font-bold text-primary text-center">
                        {country.population}
                     </div>
                  </div>
 
                  {/* Success/Fail Icon Overlay */}
                  {result && isSelected && (
-                    <div className="absolute top-4 right-4 bg-green-100 text-green-600 p-2 rounded-full shadow-sm">
-                       <Check size={24} />
+                    <div className="absolute top-2 right-2 md:top-4 md:right-4 bg-green-100 text-green-600 p-1.5 md:p-2 rounded-full shadow-sm animate-in zoom-in">
+                       <Check size={20} className="md:w-6 md:h-6" />
                     </div>
                  )}
                  {result && isLoser && (
-                    <div className="absolute top-4 right-4 bg-red-100 text-red-600 p-2 rounded-full shadow-sm">
-                       <X size={24} />
+                    <div className="absolute top-2 right-2 md:top-4 md:right-4 bg-red-100 text-red-600 p-1.5 md:p-2 rounded-full shadow-sm animate-in zoom-in">
+                       <X size={20} className="md:w-6 md:h-6" />
                     </div>
                  )}
                </div>
