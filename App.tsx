@@ -103,11 +103,8 @@ const PageTransitionHandler: React.FC<{ children: (location: any) => React.React
               'translate-x-0'
             }`}
           >
-             <div className="text-white flex flex-col items-center gap-4">
+             <div className="text-white flex items-center justify-center">
                 <Globe className="w-16 h-16 animate-spin" strokeWidth={1.5} />
-                <span className="font-display font-bold text-xl uppercase tracking-[0.2em] opacity-80">
-                  Exploring
-                </span>
              </div>
           </div>
         </div>

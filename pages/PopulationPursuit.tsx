@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Timer, Trophy, ArrowLeft, RefreshCw, Users, Check, X } from 'lucide-react';
+import { Timer, Trophy, ArrowLeft, Users, Check, X } from 'lucide-react';
 import { MOCK_COUNTRIES } from '../constants';
 import Button from '../components/Button';
 import { Country } from '../types';
@@ -102,43 +102,73 @@ export default function PopulationPursuit() {
   return (
     <div className="h-[100dvh] bg-surface flex flex-col p-4 overflow-hidden font-sans">
       <SEO title="Playing Population Pursuit" description="Choose the larger population." />
-      <div className="max-w-4xl mx-auto w-full flex shrink-0 items-center justify-between mb-3 bg-white p-3 rounded-2xl shadow-sm border border-gray-100 mt-16 md:mt-20">
+      
+      {/* Header - Compacted top margin */}
+      <div className="max-w-4xl mx-auto w-full flex shrink-0 items-center justify-between mb-4 bg-white p-2.5 rounded-2xl shadow-sm border border-gray-100 mt-12 md:mt-16">
          <Link to="/games" className="p-2 hover:bg-gray-50 rounded-full text-gray-400"><ArrowLeft size={20} /></Link>
-         <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest font-sans">Compare Populations</p>
          <div className="flex items-center gap-6">
            <div className="flex items-center gap-2">
-              <Trophy size={18} className="text-primary" /><span className="font-display font-bold text-xl text-text tabular-nums">{score}</span>
+              <Trophy size={18} className="text-primary" /><span className="font-display font-bold text-lg text-text tabular-nums">{score}</span>
            </div>
            <div className={`flex items-center gap-2 px-3 py-1 rounded-xl shadow-inner ${timeLeft < 10 ? 'bg-red-50 text-red-500 animate-pulse' : 'bg-blue-50 text-primary'}`}>
-              <Timer size={18} /><span className="font-display font-bold text-xl tabular-nums min-w-[30px]">{timeLeft}</span>
+              <Timer size={18} />
+              <span className="font-display font-bold text-lg tabular-nums min-w-[30px]">{timeLeft}</span>
            </div>
          </div>
       </div>
 
-      <div className="flex-1 max-w-5xl mx-auto w-full flex flex-col md:flex-row gap-4 min-h-0 pb-6 overflow-hidden">
-           {[countryA, countryB].map((country, idx) => {
-             const other = idx === 0 ? countryB : countryA;
-             const isWinner = getNumericValue(country.population) >= getNumericValue(other!.population);
-             let cardStyle = "bg-white border-2 border-transparent hover:border-primary/40 shadow-sm";
-             if (result) {
-                if (isWinner) cardStyle = "bg-green-50 border-green-500 ring-8 ring-green-500/10 z-10 scale-105";
-                else cardStyle = "bg-gray-50 opacity-40 grayscale scale-95 border-transparent";
-             }
+      <div className="flex-1 max-w-4xl mx-auto w-full flex flex-col min-h-0 pb-4 overflow-hidden">
+           {/* Question - Reduced margin */}
+           <div className="text-center mb-4 shrink-0">
+             <h2 className="text-xl md:text-2xl font-display font-bold text-text tracking-tight animate-in fade-in slide-in-from-top-2 duration-500">
+               Which country has a larger population?
+             </h2>
+           </div>
 
-             return (
-               <div key={country.id} onClick={() => handleChoice(country)} className={`flex-1 relative rounded-[2.5rem] p-6 flex flex-col items-center justify-center transition-all duration-300 cursor-pointer active:bg-gray-50 ${cardStyle}`} style={{ WebkitTapHighlightColor: 'transparent' }}>
-                 <div className="text-7xl md:text-[8rem] mb-2 drop-shadow-xl select-none">{country.flag}</div>
-                 <h3 className="text-2xl md:text-3xl font-display font-bold text-text mb-4 text-center leading-tight px-4 break-words">{country.name}</h3>
-                 <div className={`transition-all duration-500 overflow-hidden flex flex-col items-center ${result ? 'max-h-24 opacity-100' : 'max-h-0 opacity-0'}`}>
-                    <div className="flex items-center gap-1 text-gray-400 uppercase font-bold text-[9px] tracking-widest mb-1 font-sans">Reported Population</div>
-                    <div className="text-3xl md:text-5xl font-display font-bold text-primary tracking-tighter tabular-nums">{country.population}</div>
-                 </div>
-                 {result && isWinner && (
-                    <div className="absolute top-6 right-6 bg-green-500 text-white p-2 rounded-full shadow-lg animate-in zoom-in"><Check size={28} strokeWidth={4} /></div>
-                 )}
-               </div>
-             );
-           })}
+           {/* Cards Container - Gap reduced for tighter vertical space */}
+           <div className="flex-1 flex flex-col md:flex-row gap-4 min-h-0">
+                {[countryA, countryB].map((country, idx) => {
+                  const other = idx === 0 ? countryB : countryA;
+                  const isWinner = getNumericValue(country.population) >= getNumericValue(other!.population);
+                  let cardStyle = "bg-white border-2 border-gray-100 hover:border-primary/40 shadow-sm";
+                  if (result) {
+                      if (isWinner) cardStyle = "bg-green-50 border-green-500 ring-4 ring-green-500/10 z-10 scale-[1.02]";
+                      else cardStyle = "bg-gray-50 opacity-40 grayscale scale-[0.98] border-transparent";
+                  }
+
+                  return (
+                    <div 
+                      key={country.id} 
+                      onClick={() => handleChoice(country)} 
+                      className={`flex-1 relative rounded-[1.5rem] p-4 md:p-6 flex flex-col items-center justify-center transition-all duration-300 cursor-pointer active:bg-gray-50 ${cardStyle}`} 
+                      style={{ WebkitTapHighlightColor: 'transparent' }}
+                    >
+                      {/* Flag - Responsive sizing to prevent overflow */}
+                      <div className="text-6xl md:text-7xl lg:text-[7.5rem] mb-2 drop-shadow-lg select-none transition-transform duration-500 hover:scale-105">
+                        {country.flag}
+                      </div>
+                      
+                      {/* Name - Responsive sizing */}
+                      <h3 className="text-lg md:text-2xl font-display font-bold text-text mb-2 text-center leading-tight px-2 break-words">
+                        {country.name}
+                      </h3>
+
+                      {/* Result Box - Absolute centering or controlled max-height */}
+                      <div className={`transition-all duration-500 overflow-hidden flex flex-col items-center ${result ? 'max-h-24 opacity-100 scale-100 mt-2' : 'max-h-0 opacity-0 scale-95'}`}>
+                          <div className="flex items-center gap-1 text-gray-400 uppercase font-bold text-[9px] tracking-widest mb-0.5 font-sans">Reported Population</div>
+                          <div className="text-2xl md:text-4xl font-display font-bold text-primary tracking-tighter tabular-nums">{country.population}</div>
+                      </div>
+
+                      {/* Floating Indicator */}
+                      {result && isWinner && (
+                          <div className="absolute top-4 right-4 bg-green-500 text-white p-1.5 rounded-full shadow-lg animate-in zoom-in">
+                            <Check size={24} strokeWidth={4} />
+                          </div>
+                      )}
+                    </div>
+                  );
+                })}
+           </div>
       </div>
     </div>
   );
