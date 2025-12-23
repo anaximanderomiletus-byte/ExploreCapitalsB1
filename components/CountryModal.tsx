@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState, useMemo } from 'react';
 import { MapPin, Map } from 'lucide-react';
 import { Country } from '../types';
@@ -42,8 +41,8 @@ const CountryModal: React.FC<CountryModalProps> = ({ country, onClose }) => {
          - Short Screen (Mobile Landscape): Resizes to fit viewport w-[85vw] h-[90vh]
          - Tablet/Desktop: Fixed w-[460px] h-[660px] (overrides landscape sizing if screen is tall enough)
       */}
-      <div className="relative bg-white rounded-xl shadow-2xl flex flex-col animate-in fade-in zoom-in duration-300 border-[6px] border-white ring-1 ring-gray-300 mx-auto overflow-hidden 
-        w-[360px] h-[640px]
+      <div className="relative bg-white rounded-xl shadow-2xl flex flex-col border-[6px] border-white ring-1 ring-gray-300 mx-auto overflow-hidden 
+        w-[360px] h-[640px] max-h-[95vh]
         [@media(max-height:620px)]:w-[85vw] [@media(max-height:620px)]:h-[90vh] [@media(max-height:620px)]:max-w-[700px]
         md:w-[460px] md:h-[660px]
       ">
@@ -58,7 +57,7 @@ const CountryModal: React.FC<CountryModalProps> = ({ country, onClose }) => {
             - Landscape (Short): Grid (Left Col: Image+Footer, Right Col: Body)
         */}
         <div className="w-full h-full border border-gray-300 border-t-0 bg-white relative z-10 overflow-hidden rounded-b-xl 
-          flex flex-col 
+          flex flex-col flex-1 min-h-0
           [@media(max-height:620px)]:grid [@media(max-height:620px)]:grid-cols-[40%_60%] [@media(max-height:620px)]:grid-rows-[1fr_auto]
         ">
 
@@ -66,17 +65,16 @@ const CountryModal: React.FC<CountryModalProps> = ({ country, onClose }) => {
                 - Portrait: Height 35%, Width 100%
                 - Landscape: Top Left Cell (Row 1, Col 1), fills remaining vertical space above footer
             */}
-            <div className="bg-slate-50 relative border-b border-gray-200 overflow-hidden shrink-0 p-4 flex items-center justify-center
+            <div className="relative overflow-hidden shrink-0 p-4 flex items-center justify-center
               h-[35%] w-full
               [@media(max-height:620px)]:h-full [@media(max-height:620px)]:w-full 
               [@media(max-height:620px)]:col-start-1 [@media(max-height:620px)]:row-start-1
-              [@media(max-height:620px)]:border-r
             ">
               {!imgError ? (
                 <img 
                     src={`https://flagcdn.com/w640/${countryCode}.png`}
                     alt={`${country.name} Flag`}
-                    className="w-full h-full object-contain drop-shadow-md cursor-pointer select-none hover:scale-105 transition-transform duration-300"
+                    className="w-full h-full object-contain cursor-pointer select-none"
                     onError={() => setImgError(true)}
                 />
               ) : (
@@ -139,10 +137,10 @@ const CountryModal: React.FC<CountryModalProps> = ({ country, onClose }) => {
               </div>
 
               {/* Description / Bio */}
-              <div className="flex flex-col min-h-0 shrink flex-1">
-                <div className="text-[9px] text-gray-400 uppercase font-bold mb-1 ml-1">Field Report</div>
-                <div className="bg-white p-3 rounded-lg border border-gray-200 shadow-sm overflow-hidden relative group flex-1">
-                    <div className="absolute inset-0 overflow-y-auto custom-scrollbar p-3">
+              <div className="flex flex-col min-h-0 flex-1 relative">
+                <div className="text-[9px] text-gray-400 uppercase font-bold mb-1 ml-1 shrink-0">Field Report</div>
+                <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden flex-1 flex flex-col">
+                    <div className="overflow-y-auto custom-scrollbar p-3 flex-1">
                         <p className="text-[10px] md:text-[11px] text-gray-600 leading-relaxed italic font-serif">
                           "{country.description}"
                         </p>

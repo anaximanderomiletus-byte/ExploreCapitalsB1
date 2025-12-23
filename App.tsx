@@ -15,6 +15,8 @@ import KnowYourNeighbor from './pages/KnowYourNeighbor';
 import PopulationPursuit from './pages/PopulationPursuit';
 import GlobalDetective from './pages/GlobalDetective';
 import CapitalConnection from './pages/CapitalConnection';
+import RegionRoundup from './pages/RegionRoundup';
+import LandmarkLegend from './pages/LandmarkLegend';
 import CountryExploration from './pages/CountryExploration';
 import Footer from './components/Footer';
 import { LayoutProvider, useLayout } from './context/LayoutContext';
@@ -130,6 +132,8 @@ const AppContent: React.FC = () => {
               <Route path="/games/population-pursuit" element={<PopulationPursuit />} />
               <Route path="/games/global-detective" element={<GlobalDetective />} />
               <Route path="/games/capital-connection" element={<CapitalConnection />} />
+              <Route path="/games/region-roundup" element={<RegionRoundup />} />
+              <Route path="/games/landmark-legend" element={<LandmarkLegend />} />
               <Route path="/directory" element={<Directory />} />
               <Route path="/map" element={<MapPage />} />
               <Route path="/about" element={<About />} />

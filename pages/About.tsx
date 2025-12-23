@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import { Globe, Target, Award, Compass, ArrowRight, ShieldCheck, Microscope } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -105,7 +104,7 @@ const About: React.FC = () => {
                 <h2 className="text-3xl md:text-5xl font-display font-black mb-10 tracking-tight">Begin Your Path to Global Mastery</h2>
                 <div className="flex flex-col sm:flex-row gap-4 justify-center items-stretch">
                     <Link to="/map" title="View Interactive World Map" className="flex">
-                      <Button variant="secondary" size="lg" className="h-16 px-14 text-xl w-full">
+                      <Button variant="secondary" size="lg" className="h-16 px-10 md:px-14 text-lg md:text-xl w-full">
                         Launch Map
                       </Button>
                     </Link>
@@ -113,9 +112,9 @@ const About: React.FC = () => {
                       <Button 
                         variant="outline" 
                         size="lg" 
-                        className="h-16 px-14 text-xl !border-white !text-white shadow-[0_4px_0_rgba(255,255,255,0.4)] hover:bg-white/10 active:shadow-none active:translate-y-[4px] w-full"
+                        className="h-16 px-6 md:px-14 text-lg md:text-xl !border-white !text-white shadow-[0_4px_0_rgba(255,255,255,0.4)] hover:bg-white/10 active:shadow-none active:translate-y-[4px] w-full flex items-center justify-center whitespace-nowrap"
                       >
-                        Start World Quizzes <ArrowRight size={20} className="ml-2" />
+                        Start World Quizzes <ArrowRight size={20} className="ml-2 shrink-0" />
                       </Button>
                     </Link>
                 </div>

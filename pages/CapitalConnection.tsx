@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Timer, Trophy, ArrowLeft, RefreshCw, Network, Building2 } from 'lucide-react';
@@ -184,9 +183,9 @@ export default function CapitalConnection() {
           {cards.map(card => {
               let cardStyle = "bg-white border-2 border-gray-200 text-text active:bg-gray-50";
               if (card.isMatched) {
-                  cardStyle = "bg-green-50 border-4 border-[#22c55e] opacity-60 cursor-default";
+                  cardStyle = "bg-green-50 border-2 border-[#22c55e] opacity-60 cursor-default";
               } else if (card.isWrong) {
-                  cardStyle = "bg-red-50 border-4 border-red-600 text-red-800 animate-pulse";
+                  cardStyle = "bg-red-50 border-2 border-red-600 text-red-800 animate-pulse";
               } else if (card.isSelected) {
                   cardStyle = "bg-blue-50 border-2 border-primary text-primary";
               }
@@ -196,7 +195,7 @@ export default function CapitalConnection() {
                       key={card.id}
                       onClick={() => handleCardClick(card.id)}
                       disabled={card.isMatched}
-                      className={`h-28 md:h-36 rounded-xl p-2 flex flex-col items-center justify-center text-center transition-all duration-75 ${cardStyle}`}
+                      className={`h-28 md:h-36 rounded-xl p-2 flex flex-col items-center justify-center text-center transition-all duration-500 ${cardStyle}`}
                       style={{ WebkitTapHighlightColor: 'transparent' }}
                   >
                       <div className={`mb-1 transform scale-90 ${card.type === 'country' ? '' : 'opacity-50'}`}>

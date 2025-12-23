@@ -139,6 +139,24 @@ const Games: React.FC = () => {
                   </Link>
                 )}
 
+                {/* Region Roundup Link */}
+                {game.status === 'active' && game.id === '8' && (
+                  <Link to="/games/region-roundup">
+                    <Button variant="primary" className="w-full">
+                      <span className="flex items-center gap-2">Play Now <Play size={16} fill="currentColor" /></span>
+                    </Button>
+                  </Link>
+                )}
+
+                {/* Landmark Legend Link */}
+                {game.status === 'active' && game.id === '9' && (
+                  <Link to="/games/landmark-legend">
+                    <Button variant="primary" className="w-full">
+                      <span className="flex items-center gap-2">Play Now <Play size={16} fill="currentColor" /></span>
+                    </Button>
+                  </Link>
+                )}
+
                 {game.status !== 'active' && (
                   <Button 
                     variant="secondary" 

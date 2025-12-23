@@ -1,23 +1,25 @@
 
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Timer, Trophy, ArrowLeft, RefreshCw, Globe2, Check, X } from 'lucide-react';
+import { Timer, Trophy, ArrowLeft, Globe, Check, X } from 'lucide-react';
 import { MOCK_COUNTRIES } from '../constants';
 import Button from '../components/Button';
 import { Country } from '../types';
 import SEO from '../components/SEO';
 
+const REGIONS = ['Africa', 'Asia', 'Europe', 'North America', 'South America', 'Oceania'];
+
 const shuffle = <T,>(array: T[]): T[] => {
   return [...array].sort(() => Math.random() - 0.5);
 };
 
-export default function CapitalQuiz() {
+export default function RegionRoundup() {
   const [gameState, setGameState] = useState<'start' | 'playing' | 'finished'>('start');
   const [score, setScore] = useState(0);
   const [timeLeft, setTimeLeft] = useState(60);
   const [shuffledCountries, setShuffledCountries] = useState<Country[]>([]);
   const [questionIndex, setQuestionIndex] = useState(0);
-  const [currentQuestion, setCurrentQuestion] = useState<{ country: Country; options: Country[] } | null>(null);
+  const [currentCountry, setCurrentCountry] = useState<Country | null>(null);
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   
   useEffect(() => {
@@ -33,15 +35,7 @@ export default function CapitalQuiz() {
   }, [gameState, timeLeft]);
 
   const setupQuestion = (target: Country) => {
-    const distractors: Country[] = [];
-    while (distractors.length < 3) {
-      const c = MOCK_COUNTRIES[Math.floor(Math.random() * MOCK_COUNTRIES.length)];
-      if (c.id !== target.id && !distractors.find(d => d.id === c.id)) {
-        distractors.push(c);
-      }
-    }
-    const options = shuffle([target, ...distractors]);
-    setCurrentQuestion({ country: target, options });
+    setCurrentCountry(target);
     setSelectedAnswer(null);
   };
 
@@ -57,10 +51,10 @@ export default function CapitalQuiz() {
     }
   };
 
-  const handleAnswer = (capital: string) => {
-    if (selectedAnswer || !currentQuestion) return;
-    setSelectedAnswer(capital);
-    const correct = capital === currentQuestion.country.capital;
+  const handleAnswer = (region: string) => {
+    if (selectedAnswer || !currentCountry) return;
+    setSelectedAnswer(region);
+    const correct = region === currentCountry.region;
     if (correct) setScore(s => s + 10);
     setTimeout(() => {
       const nextIndex = questionIndex + 1;
@@ -75,14 +69,14 @@ export default function CapitalQuiz() {
 
   if (gameState === 'start') {
     return (
-      <div className="h-[100dvh] bg-surface flex items-center justify-center px-4 overflow-hidden">
-        <SEO title="Capital Quiz" description="Identify the world capitals in 60 seconds." />
+      <div className="h-[100dvh] bg-surface flex items-center justify-center px-4 overflow-hidden font-sans">
+        <SEO title="Region Roundup" description="Sort the countries into continents." />
         <div className="max-w-md w-full bg-white rounded-3xl shadow-premium p-8 text-center border border-gray-100 animate-in fade-in zoom-in duration-300">
           <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-4 text-primary">
-            <Globe2 size={32} />
+            <Globe size={32} />
           </div>
-          <h1 className="text-3xl font-display font-bold text-text mb-2">Capital Quiz</h1>
-          <p className="text-gray-500 text-sm mb-8 font-sans">Identify the world capitals in 60 seconds.</p>
+          <h1 className="text-3xl font-display font-bold text-text mb-2">Region Roundup</h1>
+          <p className="text-gray-500 text-sm mb-8 font-sans">Categorize each country into its correct continent as fast as you can.</p>
           <div className="flex flex-col gap-6">
             <Button onClick={startGame} size="lg" className="w-full h-14">Play</Button>
             <Link to="/games" className="w-full">
@@ -96,7 +90,7 @@ export default function CapitalQuiz() {
 
   if (gameState === 'finished') {
     return (
-      <div className="h-[100dvh] bg-surface flex items-center justify-center px-4 overflow-hidden">
+      <div className="h-[100dvh] bg-surface flex items-center justify-center px-4 overflow-hidden font-sans">
         <div className="max-w-md w-full bg-white rounded-3xl shadow-premium p-10 text-center border border-gray-100 animate-in fade-in zoom-in duration-300">
           <div className="w-16 h-16 bg-accent/10 rounded-full flex items-center justify-center mx-auto mb-4 text-accent"><Trophy size={32} /></div>
           <h1 className="text-2xl font-display font-bold text-text mb-1">Time's Up!</h1>
@@ -112,11 +106,10 @@ export default function CapitalQuiz() {
     );
   }
 
-  if (!currentQuestion) return null;
+  if (!currentCountry) return null;
 
   return (
     <div className="h-[100dvh] bg-surface flex flex-col p-4 overflow-hidden font-sans">
-      <SEO title="Playing Capital Quiz" description="Select the correct capital city." />
       <div className="max-w-2xl mx-auto w-full flex shrink-0 items-center justify-between mb-3 bg-white p-3 rounded-2xl shadow-sm border border-gray-100 mt-16 md:mt-20">
          <Link to="/games" className="p-2 hover:bg-gray-50 rounded-full text-gray-400 transition-colors duration-75">
            <ArrowLeft size={20} />
@@ -135,17 +128,17 @@ export default function CapitalQuiz() {
 
       <div className="flex-1 max-w-2xl mx-auto w-full flex flex-col min-h-0 bg-white rounded-3xl border border-gray-100 p-6 overflow-hidden relative">
          <div className="flex flex-col items-center justify-center flex-1 min-h-0 pb-4 overflow-hidden">
-            <span className="text-7xl md:text-8xl mb-2 drop-shadow-sm select-none">{currentQuestion.country.flag}</span>
-            <p className="text-gray-400 text-[10px] font-bold uppercase tracking-widest mb-1 font-sans">Capital of</p>
-            <h3 className="text-2xl md:text-4xl font-display font-bold text-text text-center px-2 leading-tight max-w-full break-words">
-              {currentQuestion.country.name}
+            <span className="text-8xl md:text-9xl mb-4 drop-shadow-sm select-none">{currentCountry.flag}</span>
+            <h3 className="text-3xl md:text-5xl font-display font-bold text-text text-center px-2 leading-tight max-w-full break-words">
+              {currentCountry.name}
             </h3>
+            <p className="text-gray-400 text-xs font-bold uppercase tracking-widest mt-4 font-sans">Select Continent</p>
          </div>
 
-         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 shrink-0">
-            {currentQuestion.options.map((option) => {
-              const isSelected = selectedAnswer === option.capital;
-              const isCorrect = option.capital === currentQuestion.country.capital;
+         <div className="grid grid-cols-2 gap-3 shrink-0">
+            {REGIONS.map((region) => {
+              const isSelected = selectedAnswer === region;
+              const isCorrect = region === currentCountry.region;
               let stateStyles = "bg-white border-2 border-gray-200 text-text active:bg-gray-50";
               if (selectedAnswer) {
                 if (isCorrect) stateStyles = "bg-green-50 border-2 border-[#22c55e] text-green-900";
@@ -155,15 +148,15 @@ export default function CapitalQuiz() {
 
               return (
                 <button
-                  key={option.id}
-                  onClick={() => handleAnswer(option.capital)}
+                  key={region}
+                  onClick={() => handleAnswer(region)}
                   disabled={!!selectedAnswer}
-                  className={`relative p-5 rounded-2xl font-display font-bold text-lg flex items-center justify-center min-h-[72px] transition-all ${selectedAnswer ? 'duration-500' : 'duration-0'} ${stateStyles}`}
+                  className={`relative p-4 rounded-2xl font-display font-bold text-base flex items-center justify-center min-h-[64px] transition-all ${selectedAnswer ? 'duration-500' : 'duration-0'} ${stateStyles}`}
                   style={{ WebkitTapHighlightColor: 'transparent' }}
                 >
-                  <span className="px-2 text-center leading-tight">{option.capital}</span>
-                  {selectedAnswer && isCorrect && <Check size={20} className="absolute right-4 text-[#22c55e]" />}
-                  {selectedAnswer && isSelected && !isCorrect && <X size={20} className="absolute right-4 text-red-600" />}
+                  <span className="px-2 text-center leading-tight">{region}</span>
+                  {selectedAnswer && isCorrect && <Check size={18} className="absolute right-3 text-[#22c55e]" />}
+                  {selectedAnswer && isSelected && !isCorrect && <X size={18} className="absolute right-3 text-red-600" />}
                 </button>
               );
             })}

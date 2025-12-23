@@ -1,5 +1,4 @@
 
-
 import { Country, Game } from './types';
 
 export const MOCK_COUNTRIES: Country[] = [
@@ -249,5 +248,19 @@ export const GAMES: Game[] = [
     image: 'https://anaximanderomiletus-byte.github.io/Explore-Capitals-PNGs/0-GAMES/capital-connection.png',
     status: 'active',
     description: 'Match countries to their capitals in a race against time.'
+  },
+  {
+    id: '8',
+    title: 'Region Roundup',
+    image: 'https://anaximanderomiletus-byte.github.io/Explore-Capitals-PNGs/0-GAMES/region-roundup.png',
+    status: 'active',
+    description: 'Sort countries into their correct continents.'
+  },
+  {
+    id: '9',
+    title: 'Landmark Legend',
+    image: 'https://anaximanderomiletus-byte.github.io/Explore-Capitals-PNGs/0-GAMES/landmark-legend.png',
+    status: 'active',
+    description: 'Identify the country from a famous landmark image.'
   }
 ];

@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useParams, Link, useNavigate } from 'react-router-dom';
@@ -681,7 +680,7 @@ const CountryExploration: React.FC = () => {
                              stateStyles = "bg-green-50 border-green-500 text-green-900 ring-1 ring-green-500 shadow-none";
                              icon = <CheckCircle2 size={20} className="text-green-600" />;
                            } else {
-                             stateStyles = "bg-red-50 border-red-500 text-red-900 ring-1 ring-red-500 shadow-none";
+                             stateStyles = "bg-red-50 border-red-600 text-red-900 ring-1 ring-red-600 shadow-none";
                              icon = <AlertCircle size={20} className="text-red-600" />;
                            }
                          } else if (selectedOption && option === currentQuestion.answer) {
@@ -697,7 +696,7 @@ const CountryExploration: React.FC = () => {
                              onClick={() => handleQuizAnswer(option)}
                              disabled={!!selectedOption}
                              // Removed line-clamp-1 to allow text wrapping, added leading-snug
-                             className={`w-full text-left px-5 py-3 md:py-4 rounded-xl border-2 transition-all duration-75 font-medium text-base leading-snug flex justify-between items-center ${stateStyles}`}
+                             className={`w-full text-left px-5 py-3 md:py-4 rounded-xl border-2 transition-all duration-500 font-medium text-base leading-snug flex justify-between items-center ${stateStyles}`}
                              style={{ WebkitTapHighlightColor: 'transparent' }}
                            >
                              <span className="leading-snug">{option}</span>
@@ -710,7 +709,7 @@ const CountryExploration: React.FC = () => {
               </div>
            </div>
 
-           <div className={`fixed bottom-0 left-0 right-0 z-50 bg-white transition-all duration-300 cubic-bezier(0.32,0.72,0,1) border-t-4 ${bottomSheetClasses} ${isCorrect ? 'border-green-500' : 'border-red-500'}`}>
+           <div className={`fixed bottom-0 left-0 right-0 z-50 bg-white transition-all duration-300 cubic-bezier(0.32,0.72,0,1) border-t-2 ${bottomSheetClasses} ${isCorrect ? 'border-green-500' : 'border-red-600'}`}>
               <div className="max-w-4xl mx-auto p-6 md:p-8 flex flex-col md:flex-row items-center justify-between gap-6">
                   <div className="flex-1 text-center md:text-left">
                       {selectedOption && (

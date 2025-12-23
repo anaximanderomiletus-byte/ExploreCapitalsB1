@@ -143,16 +143,16 @@ export default function FlagFrenzy() {
       <div className="flex-1 max-w-2xl mx-auto w-full flex flex-col min-h-0 bg-white rounded-3xl border border-gray-100 p-6 md:p-10 overflow-hidden relative">
          <div className="flex flex-col items-center justify-center flex-1 min-h-0 pb-4 overflow-hidden">
             <p className="text-gray-400 text-[10px] font-bold uppercase tracking-widest mb-4 shrink-0">Analyze National Flag</p>
-            <div className="flex-1 flex items-center justify-center overflow-hidden w-full min-h-[150px] relative">
+            <div className="flex-1 flex items-center justify-center overflow-hidden w-full min-h-[120px] max-h-[180px] relative">
               {!imgError ? (
                 <img 
                   src={`https://flagcdn.com/w640/${currentCountryCode}.png`}
                   alt="Target Flag"
-                  className="max-w-full max-h-[180px] object-contain animate-in zoom-in duration-500"
+                  className="max-w-full max-h-[120px] md:max-h-[150px] object-contain"
                   onError={() => setImgError(true)}
                 />
               ) : (
-                <span className="text-8xl md:text-[8rem] select-none transform transition-transform duration-75 animate-in zoom-in duration-500">
+                <span className="text-6xl md:text-8xl select-none">
                   {currentQuestion.country.flag}
                 </span>
               )}
@@ -164,12 +164,17 @@ export default function FlagFrenzy() {
               const isCorrect = option.name === currentQuestion.country.name;
               let stateStyles = "bg-white border-2 border-gray-200 text-text active:bg-gray-50";
               if (selectedAnswer) {
-                if (isCorrect) stateStyles = "bg-green-50 border-4 border-[#22c55e] text-green-900";
-                else if (isSelected) stateStyles = "bg-red-50 border-4 border-red-600 text-red-900";
+                if (isCorrect) stateStyles = "bg-green-50 border-2 border-[#22c55e] text-green-900";
+                else if (isSelected) stateStyles = "bg-red-50 border-2 border-red-600 text-red-900";
                 else stateStyles = "bg-gray-50 border-2 border-gray-400 text-gray-300 opacity-40";
               }
               return (
-                <button key={option.id} onClick={() => handleAnswer(option.name)} disabled={!!selectedAnswer} className={`relative p-5 rounded-2xl font-display font-bold text-lg transition-all duration-75 flex items-center justify-center min-h-[72px] ${stateStyles}`}>
+                <button 
+                  key={option.id} 
+                  onClick={() => handleAnswer(option.name)} 
+                  disabled={!!selectedAnswer} 
+                  className={`relative p-5 rounded-2xl font-display font-bold text-lg flex items-center justify-center min-h-[72px] transition-all ${selectedAnswer ? 'duration-500' : 'duration-0'} ${stateStyles}`}
+                >
                   <span className="px-2 text-center truncate leading-tight">{option.name}</span>
                   {selectedAnswer && isCorrect && <Check size={20} className="absolute right-4 text-[#22c55e]" />}
                   {selectedAnswer && isSelected && !isCorrect && <X size={20} className="absolute right-4 text-red-600" />}

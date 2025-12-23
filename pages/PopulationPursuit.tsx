@@ -15,6 +15,13 @@ const getNumericValue = (str: string) => {
   return value;
 };
 
+// Helper to calculate ISO code from emoji flag
+const getCountryCode = (emoji: string) => {
+    return Array.from(emoji)
+        .map(char => String.fromCharCode(char.codePointAt(0)! - 127397).toLowerCase())
+        .join('');
+};
+
 export default function PopulationPursuit() {
   const [gameState, setGameState] = useState<'start' | 'playing' | 'finished'>('start');
   const [score, setScore] = useState(0);
@@ -22,6 +29,9 @@ export default function PopulationPursuit() {
   const [countryA, setCountryA] = useState<Country | null>(null);
   const [countryB, setCountryB] = useState<Country | null>(null);
   const [result, setResult] = useState<'correct' | 'incorrect' | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [imgErrorA, setImgErrorA] = useState(false);
+  const [imgErrorB, setImgErrorB] = useState(false);
 
   useEffect(() => {
     let timer: any;
@@ -37,6 +47,9 @@ export default function PopulationPursuit() {
 
   const generateRound = () => {
     setResult(null);
+    setSelectedId(null);
+    setImgErrorA(false);
+    setImgErrorB(false);
     const idxA = Math.floor(Math.random() * MOCK_COUNTRIES.length);
     let idxB = Math.floor(Math.random() * MOCK_COUNTRIES.length);
     while (idxB === idxA) idxB = Math.floor(Math.random() * MOCK_COUNTRIES.length);
@@ -53,12 +66,16 @@ export default function PopulationPursuit() {
 
   const handleChoice = (selected: Country) => {
     if (result || !countryA || !countryB) return;
+    
+    setSelectedId(selected.id);
     const popA = getNumericValue(countryA.population);
     const popB = getNumericValue(countryB.population);
     const selectedPop = getNumericValue(selected.population);
     const isCorrect = selectedPop === Math.max(popA, popB);
+    
     setResult(isCorrect ? 'correct' : 'incorrect');
     if (isCorrect) setScore(s => s + 10);
+    
     setTimeout(generateRound, 1500);
   };
 
@@ -83,7 +100,7 @@ export default function PopulationPursuit() {
     return (
       <div className="h-[100dvh] bg-surface flex items-center justify-center px-4 overflow-hidden font-sans">
         <div className="max-w-md w-full bg-white rounded-3xl shadow-premium p-10 text-center border border-gray-100 animate-in fade-in zoom-in duration-500">
-          <div className="w-16 h-16 bg-accent/10 rounded-full flex items-center justify-center mx-auto mb-6 text-accent"><Trophy size={32} /></div>
+          <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6 text-primary"><Trophy size={32} /></div>
           <h1 className="text-2xl font-display font-bold text-text mb-1">Time's Up!</h1>
           <div className="text-6xl font-display font-bold text-primary mb-10">{score}</div>
           <div className="flex flex-col gap-6">
@@ -118,7 +135,7 @@ export default function PopulationPursuit() {
 
       <div className="flex-1 max-w-4xl mx-auto w-full flex flex-col min-h-0 pb-4 overflow-visible">
            <div className="text-center mb-4 shrink-0">
-             <h2 className="text-xl md:text-2xl font-display font-bold text-text tracking-tight animate-in fade-in slide-in-from-top-2 duration-500">
+             <h2 className="text-xl md:text-2xl font-display font-bold text-text tracking-tight">
                Which country has a larger population?
              </h2>
            </div>
@@ -127,13 +144,21 @@ export default function PopulationPursuit() {
                 {[countryA, countryB].map((country, idx) => {
                   const other = idx === 0 ? countryB : countryA;
                   const isWinner = getNumericValue(country.population) >= getNumericValue(other!.population);
+                  const isA = idx === 0;
+                  const hasError = isA ? imgErrorA : imgErrorB;
+                  const setHasError = isA ? setImgErrorA : setImgErrorB;
+                  const code = getCountryCode(country.flag);
+                  const isSelected = selectedId === country.id;
                   
-                  // Unified border approach: use a single border line, elevated z-index for scaling
                   let cardStyle = "bg-white border-2 border-gray-200 hover:border-primary/40 shadow-sm z-0";
+                  let titleStyle = "text-text";
                   
                   if (result) {
                       if (isWinner) {
-                          cardStyle = "bg-green-50 border-4 border-[#22c55e] z-20 scale-[1.02] shadow-lg ring-0";
+                          cardStyle = "bg-green-50 border-2 border-[#22c55e] z-20 scale-[1.02] shadow-lg ring-0";
+                      } else if (isSelected) {
+                          cardStyle = "bg-red-50 border-2 border-red-600 z-10 scale-[0.98] shadow-md";
+                          titleStyle = "text-red-900";
                       } else {
                           cardStyle = "bg-gray-50 opacity-40 grayscale scale-[0.98] border-2 border-gray-300 z-0";
                       }
@@ -143,25 +168,44 @@ export default function PopulationPursuit() {
                     <div 
                       key={country.id} 
                       onClick={() => handleChoice(country)} 
-                      className={`flex-1 relative rounded-[1.5rem] p-4 md:p-6 flex flex-col items-center justify-center transition-all duration-75 cursor-pointer active:bg-gray-50 ${cardStyle}`} 
+                      className={`flex-1 relative rounded-[1.5rem] p-4 md:p-6 flex flex-col items-center justify-center transition-all cursor-pointer active:bg-gray-50 ${result ? 'duration-500' : 'duration-0'} ${cardStyle}`} 
                       style={{ WebkitTapHighlightColor: 'transparent' }}
                     >
-                      <div className="text-6xl md:text-7xl lg:text-[7.5rem] mb-2 select-none transition-transform duration-75 hover:scale-105">
-                        {country.flag}
+                      <div className="mb-4 flex items-center justify-center min-h-[80px] md:min-h-[120px]">
+                        {!hasError ? (
+                          <div className="w-24 h-16 md:w-32 md:h-20 lg:w-40 lg:h-28 overflow-hidden flex items-center justify-center">
+                            <img 
+                              src={`https://flagcdn.com/w320/${code}.png`}
+                              alt={`${country.name} flag`}
+                              className="w-full h-full object-contain"
+                              onError={() => setHasError(true)}
+                            />
+                          </div>
+                        ) : (
+                          <div className="text-6xl md:text-7xl lg:text-[7.5rem] select-none">
+                            {country.flag}
+                          </div>
+                        )}
                       </div>
                       
-                      <h3 className="text-lg md:text-2xl font-display font-bold text-text mb-2 text-center leading-tight px-2 break-words">
+                      <h3 className={`text-lg md:text-2xl font-display font-bold mb-2 text-center leading-tight px-2 break-words transition-colors ${titleStyle}`}>
                         {country.name}
                       </h3>
 
-                      <div className={`transition-all duration-300 overflow-hidden flex flex-col items-center ${result ? 'max-h-24 opacity-100 scale-100 mt-2' : 'max-h-0 opacity-0 scale-95'}`}>
+                      <div className={`transition-all ${result ? 'duration-300 max-h-24 opacity-100 scale-100 mt-2' : 'duration-0 max-h-0 opacity-0 scale-95'}`}>
                           <div className="flex items-center gap-1 text-gray-400 uppercase font-bold text-[9px] tracking-widest mb-0.5 font-sans">Reported Population</div>
-                          <div className="text-2xl md:text-4xl font-display font-bold text-primary tracking-tighter tabular-nums">{country.population}</div>
+                          <div className={`text-2xl md:text-4xl font-display font-bold tracking-tighter tabular-nums ${isWinner ? 'text-[#22c55e]' : 'text-red-600'}`}>{country.population}</div>
                       </div>
 
                       {result && isWinner && (
                           <div className="absolute top-4 right-4 bg-[#22c55e] text-white p-1.5 rounded-full shadow-lg animate-in zoom-in duration-75">
                             <Check size={24} strokeWidth={4} />
+                          </div>
+                      )}
+
+                      {result && isSelected && !isWinner && (
+                          <div className="absolute top-4 right-4 bg-red-600 text-white p-1.5 rounded-full shadow-lg animate-in zoom-in duration-75">
+                            <X size={24} strokeWidth={4} />
                           </div>
                       )}
                     </div>

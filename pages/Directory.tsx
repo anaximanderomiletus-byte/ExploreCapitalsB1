@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useEffect } from 'react';
 import { Search, ArrowUp, ArrowDown, ArrowUpDown, ChevronRight, Maximize2, Banknote, Languages } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
@@ -60,12 +59,12 @@ const FlagIcon = ({ country, size = 'small' }: { country: Country, size?: 'small
   }
 
   return (
-    <div className={`flex items-center justify-center select-none overflow-hidden rounded-[4px] shadow-sm border border-gray-200 bg-gray-100 shrink-0 ${dims} transform transition-transform hover:scale-105`}>
+    <div className={`flex items-center justify-center select-none overflow-hidden shrink-0 ${dims}`}>
       <img 
         src={`https://flagcdn.com/w80/${code}.png`}
         srcSet={`https://flagcdn.com/w160/${code}.png 2x`}
         alt={`${country.name} Flag`}
-        className="w-full h-full object-cover"
+        className="w-full h-full object-contain"
         loading="lazy"
       />
     </div>

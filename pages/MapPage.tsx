@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef, useState } from 'react';
 import { Filter, Compass, Map as MapIcon, Search, X, Plus, Minus, ChevronRight } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
@@ -45,8 +44,8 @@ const MapPage: React.FC = () => {
     return `
       <div class="flex flex-col min-w-[240px] font-sans p-5 bg-white">
         <div class="flex items-center gap-3 mb-2">
-           <div class="w-10 h-7 shrink-0 overflow-hidden rounded shadow-sm border border-gray-200">
-             <img src="${flagUrl}" alt="${country.name} Flag" class="w-full h-full object-cover" />
+           <div class="w-10 h-7 shrink-0 overflow-hidden">
+             <img src="${flagUrl}" alt="${country.name} Flag" class="w-full h-full object-contain" />
            </div>
            <h3 class="font-display font-bold text-lg text-gray-800 leading-tight m-0">${country.name}</h3>
         </div>
@@ -356,8 +355,8 @@ const MapPage: React.FC = () => {
                                             onMouseEnter={() => setSelectedIndex(index)}
                                             className={`w-full text-left px-4 py-3 flex items-center gap-3 transition-colors border-b border-gray-100 last:border-none ${index === selectedIndex ? 'bg-blue-50' : 'hover:bg-blue-50/50'}`}
                                         >
-                                            <div className="w-8 h-6 shrink-0 overflow-hidden rounded shadow-sm border border-gray-100">
-                                              <img src={`https://flagcdn.com/w40/${flagCode}.png`} alt="" className="w-full h-full object-cover" />
+                                            <div className="w-8 h-6 shrink-0 overflow-hidden">
+                                              <img src={`https://flagcdn.com/w40/${flagCode}.png`} alt="" className="w-full h-full object-contain" />
                                             </div>
                                             <div>
                                                 <p className="text-sm font-bold text-text">{country.name}</p>
@@ -493,8 +492,8 @@ const MapPage: React.FC = () => {
                                                 onClick={() => handleResultClick(country)}
                                                 className="w-full text-left px-4 py-3 flex items-center gap-3 transition-colors border-b border-gray-100 last:border-none active:bg-blue-50"
                                             >
-                                                <div className="w-8 h-6 shrink-0 overflow-hidden rounded shadow-sm border border-gray-100">
-                                                  <img src={`https://flagcdn.com/w40/${flagCode}.png`} alt="" className="w-full h-full object-cover" />
+                                                <div className="w-8 h-6 shrink-0 overflow-hidden">
+                                                  <img src={`https://flagcdn.com/w40/${flagCode}.png`} alt="" className="w-full h-full object-contain" />
                                                 </div>
                                                 <div>
                                                     <p className="text-sm font-bold text-text">{country.name}</p>

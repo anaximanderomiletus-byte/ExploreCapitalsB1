@@ -55,7 +55,6 @@ export default function KnowYourNeighbor() {
     setFeedback(null);
 
     const neighbors = target.borders || [];
-    // Fixed typo: removed space in variable name 'potentialDistractors' to fix compilation and type errors.
     const potentialDistractors = MOCK_COUNTRIES.filter(c => 
       c.name !== target.name && !neighbors.includes(c.name)
     ).map(c => c.name);
@@ -176,13 +175,13 @@ export default function KnowYourNeighbor() {
 
                  if (roundResult) {
                     if (isActualNeighbor && isSelected) {
-                       btnStyle = "bg-green-50 border-4 border-[#22c55e] text-green-800";
+                       btnStyle = "bg-green-50 border-2 border-[#22c55e] text-green-800";
                        icon = <Check size={14} className="text-[#22c55e]" />;
                     } else if (isActualNeighbor && !isSelected) {
-                       btnStyle = "bg-amber-50 border-4 border-amber-500 text-amber-900";
+                       btnStyle = "bg-amber-50 border-2 border-amber-500 text-amber-900";
                        icon = <AlertCircle size={14} className="text-amber-600" />;
                     } else if (isSelected && !isActualNeighbor) {
-                       btnStyle = "bg-red-50 border-4 border-red-600 text-red-800";
+                       btnStyle = "bg-red-50 border-2 border-red-600 text-red-800";
                        icon = <X size={14} className="text-red-600" />;
                     } else {
                        btnStyle = "bg-gray-50 border-2 border-gray-400 text-gray-300 opacity-40";
@@ -198,7 +197,7 @@ export default function KnowYourNeighbor() {
                      key={countryName}
                      onClick={() => toggleOption(countryName)}
                      disabled={!!roundResult}
-                     className={`relative p-2.5 rounded-xl font-bold text-xs transition-all duration-75 flex items-center justify-between min-h-[48px] text-left ${btnStyle}`}
+                     className={`relative p-2.5 rounded-xl font-bold text-xs flex items-center justify-between min-h-[48px] text-left transition-all ${roundResult || isSelected ? 'duration-500' : 'duration-0'} ${btnStyle}`}
                      style={{ WebkitTapHighlightColor: 'transparent' }}
                    >
                      <span className="leading-tight pr-1 line-clamp-2 font-sans">{countryName}</span>
@@ -216,7 +215,7 @@ export default function KnowYourNeighbor() {
                   <span className="font-bold text-sm">{feedback}</span>
                </div>
              ) : (
-               <Button onClick={submitAnswer} isFlat disabled={selectedOptions.length === 0} className="w-full h-14" size="lg">Submit Selection</Button>
+               <Button onClick={submitAnswer} disabled={selectedOptions.length === 0} className="w-full h-14" size="lg">Submit Selection</Button>
              )}
            </div>
       </div>
