@@ -36,9 +36,11 @@ const PageTransitionHandler: React.FC<{ children: (location: any) => React.React
 
   // Transition Phase 1: Navigation Triggered
   useEffect(() => {
-    if (location.key !== displayLocation.key) {
+    // Only trigger transition if the path actually changes. 
+    // This prevents the wipe from appearing when just updating search parameters (like closing a country card in the directory).
+    if (location.pathname !== displayLocation.pathname) {
       setIsTransitioning(true);
-      setPageLoading(true); // Default to true until the new page says otherwise
+      setPageLoading(true); 
       setTransitionState('entering');
       setNavId(prev => prev + 1);
 
@@ -52,8 +54,11 @@ const PageTransitionHandler: React.FC<{ children: (location: any) => React.React
       }, 400);
 
       return () => clearTimeout(enterTimer);
+    } else if (location.search !== displayLocation.search || location.hash !== displayLocation.hash) {
+      // If only query params or hash changed, update display location immediately without animation
+      setDisplayLocation(location);
     }
-  }, [location, displayLocation.key]);
+  }, [location, displayLocation.pathname, displayLocation.search, displayLocation.hash]);
 
   // Transition Phase 3: Wait for assets to be ready
   useEffect(() => {
@@ -161,9 +166,8 @@ const ConditionalFooter: React.FC = () => {
   const location = useLocation();
   const isExploration = location.pathname.startsWith('/explore/');
   const isMap = location.pathname === '/map';
-  const isGame = location.pathname.startsWith('/games/');
   
-  if (isExploration || isMap || isGame) return null;
+  if (isExploration || isMap) return null;
   
   return <Footer />;
 };

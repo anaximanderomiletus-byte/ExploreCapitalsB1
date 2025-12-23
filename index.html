@@ -8,6 +8,16 @@
     <meta name="robots" content="index, follow" />
     <title>ExploreCapitals.com</title>
     
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-8NEFW5WL3V"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'G-8NEFW5WL3V');
+    </script>
+
     <!-- Google Fonts: Poppins & Inter -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -55,6 +65,8 @@
               'wipe-backward': 'wipe-backward 1s cubic-bezier(0.65, 0, 0.35, 1) forwards',
               'float': 'float 6s ease-in-out infinite',
               'shimmer': 'shimmer 2s linear infinite',
+              'shake': 'shake 0.4s cubic-bezier(.36,.07,.19,.97) both',
+              'scary-pulse': 'scary-pulse 0.5s ease-in-out infinite',
             },
             keyframes: {
               'color-pulse': {
@@ -88,6 +100,16 @@
               'shimmer': {
                 'from': { backgroundPosition: '0 0' },
                 'to': { backgroundPosition: '-200% 0' },
+              },
+              'shake': {
+                '10%, 90%': { transform: 'translate3d(-1px, 0, 0)' },
+                '20%, 80%': { transform: 'translate3d(2px, 0, 0)' },
+                '30%, 50%, 70%': { transform: 'translate3d(-4px, 0, 0)' },
+                '40%, 60%': { transform: 'translate3d(4px, 0, 0)' }
+              },
+              'scary-pulse': {
+                '0%, 100%': { transform: 'scale(1)', color: '#dc2626' },
+                '50%': { transform: 'scale(1.2)', color: '#991b1b' },
               }
             }
           }

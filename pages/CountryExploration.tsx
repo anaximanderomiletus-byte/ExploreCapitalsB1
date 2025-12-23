@@ -1,13 +1,14 @@
-import React, { useEffect, useState } from 'react';
+
+import { AlertCircle, ArrowLeft, BrainCircuit, CheckCircle2, ChevronLeft, ChevronRight, Compass, Globe, HelpCircle, ImageOff, MapPin, Plane, RotateCcw, XCircle } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { useParams, Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, MapPin, Plane, CheckCircle2, AlertCircle, ChevronRight, HelpCircle, RotateCcw, ImageOff, Globe, BrainCircuit, XCircle, Compass } from 'lucide-react';
-import { MOCK_COUNTRIES } from '../constants';
-import { getCountryTour, getGeneratedImage } from '../services/geminiService';
-import { TourData } from '../types';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import Button from '../components/Button';
 import SEO from '../components/SEO';
 import { useLayout } from '../context/LayoutContext';
+import { MOCK_COUNTRIES } from '../constants';
+import { getCountryTour, getGeneratedImage } from '../services/geminiService';
+import { TourData } from '../types';
 
 // Memoized Loading Visual
 const LoadingVisual = React.memo(() => (
@@ -71,6 +72,9 @@ const CountryExploration: React.FC = () => {
   const [scrollY, setScrollY] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [transitionDirection, setTransitionDirection] = useState<'forward' | 'backward'>('forward');
+
+  // Carousel Ref for Summary Screen
+  const carouselRef = useRef<HTMLDivElement>(null);
 
   // Quiz State
   const [score, setScore] = useState(0);
@@ -291,6 +295,13 @@ const CountryExploration: React.FC = () => {
     }, 1000);
   };
 
+  const scrollCarousel = (direction: 'left' | 'right') => {
+    if (carouselRef.current) {
+      const amount = direction === 'left' ? -240 : 240;
+      carouselRef.current.scrollBy({ left: amount, behavior: 'smooth' });
+    }
+  };
+
   if (!country) return <div className="p-10 text-center">Country not found.</div>;
 
   const renderContent = () => {
@@ -344,30 +355,54 @@ const CountryExploration: React.FC = () => {
                 </p>
 
                 {/* Journey Review Carousel */}
-                <div className="mb-10 w-full">
+                <div className="mb-10 w-full relative">
                    <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">Journey Review</p>
-                   <div className="flex gap-3 overflow-x-auto py-4 px-2 snap-x" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
-                      {tourData.stops.map((stop, index) => {
-                        const isCorrect = quizResults[index];
-                        const image = stopImages[index];
-                        
-                        return (
-                          <div 
-                            key={index} 
-                            className={`flex-shrink-0 w-32 h-40 md:w-36 md:h-48 rounded-xl overflow-hidden relative border-2 snap-center transition-transform hover:scale-105 duration-75 ${isCorrect ? 'border-green-200 shadow-sm' : 'border-red-200 shadow-md'}`}
-                          >
-                            <ExpeditionVisual src={image} alt={stop.stopName} className="w-full h-full object-cover" />
-                            <div className={`absolute inset-0 flex flex-col items-center justify-center p-2 text-center ${isCorrect ? 'bg-green-900/30' : 'bg-red-900/40'}`}>
-                               <div className={`w-6 h-6 rounded-full flex items-center justify-center mb-1.5 shadow-sm ${isCorrect ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
-                                  {isCorrect ? <CheckCircle2 size={14} /> : <XCircle size={14} />}
-                               </div>
-                               <p className="text-white text-[10px] md:text-xs font-bold leading-tight drop-shadow-md line-clamp-2">
-                                 {stop.stopName}
-                                </p>
-                            </div>
-                          </div>
-                        );
-                      })}
+                   
+                   <div className="relative group">
+                      {/* Left Arrow - Visible by default, styled for ICEBERG aesthetic */}
+                      <button 
+                        onClick={() => scrollCarousel('left')}
+                        className="absolute left-[-1rem] top-1/2 -translate-y-1/2 z-20 w-10 h-10 bg-white shadow-premium rounded-full flex items-center justify-center text-primary border border-gray-100 transition-all active:scale-90 hover:bg-surface md:left-[-1.5rem]"
+                        aria-label="Scroll left"
+                      >
+                         <ChevronLeft size={24} strokeWidth={2.5} />
+                      </button>
+
+                      {/* Right Arrow - Visible by default, styled for ICEBERG aesthetic */}
+                      <button 
+                        onClick={() => scrollCarousel('right')}
+                        className="absolute right-[-1rem] top-1/2 -translate-y-1/2 z-20 w-10 h-10 bg-white shadow-premium rounded-full flex items-center justify-center text-primary border border-gray-100 transition-all active:scale-90 hover:bg-surface md:right-[-1.5rem]"
+                        aria-label="Scroll right"
+                      >
+                         <ChevronRight size={24} strokeWidth={2.5} />
+                      </button>
+
+                      <div 
+                        ref={carouselRef}
+                        className="flex gap-3 overflow-x-auto py-4 px-2 snap-x no-scrollbar scroll-smooth"
+                      >
+                          {tourData.stops.map((stop, index) => {
+                            const isCorrect = quizResults[index];
+                            const image = stopImages[index];
+                            
+                            return (
+                              <div 
+                                key={index} 
+                                className={`flex-shrink-0 w-32 h-40 md:w-36 md:h-48 rounded-xl overflow-hidden relative border-2 snap-center transition-transform hover:scale-105 duration-75 ${isCorrect ? 'border-green-200 shadow-sm' : 'border-red-200 shadow-md'}`}
+                              >
+                                <ExpeditionVisual src={image} alt={stop.stopName} className="w-full h-full object-cover" />
+                                <div className={`absolute inset-0 flex flex-col items-center justify-center p-2 text-center ${isCorrect ? 'bg-green-900/30' : 'bg-red-900/40'}`}>
+                                   <div className={`w-6 h-6 rounded-full flex items-center justify-center mb-1.5 shadow-sm ${isCorrect ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
+                                      {isCorrect ? <CheckCircle2 size={14} /> : <XCircle size={14} />}
+                                   </div>
+                                   <p className="text-white text-[10px] md:text-xs font-bold leading-tight drop-shadow-md line-clamp-2">
+                                     {stop.stopName}
+                                    </p>
+                                </div>
+                              </div>
+                            );
+                          })}
+                      </div>
                    </div>
                 </div>
 
@@ -546,6 +581,7 @@ const CountryExploration: React.FC = () => {
                       {/* IMAGE MOVED BELOW THE COMPASS DIVIDER AND ABOVE THE SECOND PARAGRAPH */}
                       <div className="mb-12 w-full rounded-2xl overflow-hidden shadow-premium border-4 border-white ring-1 ring-gray-100">
                          <div className="aspect-video w-full bg-gray-100">
+                            {/* Corrected: Use currentImage instead of undefined 'image' */}
                             <ExpeditionVisual src={currentImage} alt={currentStop.stopName} className="object-cover w-full h-full" />
                          </div>
                       </div>
@@ -605,24 +641,24 @@ const CountryExploration: React.FC = () => {
                           </div>
                       )}
 
-                      <div className="flex flex-col-reverse md:flex-row justify-center items-center gap-8 pb-24">
-                          <button 
-                              onClick={prevStop} 
-                              className="flex items-center gap-2 px-6 py-3 text-gray-400 hover:text-gray-600 transition-colors font-display font-bold text-base group duration-75"
-                          >
-                              <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform duration-75" /> Back
-                          </button>
-
+                      <div className="flex flex-col justify-center items-center gap-4 pb-24">
                           {isLastStop ? (
-                              <Button onClick={nextStop} className="w-full md:w-auto min-w-[280px]" variant="accent" size="lg">
+                              <Button onClick={nextStop} className="w-full md:w-auto min-w-[320px]" variant="accent" size="lg">
                                   <BrainCircuit size={20} className="mr-2" />
                                   Start Knowledge Check
                               </Button>
                           ) : (
-                              <Button onClick={nextStop} className="w-full md:w-auto min-w-[280px]" variant="primary" size="lg">
+                              <Button onClick={nextStop} className="w-full md:w-auto min-w-[320px]" variant="primary" size="lg">
                                 Continue Journey <ChevronRight size={20} className="ml-2" />
                               </Button>
                           )}
+
+                          <button 
+                              onClick={prevStop} 
+                              className="flex items-center gap-2 px-6 py-2 text-gray-400 hover:text-gray-600 transition-colors font-display font-bold text-sm group duration-75"
+                          >
+                              <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform duration-75" /> Back
+                          </button>
                       </div>
                   </div>
               </div>
@@ -641,35 +677,35 @@ const CountryExploration: React.FC = () => {
         : 'translate-y-full opacity-0 shadow-none';
 
       return (
-        <Container className="pt-24 pb-0 px-4 md:px-6">
+        <Container className="pt-16 md:pt-20 pb-0 px-4 md:px-6">
            <div className="max-w-4xl mx-auto w-full pb-32">
-              <div className="text-center mb-4 md:mb-6">
-                 <h2 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Knowledge Check</h2>
-                 <div className="flex justify-center gap-1.5">
+              <div className="text-center mb-2 md:mb-4">
+                 <h2 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Knowledge Check</h2>
+                 <div className="flex justify-center gap-1">
                     {tourData.stops.map((_, i) => (
                       <div 
                         key={i} 
-                        className={`h-1.5 w-8 rounded-full transition-colors duration-75 ${i === stepIndex ? 'bg-primary' : i < stepIndex ? 'bg-green-400' : 'bg-gray-200'}`} 
+                        className={`h-1 w-6 rounded-full transition-colors duration-75 ${i === stepIndex ? 'bg-primary' : i < stepIndex ? 'bg-green-400' : 'bg-gray-200'}`} 
                       />
                     ))}
                  </div>
               </div>
 
               <div className="bg-white rounded-[2rem] shadow-premium overflow-hidden border border-gray-100">
-                 {/* Height increased from h-64 md:h-96 to h-80 md:h-[30rem] */}
-                 <div className="relative h-80 md:h-[30rem] bg-gray-100">
+                 {/* Height significantly reduced to ensure fit */}
+                 <div className="relative h-44 md:h-64 bg-gray-100">
                     <ExpeditionVisual src={currentImage} alt="" />
-                    <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-white/90 backdrop-blur px-4 py-1.5 rounded-full text-xs font-bold shadow-sm z-10 text-text">
+                    <div className="absolute bottom-3 left-1/2 -translate-x-1/2 bg-white/90 backdrop-blur px-3 py-1 rounded-full text-[10px] font-bold shadow-sm z-10 text-text">
                        {currentQuestion.stopName}
                     </div>
                  </div>
 
-                 <div className="p-6 md:p-8 text-center">
-                    <h3 className="text-xl md:text-2xl font-bold text-text mb-6 leading-tight">
+                 <div className="p-4 md:p-6 text-center">
+                    <h3 className="text-lg md:text-xl font-bold text-text mb-4 leading-tight">
                       {currentQuestion.question}
                     </h3>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 w-full">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2 w-full">
                        {currentQuestion.options.map((option, idx) => {
                          const isSelected = selectedOption === option;
                          let stateStyles = "bg-white border-gray-200 text-gray-600 hover:border-primary/50 hover:bg-blue-50/30";
@@ -678,14 +714,14 @@ const CountryExploration: React.FC = () => {
                          if (isSelected) {
                            if (isCorrect) {
                              stateStyles = "bg-green-50 border-green-500 text-green-900 ring-1 ring-green-500 shadow-none";
-                             icon = <CheckCircle2 size={20} className="text-green-600" />;
+                             icon = <CheckCircle2 size={18} className="text-green-600" />;
                            } else {
                              stateStyles = "bg-red-50 border-red-600 text-red-900 ring-1 ring-red-600 shadow-none";
-                             icon = <AlertCircle size={20} className="text-red-600" />;
+                             icon = <AlertCircle size={18} className="text-red-600" />;
                            }
                          } else if (selectedOption && option === currentQuestion.answer) {
                             stateStyles = "bg-green-50/50 border-green-300 text-green-800 opacity-70"; 
-                            icon = <CheckCircle2 size={16} className="text-green-600 opacity-50" />;
+                            icon = <CheckCircle2 size={14} className="text-green-600 opacity-50" />;
                          } else if (selectedOption) {
                             stateStyles = "opacity-40 grayscale border-gray-100";
                          }
@@ -695,8 +731,7 @@ const CountryExploration: React.FC = () => {
                              key={idx}
                              onClick={() => handleQuizAnswer(option)}
                              disabled={!!selectedOption}
-                             // Removed line-clamp-1 to allow text wrapping, added leading-snug
-                             className={`w-full text-left px-5 py-3 md:py-4 rounded-xl border-2 transition-all duration-500 font-medium text-base leading-snug flex justify-between items-center ${stateStyles}`}
+                             className={`w-full text-left px-4 py-2 md:py-3 rounded-xl border-2 transition-all duration-500 font-medium text-sm leading-snug flex justify-between items-center ${stateStyles}`}
                              style={{ WebkitTapHighlightColor: 'transparent' }}
                            >
                              <span className="leading-snug">{option}</span>
@@ -710,45 +745,39 @@ const CountryExploration: React.FC = () => {
            </div>
 
            <div className={`fixed bottom-0 left-0 right-0 z-50 bg-white transition-all duration-300 cubic-bezier(0.32,0.72,0,1) border-t-2 ${bottomSheetClasses} ${isCorrect ? 'border-green-500' : 'border-red-600'}`}>
-              <div className="max-w-4xl mx-auto p-6 md:p-8 flex flex-col md:flex-row items-center justify-between gap-6">
+              <div className="max-w-4xl mx-auto p-4 md:p-6 flex flex-col md:flex-row items-center justify-between gap-4">
                   <div className="flex-1 text-center md:text-left">
                       {selectedOption && (
                         <>
-                          <div className="flex items-center justify-center md:justify-start gap-3 mb-2">
+                          <div className="flex items-center justify-center md:justify-start gap-2 mb-1">
                               {isCorrect ? (
-                                  <div className="p-2 bg-green-100 rounded-full text-green-600">
-                                      <CheckCircle2 size={24} />
+                                  <div className="p-1.5 bg-green-100 rounded-full text-green-600">
+                                      <CheckCircle2 size={20} />
                                   </div>
                               ) : (
-                                  <div className="p-2 bg-red-100 rounded-full text-red-600">
-                                      <AlertCircle size={24} />
+                                  <div className="p-1.5 bg-red-100 rounded-full text-red-600">
+                                      <AlertCircle size={20} />
                                   </div>
                               )}
-                              <h3 className={`font-display font-bold text-xl ${isCorrect ? 'text-green-800' : 'text-red-800'}`}>
+                              <h3 className={`font-display font-bold text-lg ${isCorrect ? 'text-green-800' : 'text-red-800'}`}>
                                   {isCorrect ? 'Correct!' : 'Incorrect'}
                               </h3>
                           </div>
-                          <p className="text-gray-600 leading-relaxed max-w-2xl">
+                          <p className="text-sm text-gray-600 leading-relaxed max-w-2xl">
                               {feedbackMessage ? feedbackMessage.replace(/^(Correct!|Incorrect\.)\s*/, '') : ''}
                           </p>
                         </>
                       )}
                   </div>
                   <div className="w-full md:w-auto">
-                       <button 
-                         onClick={prevStop} 
-                         className="hidden md:flex items-center gap-2 px-6 py-3 text-gray-400 hover:text-gray-600 transition-colors duration-75 font-display font-bold text-sm mr-4"
-                       >
-                          <ArrowLeft size={16} /> Back to Content
-                       </button>
                        <Button 
                          onClick={nextQuestion} 
-                         className="w-full md:min-w-[200px] flex items-center justify-center gap-2"
+                         className="w-full md:min-w-[180px] flex items-center justify-center gap-2"
                          variant="primary"
-                         size="lg"
+                         size="md"
                          disabled={!selectedOption}
                        >
-                         {isLastQuestion ? 'Finish' : 'Next Question'} <ChevronRight size={20} />
+                         {isLastQuestion ? 'Finish' : 'Next Question'} <ChevronRight size={18} />
                        </Button>
                   </div>
               </div>

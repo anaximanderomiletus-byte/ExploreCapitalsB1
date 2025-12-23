@@ -168,7 +168,7 @@ export default function MapDash() {
   }, [generateTarget]);
 
   return (
-    <div className="fixed inset-0 z-40 bg-surface overflow-hidden font-sans">
+    <div className="relative h-[100dvh] w-full z-40 bg-surface overflow-hidden font-sans">
       <SEO title="Map Dash" description="Locate the nation on the map." />
       
       <style>{`
@@ -234,9 +234,9 @@ export default function MapDash() {
               <span className="font-display font-bold text-lg text-text tabular-nums">{score}</span>
             </div>
             
-            <div className={`bg-white/90 backdrop-blur-md rounded-2xl shadow-premium border border-white/50 px-5 py-2.5 flex items-center gap-3 transition-all ${timeLeft <= 10 ? 'bg-red-50 border-red-200' : ''}`}>
-              <Timer size={18} className={timeLeft <= 10 ? "text-red-500 animate-pulse" : "text-primary"} />
-              <span className={`font-display font-bold text-lg tabular-nums ${timeLeft <= 10 ? 'text-red-500' : 'text-text'}`}>
+            <div className={`bg-white/90 backdrop-blur-md rounded-2xl shadow-premium border border-white/50 px-5 py-2.5 flex items-center gap-3 transition-all duration-300 ${timeLeft <= 10 ? 'bg-red-100 border-red-500 animate-scary-pulse ring-2 ring-red-500' : ''}`}>
+              <Timer size={18} className={timeLeft <= 10 ? "animate-spin-slow text-red-600" : "text-primary"} />
+              <span className={`font-display font-bold text-lg tabular-nums ${timeLeft <= 10 ? 'text-red-600' : 'text-text'}`}>
                 {formatTime(timeLeft)}
               </span>
             </div>
@@ -266,8 +266,12 @@ export default function MapDash() {
             <p className="text-gray-500 text-sm mb-8 font-sans">Identify as many target nations as possible before the clock hits zero.</p>
             <div className="flex flex-col gap-6">
               <Button onClick={startGame} size="lg" className="w-full h-14">Play</Button>
-              <Link to="/games" className="w-full">
-                <Button variant="secondary" size="lg" className="w-full h-14">Back to Games</Button>
+              <Link 
+                to="/games" 
+                className="inline-flex items-center justify-center gap-2 text-gray-400 hover:text-text transition-colors font-display font-bold text-sm group"
+              >
+                <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" /> 
+                Back to Games
               </Link>
             </div>
           </div>
@@ -285,8 +289,12 @@ export default function MapDash() {
             <div className="text-6xl font-display font-bold text-primary mb-10">{score}</div>
             <div className="flex flex-col gap-6">
               <Button onClick={startGame} size="lg" className="w-full h-14">Play Again</Button>
-              <Link to="/games" className="w-full">
-                <Button variant="secondary" size="lg" className="w-full h-14">Back to Games</Button>
+              <Link 
+                to="/games" 
+                className="inline-flex items-center justify-center gap-2 text-gray-400 hover:text-text transition-colors font-display font-bold text-sm group"
+              >
+                <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" /> 
+                Back to Games
               </Link>
             </div>
           </div>

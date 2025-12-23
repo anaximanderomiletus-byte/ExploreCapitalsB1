@@ -90,8 +90,12 @@ export default function GlobalDetective() {
           <p className="text-gray-500 text-sm mb-8 font-sans">Identify the country using the provided clues.</p>
           <div className="flex flex-col gap-6">
             <Button onClick={startGame} size="lg" className="w-full h-14">Play</Button>
-            <Link to="/games" className="w-full">
-              <Button variant="secondary" size="lg" className="w-full h-14">Back to Games</Button>
+            <Link 
+              to="/games" 
+              className="inline-flex items-center justify-center gap-2 text-gray-400 hover:text-text transition-colors font-display font-bold text-sm group"
+            >
+              <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" /> 
+              Back to Games
             </Link>
           </div>
         </div>
@@ -106,8 +110,12 @@ export default function GlobalDetective() {
           <div className="text-6xl font-display font-bold text-primary mb-10 tabular-nums">{score}</div>
           <div className="flex flex-col gap-6">
             <Button onClick={startGame} size="lg" className="w-full h-14">Play Again</Button>
-            <Link to="/games" className="w-full">
-               <Button variant="secondary" size="lg" className="w-full h-14">Back to Games</Button>
+            <Link 
+              to="/games" 
+              className="inline-flex items-center justify-center gap-2 text-gray-400 hover:text-text transition-colors font-display font-bold text-sm group"
+            >
+              <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" /> 
+              Back to Games
             </Link>
           </div>
         </div>
@@ -124,8 +132,8 @@ export default function GlobalDetective() {
                   <Trophy size={18} className="text-primary" />
                   <span className="font-display font-bold text-xl text-text tabular-nums">{score}</span>
                </div>
-               <div className={`flex items-center gap-2 px-3 py-1 rounded-xl shadow-inner ${timeLeft < 10 ? 'bg-red-50 text-red-500 animate-pulse' : 'bg-blue-50 text-primary'}`}>
-                  <Timer size={18} />
+               <div className={`flex items-center gap-2 px-3 py-1 rounded-xl shadow-inner transition-all duration-300 ${timeLeft < 10 ? 'bg-red-100 text-red-600 animate-scary-pulse ring-2 ring-red-500' : 'bg-blue-50 text-primary'}`}>
+                  <Timer size={18} className={timeLeft < 10 ? 'animate-spin-slow' : ''} />
                   <span className="font-display font-bold text-xl tabular-nums min-w-[30px]">{timeLeft}</span>
                </div>
              </div>
@@ -180,6 +188,8 @@ export default function GlobalDetective() {
                         {options.map((option) => {
                              const isSelected = selectedAnswer === option.name;
                              const isCorrect = option.name === targetCountry.name;
+                             const isWrong = isSelected && !isCorrect;
+                             
                              let stateStyles = "bg-white/80 border-2 border-gray-200 text-text active:bg-white";
                              if (selectedAnswer) {
                                if (isCorrect) stateStyles = "bg-green-50 border-2 border-[#22c55e] text-green-900";
@@ -191,7 +201,7 @@ export default function GlobalDetective() {
                                  key={option.id} 
                                  onClick={() => handleAnswer(option.name)} 
                                  disabled={!!selectedAnswer} 
-                                 className={`relative p-4 rounded-2xl font-display font-bold text-base flex items-center justify-center min-h-[64px] transition-all ${selectedAnswer ? 'duration-500' : 'duration-0'} ${stateStyles}`}
+                                 className={`relative p-4 rounded-2xl font-display font-bold text-base flex items-center justify-center min-h-[64px] transition-all ${selectedAnswer ? 'duration-250 ease-out' : 'duration-0'} ${stateStyles} ${isWrong ? 'animate-shake' : ''}`}
                                  style={{ WebkitTapHighlightColor: 'transparent' }}
                                >
                                  <span className="text-center leading-tight">{option.name}</span>

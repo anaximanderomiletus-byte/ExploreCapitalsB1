@@ -81,7 +81,7 @@ export default function PopulationPursuit() {
 
   if (gameState === 'start') {
     return (
-      <div className="h-[100dvh] bg-surface flex items-center justify-center px-4 overflow-hidden font-sans">
+      <div className="h-[100dvh] bg-surface flex items-center justify-center px-4 overflow-hidden font-sans relative">
         <SEO title="Population Pursuit" description="Which country has more people?" />
         <div className="max-w-md w-full bg-white rounded-3xl shadow-premium p-8 text-center border border-gray-100 animate-in fade-in zoom-in duration-300">
           <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-4 text-primary"><Users size={32} /></div>
@@ -89,7 +89,13 @@ export default function PopulationPursuit() {
           <p className="text-gray-500 text-sm mb-8 leading-relaxed font-sans">Select the nation with the larger population count.</p>
           <div className="flex flex-col gap-6">
             <Button onClick={startGame} size="lg" className="w-full h-14">Play</Button>
-            <Link to="/games" className="w-full"><Button variant="secondary" size="lg" className="w-full h-14">Back to Games</Button></Link>
+            <Link 
+              to="/games" 
+              className="inline-flex items-center justify-center gap-2 text-gray-400 hover:text-text transition-colors font-display font-bold text-sm group"
+            >
+              <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" /> 
+              Back to Games
+            </Link>
           </div>
         </div>
       </div>
@@ -98,15 +104,19 @@ export default function PopulationPursuit() {
 
   if (gameState === 'finished') {
     return (
-      <div className="h-[100dvh] bg-surface flex items-center justify-center px-4 overflow-hidden font-sans">
+      <div className="h-[100dvh] bg-surface flex items-center justify-center px-4 overflow-hidden font-sans relative">
         <div className="max-w-md w-full bg-white rounded-3xl shadow-premium p-10 text-center border border-gray-100 animate-in fade-in zoom-in duration-500">
           <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6 text-primary"><Trophy size={32} /></div>
           <h1 className="text-2xl font-display font-bold text-text mb-1">Time's Up!</h1>
           <div className="text-6xl font-display font-bold text-primary mb-10">{score}</div>
           <div className="flex flex-col gap-6">
             <Button onClick={startGame} size="lg" className="w-full h-14">Play Again</Button>
-            <Link to="/games" className="w-full">
-               <Button variant="secondary" size="lg" className="w-full h-14">Back to Games</Button>
+            <Link 
+              to="/games" 
+              className="inline-flex items-center justify-center gap-2 text-gray-400 hover:text-text transition-colors font-display font-bold text-sm group"
+            >
+              <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" /> 
+              Back to Games
             </Link>
           </div>
         </div>
@@ -126,8 +136,8 @@ export default function PopulationPursuit() {
            <div className="flex items-center gap-2">
               <Trophy size={18} className="text-primary" /><span className="font-display font-bold text-lg text-text tabular-nums">{score}</span>
            </div>
-           <div className={`flex items-center gap-2 px-3 py-1 rounded-xl shadow-inner ${timeLeft < 10 ? 'bg-red-50 text-red-500 animate-pulse' : 'bg-blue-50 text-primary'}`}>
-              <Timer size={18} />
+           <div className={`flex items-center gap-2 px-3 py-1 rounded-xl shadow-inner transition-all duration-300 ${timeLeft < 10 ? 'bg-red-100 text-red-600 animate-scary-pulse ring-2 ring-red-500' : 'bg-blue-50 text-primary'}`}>
+              <Timer size={18} className={timeLeft < 10 ? 'animate-spin-slow' : ''} />
               <span className="font-display font-bold text-lg tabular-nums min-w-[30px]">{timeLeft}</span>
            </div>
          </div>
@@ -143,12 +153,15 @@ export default function PopulationPursuit() {
            <div className="flex-1 flex flex-col md:flex-row gap-4 min-h-0 overflow-visible">
                 {[countryA, countryB].map((country, idx) => {
                   const other = idx === 0 ? countryB : countryA;
-                  const isWinner = getNumericValue(country.population) >= getNumericValue(other!.population);
+                  const popCurrent = getNumericValue(country.population);
+                  const popOther = getNumericValue(other!.population);
+                  const isWinner = popCurrent >= popOther;
                   const isA = idx === 0;
                   const hasError = isA ? imgErrorA : imgErrorB;
                   const setHasError = isA ? setImgErrorA : setImgErrorB;
                   const code = getCountryCode(country.flag);
                   const isSelected = selectedId === country.id;
+                  const isWrong = isSelected && !isWinner;
                   
                   let cardStyle = "bg-white border-2 border-gray-200 hover:border-primary/40 shadow-sm z-0";
                   let titleStyle = "text-text";
@@ -168,7 +181,7 @@ export default function PopulationPursuit() {
                     <div 
                       key={country.id} 
                       onClick={() => handleChoice(country)} 
-                      className={`flex-1 relative rounded-[1.5rem] p-4 md:p-6 flex flex-col items-center justify-center transition-all cursor-pointer active:bg-gray-50 ${result ? 'duration-500' : 'duration-0'} ${cardStyle}`} 
+                      className={`flex-1 relative rounded-[1.5rem] p-4 md:p-6 flex flex-col items-center justify-center transition-all cursor-pointer active:bg-gray-50 ${result ? 'duration-250 ease-out' : 'duration-0'} ${cardStyle} ${isWrong ? 'animate-shake' : ''}`} 
                       style={{ WebkitTapHighlightColor: 'transparent' }}
                     >
                       <div className="mb-4 flex items-center justify-center min-h-[80px] md:min-h-[120px]">

@@ -89,7 +89,7 @@ export default function FlagFrenzy() {
 
   if (gameState === 'start') {
     return (
-      <div className="h-[100dvh] bg-surface flex items-center justify-center px-4 overflow-hidden font-sans">
+      <div className="h-[100dvh] bg-surface flex items-center justify-center px-4 overflow-hidden font-sans relative">
         <SEO title="Flag Frenzy" description="Match the flag to the correct nation in 60 seconds." />
         <div className="max-w-md w-full bg-white rounded-3xl shadow-premium p-8 text-center border border-gray-100 animate-in fade-in zoom-in duration-300">
           <div className="w-16 h-16 bg-accent/10 rounded-3xl flex items-center justify-center mx-auto mb-4 text-accent"><Flag size={32} /></div>
@@ -97,8 +97,12 @@ export default function FlagFrenzy() {
           <p className="text-gray-500 text-sm mb-8 leading-relaxed">Match nations to their visual identity.</p>
           <div className="flex flex-col gap-6">
             <Button onClick={startGame} size="lg" className="w-full h-14">Play</Button>
-            <Link to="/games" className="w-full">
-              <Button variant="secondary" size="lg" className="w-full h-14">Back to Games</Button>
+            <Link 
+              to="/games" 
+              className="inline-flex items-center justify-center gap-2 text-gray-400 hover:text-text transition-colors font-display font-bold text-sm group"
+            >
+              <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" /> 
+              Back to Games
             </Link>
           </div>
         </div>
@@ -108,15 +112,19 @@ export default function FlagFrenzy() {
 
   if (gameState === 'finished') {
     return (
-      <div className="h-[100dvh] bg-surface flex items-center justify-center px-4 overflow-hidden font-sans">
+      <div className="h-[100dvh] bg-surface flex items-center justify-center px-4 overflow-hidden font-sans relative">
         <div className="max-w-md w-full bg-white rounded-3xl shadow-premium p-10 text-center border border-gray-100 animate-in fade-in zoom-in duration-500">
           <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6 text-primary"><Trophy size={32} /></div>
           <h1 className="text-2xl font-display font-bold text-text mb-1">Time's Up!</h1>
           <div className="text-6xl font-display font-bold text-primary mb-10">{score}</div>
           <div className="flex flex-col gap-6">
             <Button onClick={startGame} size="lg" className="w-full h-14">Play Again</Button>
-            <Link to="/games" className="w-full">
-               <Button variant="secondary" size="lg" className="w-full h-14">Back to Games</Button>
+            <Link 
+              to="/games" 
+              className="inline-flex items-center justify-center gap-2 text-gray-400 hover:text-text transition-colors font-display font-bold text-sm group"
+            >
+              <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" /> 
+              Back to Games
             </Link>
           </div>
         </div>
@@ -134,8 +142,8 @@ export default function FlagFrenzy() {
            <div className="flex items-center gap-2">
               <Trophy size={18} className="text-primary" /><span className="font-display font-bold text-xl text-text tabular-nums">{score}</span>
            </div>
-           <div className={`flex items-center gap-2 px-3 py-1 rounded-xl shadow-inner ${timeLeft < 10 ? 'bg-red-50 text-red-500 animate-pulse' : 'bg-blue-50 text-primary'}`}>
-              <Timer size={18} /><span className="font-display font-bold text-xl tabular-nums min-w-[30px]">{timeLeft}</span>
+           <div className={`flex items-center gap-2 px-3 py-1 rounded-xl shadow-inner transition-all duration-300 ${timeLeft < 10 ? 'bg-red-100 text-red-600 animate-scary-pulse ring-2 ring-red-500' : 'bg-blue-50 text-primary'}`}>
+              <Timer size={18} className={timeLeft < 10 ? 'animate-spin-slow' : ''} /><span className="font-display font-bold text-xl tabular-nums min-w-[30px]">{timeLeft}</span>
            </div>
          </div>
       </div>
@@ -162,6 +170,8 @@ export default function FlagFrenzy() {
             {currentQuestion.options.map((option) => {
               const isSelected = selectedAnswer === option.name;
               const isCorrect = option.name === currentQuestion.country.name;
+              const isWrong = isSelected && !isCorrect;
+              
               let stateStyles = "bg-white border-2 border-gray-200 text-text active:bg-gray-50";
               if (selectedAnswer) {
                 if (isCorrect) stateStyles = "bg-green-50 border-2 border-[#22c55e] text-green-900";
@@ -173,7 +183,7 @@ export default function FlagFrenzy() {
                   key={option.id} 
                   onClick={() => handleAnswer(option.name)} 
                   disabled={!!selectedAnswer} 
-                  className={`relative p-5 rounded-2xl font-display font-bold text-lg flex items-center justify-center min-h-[72px] transition-all ${selectedAnswer ? 'duration-500' : 'duration-0'} ${stateStyles}`}
+                  className={`relative p-5 rounded-2xl font-display font-bold text-lg flex items-center justify-center min-h-[72px] transition-all ${selectedAnswer ? 'duration-250 ease-out' : 'duration-0'} ${stateStyles} ${isWrong ? 'animate-shake' : ''}`}
                 >
                   <span className="px-2 text-center truncate leading-tight">{option.name}</span>
                   {selectedAnswer && isCorrect && <Check size={20} className="absolute right-4 text-[#22c55e]" />}

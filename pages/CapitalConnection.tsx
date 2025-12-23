@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Timer, Trophy, ArrowLeft, RefreshCw, Network, Building2 } from 'lucide-react';
@@ -124,7 +125,7 @@ export default function CapitalConnection() {
 
   if (gameState === 'start') {
     return (
-      <div className="h-[100dvh] bg-surface flex items-center justify-center px-4 overflow-hidden font-sans">
+      <div className="h-[100dvh] bg-surface flex items-center justify-center px-4 overflow-hidden font-sans relative">
         <SEO title="Capital Connection" description="Connect countries to their capitals." />
         <div className="max-w-md w-full bg-white rounded-3xl shadow-premium p-8 text-center border border-gray-100 animate-in fade-in zoom-in duration-300">
           <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-4 text-primary">
@@ -134,8 +135,12 @@ export default function CapitalConnection() {
           <p className="text-gray-500 text-sm mb-8 font-sans">Connect countries to their capitals.</p>
           <div className="flex flex-col gap-6">
             <Button onClick={startGame} size="lg" className="w-full h-14">Play</Button>
-            <Link to="/games" className="w-full">
-              <Button variant="secondary" size="lg" className="w-full h-14">Back to Games</Button>
+            <Link 
+              to="/games" 
+              className="inline-flex items-center justify-center gap-2 text-gray-400 hover:text-text transition-colors font-display font-bold text-sm group"
+            >
+              <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" /> 
+              Back to Games
             </Link>
           </div>
         </div>
@@ -145,7 +150,7 @@ export default function CapitalConnection() {
 
   if (gameState === 'finished') {
     return (
-      <div className="h-[100dvh] bg-surface flex items-center justify-center px-4 overflow-hidden font-sans">
+      <div className="h-[100dvh] bg-surface flex items-center justify-center px-4 overflow-hidden font-sans relative">
         <div className="max-w-md w-full bg-white rounded-3xl shadow-premium p-8 text-center border border-gray-100 animate-in fade-in zoom-in duration-300">
           <div className="w-16 h-16 bg-accent/10 rounded-full flex items-center justify-center mx-auto mb-4 text-accent">
             <Trophy size={32} />
@@ -155,8 +160,12 @@ export default function CapitalConnection() {
           <div className="text-5xl font-display font-bold text-primary mb-10">{score}</div>
           <div className="flex flex-col gap-6">
             <Button onClick={startGame} size="lg" className="w-full h-14">Play Again</Button>
-            <Link to="/games" className="w-full">
-               <Button variant="secondary" size="lg" className="w-full h-14">Back to Games</Button>
+            <Link 
+              to="/games" 
+              className="inline-flex items-center justify-center gap-2 text-gray-400 hover:text-text transition-colors font-display font-bold text-sm group"
+            >
+              <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" /> 
+              Back to Games
             </Link>
           </div>
         </div>
@@ -173,7 +182,8 @@ export default function CapitalConnection() {
          </Link>
          <div className="flex items-center gap-4">
            <div className="flex items-center gap-1.5 font-bold"><Trophy size={14} className="text-yellow-500" /> <span className="tabular-nums">{score}</span></div>
-           <div className={`px-2 py-0.5 rounded font-bold tabular-nums ${timeLeft < 10 ? 'bg-red-50 text-red-500 animate-pulse' : 'bg-blue-50 text-primary'}`}>
+           <div className={`px-3 py-1 rounded-xl font-bold tabular-nums transition-all duration-300 flex items-center gap-1.5 ${timeLeft < 10 ? 'bg-red-100 text-red-600 animate-scary-pulse ring-2 ring-red-500' : 'bg-blue-50 text-primary'}`}>
+             <Timer size={14} className={timeLeft < 10 ? 'animate-spin-slow' : ''} />
              {formatTime(timeLeft)}
            </div>
          </div>
@@ -181,11 +191,12 @@ export default function CapitalConnection() {
 
       <div className="flex-1 max-w-4xl mx-auto w-full grid grid-cols-3 lg:grid-cols-4 gap-2 md:gap-3 min-h-0 overflow-y-auto no-scrollbar pb-4">
           {cards.map(card => {
+              const isActive = card.isSelected || card.isWrong || card.isMatched;
               let cardStyle = "bg-white border-2 border-gray-200 text-text active:bg-gray-50";
               if (card.isMatched) {
                   cardStyle = "bg-green-50 border-2 border-[#22c55e] opacity-60 cursor-default";
               } else if (card.isWrong) {
-                  cardStyle = "bg-red-50 border-2 border-red-600 text-red-800 animate-pulse";
+                  cardStyle = "bg-red-50 border-2 border-red-600 text-red-800";
               } else if (card.isSelected) {
                   cardStyle = "bg-blue-50 border-2 border-primary text-primary";
               }
@@ -195,7 +206,7 @@ export default function CapitalConnection() {
                       key={card.id}
                       onClick={() => handleCardClick(card.id)}
                       disabled={card.isMatched}
-                      className={`h-28 md:h-36 rounded-xl p-2 flex flex-col items-center justify-center text-center transition-all duration-500 ${cardStyle}`}
+                      className={`h-28 md:h-36 rounded-xl p-2 flex flex-col items-center justify-center text-center transition-all ${isActive ? 'duration-250 ease-out' : 'duration-0'} ${cardStyle} ${card.isWrong ? 'animate-shake' : ''}`}
                       style={{ WebkitTapHighlightColor: 'transparent' }}
                   >
                       <div className={`mb-1 transform scale-90 ${card.type === 'country' ? '' : 'opacity-50'}`}>

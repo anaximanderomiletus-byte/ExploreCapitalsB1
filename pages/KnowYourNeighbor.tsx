@@ -97,7 +97,7 @@ export default function KnowYourNeighbor() {
 
   if (gameState === 'start') {
     return (
-      <div className="h-[100dvh] bg-surface flex items-center justify-center px-4 overflow-hidden font-sans">
+      <div className="h-[100dvh] bg-surface flex items-center justify-center px-4 overflow-hidden font-sans relative">
         <SEO title="Know Your Neighbor" description="Identify all the bordering countries." />
         <div className="max-w-md w-full bg-white rounded-3xl shadow-premium p-8 text-center border border-gray-100 animate-in fade-in zoom-in duration-300">
           <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-4 text-primary">
@@ -107,8 +107,12 @@ export default function KnowYourNeighbor() {
           <p className="text-gray-500 text-sm mb-8 font-sans">Identify <strong>every</strong> bordering country for the displayed nation.</p>
           <div className="flex flex-col gap-6">
             <Button onClick={startGame} size="lg" className="w-full h-14">Play</Button>
-            <Link to="/games" className="w-full">
-               <Button variant="secondary" size="lg" className="w-full h-14">Back to Games</Button>
+            <Link 
+              to="/games" 
+              className="inline-flex items-center justify-center gap-2 text-gray-400 hover:text-text transition-colors font-display font-bold text-sm group"
+            >
+              <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" /> 
+              Back to Games
             </Link>
           </div>
         </div>
@@ -118,7 +122,7 @@ export default function KnowYourNeighbor() {
 
   if (gameState === 'finished') {
     return (
-      <div className="h-[100dvh] bg-surface flex items-center justify-center px-4 overflow-hidden font-sans">
+      <div className="h-[100dvh] bg-surface flex items-center justify-center px-4 overflow-hidden font-sans relative">
         <div className="max-w-md w-full bg-white rounded-3xl shadow-premium p-8 text-center border border-gray-100 animate-in fade-in zoom-in duration-300">
           <div className="w-16 h-16 bg-accent/10 rounded-full flex items-center justify-center mx-auto mb-4 text-accent ring-4 ring-accent/5">
             <Trophy size={32} />
@@ -128,8 +132,12 @@ export default function KnowYourNeighbor() {
           <div className="text-5xl font-display font-bold text-primary mb-10">{score}</div>
           <div className="flex flex-col gap-6">
             <Button onClick={startGame} size="lg" className="w-full h-14">Play Again</Button>
-            <Link to="/games" className="w-full">
-                <Button variant="secondary" size="lg" className="w-full h-14">Back to Games</Button>
+            <Link 
+              to="/games" 
+              className="inline-flex items-center justify-center gap-2 text-gray-400 hover:text-text transition-colors font-display font-bold text-sm group"
+            >
+              <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" /> 
+              Back to Games
             </Link>
           </div>
         </div>
@@ -151,8 +159,8 @@ export default function KnowYourNeighbor() {
               <Trophy size={16} className="text-yellow-500" />
               <span className="font-display font-bold text-lg tabular-nums">{score}</span>
            </div>
-           <div className={`flex items-center gap-2 px-3 py-1 rounded-lg ${timeLeft < 10 ? 'bg-red-50 text-red-500 animate-pulse' : 'bg-blue-50 text-primary'}`}>
-              <Timer size={16} />
+           <div className={`flex items-center gap-2 px-3 py-1 rounded-lg transition-all duration-300 ${timeLeft < 10 ? 'bg-red-100 text-red-600 animate-scary-pulse ring-2 ring-red-500' : 'bg-blue-50 text-primary'}`}>
+              <Timer size={16} className={timeLeft < 10 ? 'animate-spin-slow' : ''} />
               <span className="font-display font-bold text-lg tabular-nums">{formatTime(timeLeft)}</span>
            </div>
          </div>
@@ -170,6 +178,8 @@ export default function KnowYourNeighbor() {
                {options.map((countryName) => {
                  const isSelected = selectedOptions.includes(countryName);
                  const isActualNeighbor = targetCountry.borders?.includes(countryName);
+                 const isIncorrectSelection = isSelected && !isActualNeighbor;
+                 
                  let btnStyle = "bg-white border-2 border-gray-200 text-text active:bg-gray-50";
                  let icon = null;
 
@@ -197,7 +207,7 @@ export default function KnowYourNeighbor() {
                      key={countryName}
                      onClick={() => toggleOption(countryName)}
                      disabled={!!roundResult}
-                     className={`relative p-2.5 rounded-xl font-bold text-xs flex items-center justify-between min-h-[48px] text-left transition-all ${roundResult || isSelected ? 'duration-500' : 'duration-0'} ${btnStyle}`}
+                     className={`relative p-2.5 rounded-xl font-bold text-xs flex items-center justify-between min-h-[48px] text-left transition-all ${roundResult || isSelected ? 'duration-250 ease-out' : 'duration-0'} ${btnStyle} ${roundResult && isIncorrectSelection ? 'animate-shake' : ''}`}
                      style={{ WebkitTapHighlightColor: 'transparent' }}
                    >
                      <span className="leading-tight pr-1 line-clamp-2 font-sans">{countryName}</span>
