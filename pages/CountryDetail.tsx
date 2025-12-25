@@ -1,6 +1,11 @@
+
 import React, { useEffect, useMemo } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Map, Compass, Navigation, Scroll, MapPin, Globe2, Clock, Phone, Car } from 'lucide-react';
+import { 
+  ArrowLeft, Map, Compass, Navigation, Scroll, MapPin, 
+  Clock, Phone, Car, Users, Maximize2, Banknote, 
+  TrendingUp, Languages, Building2 
+} from 'lucide-react';
 import { MOCK_COUNTRIES } from '../constants';
 import { STATIC_IMAGES } from '../data/images';
 import Button from '../components/Button';
@@ -38,7 +43,6 @@ const CountryDetail: React.FC = () => {
       setTransitionStyle('cartographic');
       navigate(`/country/${neighborId}`);
     } else {
-      // If we don't have the neighbor in the database, fallback to directory search
       setTransitionStyle('default');
       navigate(`/directory?search=${neighborName}`);
     }
@@ -51,8 +55,21 @@ const CountryDetail: React.FC = () => {
 
   const landmarkImage = STATIC_IMAGES[country.name] || STATIC_IMAGES[country.capital] || "https://images.unsplash.com/photo-1526778548025-fa2f459cd5c1?q=80&w=1200&auto=format&fit=crop";
 
+  // Reusable Stat Component for the card
+  const StatItem = ({ label, value, icon: Icon }: { label: string, value: string | React.ReactNode, icon: any }) => (
+    <div className="flex flex-col gap-1.5 group/stat">
+      <div className="flex items-center gap-2">
+        <div className="p-1.5 bg-primary/5 rounded-lg text-primary group-hover/stat:bg-primary group-hover/stat:text-white transition-colors duration-300">
+          <Icon size={14} />
+        </div>
+        <span className="text-[9px] font-black text-gray-400 uppercase tracking-[0.15em]">{label}</span>
+      </div>
+      <p className="text-lg md:text-xl font-display font-bold text-gray-700 leading-tight pl-0.5">{value}</p>
+    </div>
+  );
+
   return (
-    <main className="min-h-screen bg-surface pt-24 pb-12 px-4 md:px-8 relative overflow-hidden">
+    <main className="min-h-screen bg-surface pt-24 pb-12 px-4 md:px-8 relative overflow-hidden text-text">
       <SEO 
         title={`${country.name} - Country Profile`} 
         description={`Explore detailed demographics, history, and travel insights for ${country.name}. Start your virtual expedition to its capital, ${country.capital}.`} 
@@ -111,54 +128,36 @@ const CountryDetail: React.FC = () => {
 
             {/* 2. The "Field Notes": Official Profile & Integrated Coordinates */}
             <div className="lg:col-span-7 order-2 lg:row-span-2">
-                <div className="bg-[#fdf6e3] p-8 md:p-12 shadow-premium rounded-[2.5rem] border-l-[12px] border-primary/40 relative h-full flex flex-col">
+                <div className="bg-[#fdf6e3] p-6 md:p-10 lg:p-12 shadow-premium rounded-[2.5rem] border-l-[12px] border-primary/40 relative h-full flex flex-col overflow-hidden">
                      <div className="absolute top-8 right-8">
                         <Scroll className="text-primary/10 w-16 h-16" />
                      </div>
-                     <h3 className="font-display font-black text-2xl text-gray-800 uppercase tracking-tight mb-8 pb-4 border-b border-gray-200 flex items-center gap-3 shrink-0">
-                        <Compass className="text-primary" /> Official Profile
-                     </h3>
                      
-                     <div className="grid grid-cols-2 md:grid-cols-3 gap-y-10 gap-x-8 mb-12 shrink-0">
-                        <div>
-                            <p className="text-[10px] font-black text-primary uppercase tracking-[0.2em] mb-2">Capital City</p>
-                            <p className="text-xl font-display font-bold text-gray-700">{country.capital}</p>
-                        </div>
-                        <div>
-                            <p className="text-[10px] font-black text-primary uppercase tracking-[0.2em] mb-2">Population</p>
-                            <p className="text-xl font-display font-bold text-gray-700">{country.population}</p>
-                        </div>
-                        <div>
-                            <p className="text-[10px] font-black text-primary uppercase tracking-[0.2em] mb-2">Land Area</p>
-                            <p className="text-xl font-display font-bold text-gray-700">{country.area} km²</p>
-                        </div>
-                        <div>
-                            <p className="text-[10px] font-black text-primary uppercase tracking-[0.2em] mb-2">Currency</p>
-                            <p className="text-xl font-display font-bold text-gray-700">{country.currency}</p>
-                        </div>
-                        <div>
-                            <p className="text-[10px] font-black text-primary uppercase tracking-[0.2em] mb-2">GDP (NOMINAL)</p>
-                            <p className="text-xl font-display font-bold text-gray-700">{country.gdp || 'N/A'}</p>
-                        </div>
-                        <div>
-                            <p className="text-[10px] font-black text-primary uppercase tracking-[0.2em] mb-2">Time Zone</p>
-                            <p className="text-xl font-display font-bold text-gray-700 flex items-center gap-1.5"><Clock size={16} /> {country.timeZone || 'N/A'}</p>
-                        </div>
-                        <div className="col-span-1">
-                            <p className="text-[10px] font-black text-primary uppercase tracking-[0.2em] mb-2">Calling Code</p>
-                            <p className="text-xl font-display font-bold text-gray-700 flex items-center gap-1.5"><Phone size={16} /> {country.callingCode || 'N/A'}</p>
-                        </div>
-                        <div className="col-span-1">
-                            <p className="text-[10px] font-black text-primary uppercase tracking-[0.2em] mb-2">Road Traffic</p>
-                            <p className="text-xl font-display font-bold text-gray-700 flex items-center gap-1.5"><Car size={16} /> {country.driveSide || 'Right'}-hand</p>
-                        </div>
-                        <div className="col-span-3 md:col-span-1">
-                            <p className="text-[10px] font-black text-primary uppercase tracking-[0.2em] mb-2">Languages</p>
-                            <div className="flex flex-wrap gap-2">
-                                {country.languages.map(lang => (
-                                    <span key={lang} className="px-2 py-1 bg-white border border-gray-200 rounded text-xs font-bold text-gray-600 shadow-sm">{lang}</span>
-                                ))}
-                            </div>
+                     <header className="mb-8 pb-4 border-b border-gray-200 flex items-center gap-3 shrink-0">
+                        <Compass className="text-primary" size={28} />
+                        <h3 className="font-display font-black text-2xl text-gray-800 uppercase tracking-tight">Official Profile</h3>
+                     </header>
+                     
+                     {/* Refined Stats Grid */}
+                     <div className="grid grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-8 mb-10 shrink-0">
+                        <StatItem label="Capital" value={country.capital} icon={Building2} />
+                        <StatItem label="Population" value={country.population} icon={Users} />
+                        <StatItem label="Land Area" value={`${country.area} km²`} icon={Maximize2} />
+                        <StatItem label="Currency" value={country.currency} icon={Banknote} />
+                        <StatItem label="GDP (Nominal)" value={country.gdp || 'N/A'} icon={TrendingUp} />
+                        <StatItem label="Time Zone" value={country.timeZone || 'N/A'} icon={Clock} />
+                        <StatItem label="Calling Code" value={country.callingCode || 'N/A'} icon={Phone} />
+                        <StatItem label="Road Traffic" value={`${country.driveSide || 'Right'}-hand`} icon={Car} />
+                     </div>
+
+                     <div className="mb-8 p-4 bg-white/40 rounded-2xl border border-white/60">
+                        <p className="text-[10px] font-black text-primary uppercase tracking-[0.2em] mb-2 flex items-center gap-2">
+                          <Languages size={12} /> Primary Languages
+                        </p>
+                        <div className="flex flex-wrap gap-1.5">
+                            {country.languages.map(lang => (
+                                <span key={lang} className="px-2.5 py-1 bg-white border border-gray-100 rounded-lg text-xs font-bold text-gray-600 shadow-sm">{lang}</span>
+                            ))}
                         </div>
                      </div>
 
@@ -169,7 +168,7 @@ const CountryDetail: React.FC = () => {
                         </p>
                      </div>
 
-                     {/* Borders - Restored to minimalist old style while staying clickable */}
+                     {/* Borders */}
                      {country.borders && country.borders.length > 0 && (
                         <div className="mb-12 shrink-0">
                              <p className="text-[10px] font-black text-primary uppercase tracking-[0.2em] mb-3">Bordering Nations</p>
@@ -201,7 +200,7 @@ const CountryDetail: React.FC = () => {
                         </div>
                      </div>
 
-                     {/* White Coordinate Bubble - Updated Visuals */}
+                     {/* White Coordinate Bubble */}
                      <div className="mt-auto pt-16 flex justify-center">
                         <div className="inline-flex flex-col items-center gap-2">
                              <div className="text-[10px] font-black text-gray-400 uppercase tracking-[0.4em] mb-1">Coordinates</div>
