@@ -128,7 +128,7 @@ const CountryDetail: React.FC = () => {
 
             {/* 2. The "Field Notes": Official Profile & Integrated Coordinates */}
             <div className="lg:col-span-7 order-2 lg:row-span-2">
-                <div className="bg-[#fdf6e3] p-6 md:p-10 lg:p-12 shadow-premium rounded-[2.5rem] border-l-[12px] border-primary/40 relative h-full flex flex-col overflow-hidden">
+                <div className="bg-[#fdf6e3] p-6 md:p-10 lg:p-12 shadow-premium rounded-[2.5rem] border border-gray-200/50 relative h-full flex flex-col overflow-hidden">
                      <div className="absolute top-8 right-8">
                         <Scroll className="text-primary/10 w-16 h-16" />
                      </div>

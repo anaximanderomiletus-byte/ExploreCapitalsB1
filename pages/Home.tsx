@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Trophy, BookOpen, ArrowRight, Compass, Globe2, GraduationCap, Zap } from 'lucide-react';
@@ -21,7 +22,8 @@ const Home: React.FC = () => {
     };
 
     const handleScroll = () => {
-      setScrollY(window.scrollY);
+      const currentScrollY = window.scrollY;
+      setScrollY(currentScrollY);
     };
 
     window.addEventListener('mousemove', handleMouseMove);
@@ -31,7 +33,7 @@ const Home: React.FC = () => {
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('scroll', handleScroll);
     };
-  }, []);
+  }, [setPageLoading]);
 
   const structuredData = {
     "@context": "https://schema.org",
@@ -57,7 +59,7 @@ const Home: React.FC = () => {
       />
 
       {/* Hero Section - Balanced min-height and justify-center for vertical impact */}
-      <section className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden pt-48 pb-32">
+      <section className="relative min-h-[90vh] md:min-h-screen flex flex-col items-center justify-center overflow-hidden pt-44 pb-8 md:pt-48 md:pb-32">
          <div className="absolute inset-0 bg-gradient-to-b from-blue-50/80 to-surface z-0"></div>
          
          <div 
@@ -124,7 +126,7 @@ const Home: React.FC = () => {
                 </Link>
              </div>
              
-             <div className="mt-20 pt-10 border-t border-gray-200/40 flex flex-wrap justify-center gap-10 md:gap-20 opacity-0 animate-in fade-in slide-in-from-bottom-4 duration-1000 delay-400 fill-mode-forwards">
+             <div className="mt-12 md:mt-20 pt-10 border-t border-gray-200/40 flex flex-wrap justify-center gap-10 md:gap-20 opacity-0 animate-in fade-in slide-in-from-bottom-4 duration-1000 delay-400 fill-mode-forwards">
                  <div className="flex flex-col items-center">
                     <span className="text-3xl md:text-4xl font-display font-bold text-text">195</span>
                     <span className="text-[9px] font-bold uppercase tracking-widest text-gray-400 mt-1">Nations</span>
@@ -142,7 +144,7 @@ const Home: React.FC = () => {
       </section>
 
       {/* Bento-Grid Feature Ecosystem */}
-      <section className="py-24 px-6 relative z-10 bg-white rounded-t-[3rem] shadow-[0_-15px_50px_rgba(0,0,0,0.02)]">
+      <section className="pt-10 pb-24 md:py-24 px-6 relative z-10 bg-white rounded-t-[3rem] shadow-[0_-15px_50px_rgba(0,0,0,0.02)]">
          <div className="max-w-7xl mx-auto">
             <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-6">
                 <div className="text-center md:text-left">
