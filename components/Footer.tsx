@@ -16,7 +16,7 @@ const Footer: React.FC = () => (
           </p>
         </div>
 
-        {/* Navigation Column */}
+        {/* Navigation Column - Matching Main Menu Labels */}
         <div>
           <h4 className="font-display font-bold text-text text-sm uppercase tracking-widest mb-6">Navigation</h4>
           <ul className="space-y-3 md:space-y-4">

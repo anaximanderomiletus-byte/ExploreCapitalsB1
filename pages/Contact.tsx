@@ -1,6 +1,6 @@
 
 import React, { useEffect } from 'react';
-import { Mail, MessageSquare, Globe, ArrowRight, Compass, Shield, Zap } from 'lucide-react';
+import { MessageSquare, Globe, Compass } from 'lucide-react';
 import SEO from '../components/SEO';
 import { useLayout } from '../context/LayoutContext';
 
@@ -20,7 +20,7 @@ const Contact: React.FC = () => {
   };
 
   return (
-    <main className="pt-32 pb-20 px-6 bg-surface min-h-screen">
+    <main className="pt-32 pb-20 px-6 bg-surface min-h-screen overflow-x-hidden">
       <SEO
         title="Contact Us"
         description="Have questions or feedback? Connect with the ExploreCapitals team. We welcome institutional inquiries and collaboration from the global geography community."
@@ -40,49 +40,12 @@ const Contact: React.FC = () => {
            </p>
         </header>
 
-        <div className="grid md:grid-cols-5 gap-8">
-          {/* Main Contact Card */}
-          <section className="md:col-span-3 bg-white rounded-[2.5rem] p-8 md:p-12 shadow-premium border border-gray-100 flex flex-col justify-center animate-in fade-in slide-in-from-left-4 duration-700 delay-100">
-            <div className="w-16 h-16 bg-primary rounded-2xl flex items-center justify-center text-white shadow-lg mb-8">
-              <Mail size={32} />
-            </div>
-            <h2 className="text-2xl font-display font-bold text-text mb-4 tracking-tight">Direct Correspondence</h2>
-            <p className="text-gray-500 mb-8 leading-relaxed">
-              For general inquiries, technical issues, or data corrections, please reach out via our primary administrative channel:
-            </p>
-            <a 
-              href="mailto:anaximanderomiletus@gmail.com" 
-              className="group text-xl md:text-2xl font-display font-bold text-primary break-all hover:text-primary/80 transition-all flex items-center gap-3"
-            >
-              anaximanderomiletus@gmail.com
-              <ArrowRight size={24} className="group-hover:translate-x-1 transition-transform shrink-0" />
-            </a>
-          </section>
-
-          {/* Side Panels */}
-          <div className="md:col-span-2 space-y-6 animate-in fade-in slide-in-from-right-4 duration-700 delay-200">
-             <div className="bg-white/60 backdrop-blur-md p-8 rounded-[2rem] border border-white shadow-sm">
-                <div className="flex items-center gap-3 text-primary mb-4">
-                   <Shield size={20} />
-                   <h3 className="font-display font-bold text-text">Privacy First</h3>
-                </div>
-                <p className="text-sm text-gray-500 leading-relaxed">
-                  Your communication is handled with institutional-grade privacy. We do not share correspondent data with third parties.
-                </p>
-             </div>
-
-             <div className="bg-primary p-8 rounded-[2rem] text-white shadow-lg relative overflow-hidden group">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 blur-2xl group-hover:scale-110 transition-transform duration-500"></div>
-                <div className="flex items-center gap-3 mb-4 relative z-10">
-                   <Zap size={20} />
-                   <h3 className="font-display font-bold">Fast Response</h3>
-                </div>
-                <p className="text-sm text-blue-50 leading-relaxed relative z-10">
-                  Our lead architects typically review and respond to institutional inquiries within 24-48 business hours.
-                </p>
-             </div>
-          </div>
-        </div>
+        <section className="bg-white rounded-[2.5rem] p-8 md:p-16 shadow-premium border border-gray-100 text-center animate-in fade-in slide-in-from-bottom-4 duration-700 delay-100">
+           <h2 className="text-2xl md:text-3xl font-display font-bold text-text mb-6 tracking-tight">Direct Outreach</h2>
+           <p className="text-gray-600 text-lg md:text-xl leading-relaxed">
+             We'd love to hear from you. Feel free to shoot an email at <a href="mailto:anaximanderomiletus@gmail.com" className="text-primary font-bold whitespace-nowrap hover:underline underline-offset-4 transition-all text-[min(4.2vw,1.25rem)] sm:text-xl md:text-2xl">anaximanderomiletus@gmail.com</a>
+           </p>
+        </section>
 
         {/* Categories Section */}
         <section className="mt-16 grid sm:grid-cols-3 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-300">

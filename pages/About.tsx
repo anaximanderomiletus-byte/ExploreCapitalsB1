@@ -1,6 +1,6 @@
 
 import React, { useEffect } from 'react';
-import { Target, Award, Compass, ArrowRight, ShieldCheck, Microscope, Mail, Shield, Zap } from 'lucide-react';
+import { Target, Award, Compass, ShieldCheck, Microscope, Clock } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import Button from '../components/Button';
 import SEO from '../components/SEO';
@@ -13,11 +13,9 @@ const About: React.FC = () => {
   useEffect(() => {
     setPageLoading(false);
     
-    // Handle anchor scrolling for the merged contact section
     if (hash === '#contact') {
       const element = document.getElementById('contact');
       if (element) {
-        // Small delay to ensure layout is stable
         setTimeout(() => {
           element.scrollIntoView({ behavior: 'smooth' });
         }, 150);
@@ -86,54 +84,38 @@ const About: React.FC = () => {
               </div>
             </div>
 
-            {/* Integrated Contact Section */}
-            <div id="contact" className="pt-16 md:pt-20 border-t border-gray-100 scroll-mt-24 md:scroll-mt-32">
-              <div className="mb-10 md:mb-12 text-center md:text-left">
-                <h2 className="text-3xl md:text-4xl font-display font-black text-text tracking-tight mb-4">Connect With Us</h2>
-                <p className="text-gray-500 text-base md:text-lg">Have questions, institutional inquiries, or technical feedback?</p>
-              </div>
+            {/* Section Divider */}
+            <div className="border-t border-gray-100 my-16 md:my-20"></div>
 
-              <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
-                <div className="md:col-span-3 bg-surface/40 p-6 md:p-12 rounded-[2rem] md:rounded-[2.5rem] border border-secondary/20 flex flex-col justify-center overflow-hidden">
-                  <div className="w-12 h-12 md:w-14 md:h-14 bg-primary rounded-2xl flex items-center justify-center text-white shadow-lg mb-6 md:mb-8">
-                    <Mail size={28} />
-                  </div>
-                  <h3 className="text-lg md:text-xl font-display font-bold text-text mb-4 md:mb-6">Direct Correspondence</h3>
-                  
-                  {/* Robust Fluid Email Display: Clamp prevents bleeding, white-space:nowrap ensures one line */}
-                  <div className="w-full">
-                    <a 
-                      href="mailto:anaximanderomiletus@gmail.com" 
-                      className="group inline-flex items-center justify-between gap-3 p-4 md:p-5 bg-white rounded-2xl border border-primary/20 hover:border-primary/50 transition-all shadow-sm w-full max-w-full overflow-hidden"
-                    >
-                      <span className="text-[min(3.8vw,1.5rem)] xs:text-[min(3.5vw,1.5rem)] sm:text-lg md:text-xl lg:text-2xl font-display font-bold text-primary whitespace-nowrap overflow-hidden text-ellipsis select-all">
-                        anaximanderomiletus@gmail.com
-                      </span>
-                      <ArrowRight size={24} className="text-primary shrink-0 group-hover:translate-x-1 transition-transform hidden sm:block" />
-                    </a>
-                  </div>
-                </div>
+            {/* Contact Section */}
+            <div id="contact" className="scroll-mt-24 md:scroll-mt-32">
+              <h2 className="text-3xl md:text-4xl font-display font-black text-text tracking-tight mb-4">Connect With Us</h2>
+              <p className="text-gray-500 text-base md:text-lg leading-relaxed">
+                Have questions, institutional inquiries, or technical feedback? Feel free to shoot an email at <a href="mailto:anaximanderomiletus@gmail.com" className="text-primary font-bold hover:underline underline-offset-4 decoration-primary/30 transition-all">anaximanderomiletus@gmail.com</a>.
+              </p>
 
-                <div className="md:col-span-2 flex flex-col gap-4 md:gap-6">
-                  <div className="bg-white p-6 md:p-8 rounded-[2rem] md:rounded-[2.5rem] border border-gray-100 shadow-sm flex-1">
-                    <div className="flex items-center gap-3 text-primary mb-3 md:mb-4">
-                      <Shield size={20} />
-                      <h4 className="font-display font-bold text-[10px] md:text-sm text-text uppercase tracking-wider">Privacy Protocol</h4>
-                    </div>
-                    <p className="text-xs md:text-sm text-gray-500 leading-relaxed">
-                      Communication is handled with institutional-grade privacy. Your correspondence data is never shared with third parties.
+              {/* Institutional Protocols */}
+              <div className="mt-12 grid md:grid-cols-2 gap-6">
+                <div className="group bg-white p-8 rounded-[2rem] border border-gray-100 shadow-premium hover:shadow-premium-hover transition-all duration-500 flex flex-col items-start gap-5">
+                  <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary group-hover:rotate-6 transition-all duration-300">
+                    <ShieldCheck size={26} strokeWidth={2.5} />
+                  </div>
+                  <div>
+                    <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] mb-2">Privacy Protocol</h4>
+                    <p className="text-sm md:text-base text-gray-500 leading-relaxed font-medium">
+                      Communication is handled with institutional-grade privacy. Your correspondence data is encrypted and never shared with third parties.
                     </p>
                   </div>
-
-                  <div className="bg-primary p-6 md:p-8 rounded-[2rem] md:rounded-[2.5rem] text-white shadow-lg relative overflow-hidden group flex-1">
-                    {/* Responsive "Bubble" - adjusted position to avoid cut-off feel */}
-                    <div className="absolute top-[-10%] right-[-10%] w-24 h-24 md:w-32 md:h-32 bg-white/10 rounded-full blur-2xl group-hover:scale-110 transition-transform duration-500 pointer-events-none"></div>
-                    <div className="flex items-center gap-3 mb-3 md:mb-4 relative z-10">
-                      <Zap size={20} />
-                      <h4 className="font-display font-bold text-[10px] md:text-sm uppercase tracking-wider">Response Threshold</h4>
-                    </div>
-                    <p className="text-xs md:text-sm text-blue-50 leading-relaxed relative z-10">
-                      Our lead architects typically review and respond to institutional inquiries within 24-48 business hours.
+                </div>
+                
+                <div className="group bg-white p-8 rounded-[2rem] border border-gray-100 shadow-premium hover:shadow-premium-hover transition-all duration-500 flex flex-col items-start gap-5">
+                  <div className="w-12 h-12 rounded-2xl bg-accent/20 flex items-center justify-center text-accent group-hover:-rotate-6 transition-all duration-300">
+                    <Clock size={26} strokeWidth={2.5} />
+                  </div>
+                  <div>
+                    <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] mb-2">Response Threshold</h4>
+                    <p className="text-sm md:text-base text-gray-500 leading-relaxed font-medium">
+                      Our lead architects typically review and respond to institutional inquiries within a strict 24-48 business hour window.
                     </p>
                   </div>
                 </div>
@@ -160,7 +142,7 @@ const About: React.FC = () => {
                         size="lg" 
                         className="h-14 md:h-16 px-6 md:px-14 text-base md:text-xl !border-white !text-white shadow-[0_4px_0_rgba(255,255,255,0.4)] hover:bg-white/10 active:shadow-none active:translate-y-[4px] w-full flex items-center justify-center whitespace-nowrap"
                       >
-                        Start World Quizzes <ArrowRight size={20} className="ml-2 shrink-0" />
+                        Start World Quizzes <Compass size={20} className="ml-2 shrink-0" />
                       </Button>
                     </Link>
                 </div>
