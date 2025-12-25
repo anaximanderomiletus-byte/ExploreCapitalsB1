@@ -1,7 +1,6 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Trophy, BookOpen, ArrowRight, Compass, Globe2, GraduationCap, Zap, Plane } from 'lucide-react';
+import { Trophy, BookOpen, ArrowRight, Compass, Globe2, GraduationCap, Zap } from 'lucide-react';
 import Button from '../components/Button';
 import SEO from '../components/SEO';
 import { useLayout } from '../context/LayoutContext';
@@ -12,7 +11,6 @@ const Home: React.FC = () => {
   const { setPageLoading } = useLayout();
 
   useEffect(() => {
-    // Immediately tell the transition handler we are ready
     setPageLoading(false);
 
     const handleMouseMove = (e: MouseEvent) => {
@@ -39,10 +37,12 @@ const Home: React.FC = () => {
     "@context": "https://schema.org",
     "@type": "WebSite",
     "name": "ExploreCapitals",
+    "alternateName": "Explore Capitals",
     "url": "https://explorecapitals.com",
+    "description": "Master world geography and capitals with interactive maps, competitive quizzes, and detailed country data for 195 nations.",
     "potentialAction": {
       "@type": "SearchAction",
-      "target": "https://explorecapitals.com/directory?search={search_term_string}",
+      "target": "https://explorecapitals.com/#/directory?search={search_term_string}",
       "query-input": "required name=search_term_string"
     }
   };
@@ -50,17 +50,16 @@ const Home: React.FC = () => {
   return (
     <main className="bg-surface overflow-x-hidden">
       <SEO 
-        title="Master World Geography & Capitals"
-        description="The premier platform for geography education. Explore interactive maps, play capital city quizzes, and access comprehensive demographic data for over 190 countries."
+        title="Master World Geography & Capitals | Interactive Atlas"
+        description="ExploreCapitals is the premier platform for geography mastery. Features interactive maps, capital city quizzes, and comprehensive data for over 190 countries. Start your global journey today."
+        keywords="world capitals, geography games, interactive map, learning geography, country facts, population data, capital cities"
         structuredData={structuredData}
       />
 
       {/* Hero Section */}
       <section className="relative min-h-[80vh] flex flex-col items-center justify-start overflow-hidden pt-44 pb-20">
-         {/* Layered Background Elements */}
          <div className="absolute inset-0 bg-gradient-to-b from-blue-50/80 to-surface z-0"></div>
          
-         {/* Precision Grid Pattern with Parallax */}
          <div 
             className="absolute inset-0 opacity-[0.15] z-0 will-change-transform" 
             style={{ 
@@ -70,13 +69,11 @@ const Home: React.FC = () => {
             }}
          ></div>
 
-         {/* Massive Background Map Silhouette with Parallax */}
          <div 
             className="absolute inset-0 z-0 opacity-[0.05] pointer-events-none flex items-center justify-center scale-110 select-none will-change-transform"
             style={{ transform: `translateY(${scrollY * 0.25}px) scale(1.1)` }}
          >
             <svg viewBox="0 0 800 400" xmlns="http://www.w3.org/2000/svg" className="w-full h-full fill-current text-text">
-               {/* Simplified Rounded Continents */}
                <path d="M120,80 Q140,70 180,80 T240,80 T230,150 T180,180 T120,130 Z" />
                <path d="M180,200 Q210,190 240,210 T250,300 T190,340 T160,240 Z" />
                <path d="M350,60 Q450,40 600,40 T780,100 T750,180 T580,200 T380,150 Z" />
@@ -86,7 +83,6 @@ const Home: React.FC = () => {
             </svg>
          </div>
          
-         {/* Parallax Blobs for Depth */}
          <div 
             className="absolute top-1/4 -left-20 w-80 h-80 bg-primary/20 rounded-full blur-[120px] opacity-40 transition-transform duration-1000 ease-out pointer-events-none"
             style={{ transform: `translate(${mousePos.x * -1}px, ${mousePos.y * -1}px)` }}
@@ -97,46 +93,42 @@ const Home: React.FC = () => {
          ></div>
 
          <div className="relative z-10 max-w-6xl mx-auto px-6 text-center">
-            {/* Main Headline */}
             <h1 className="text-6xl md:text-8xl lg:text-9xl font-display font-black mb-8 text-text tracking-tighter leading-[0.9] animate-in fade-in slide-in-from-bottom-4 duration-1000">
-              The Atlas <br/>
+              The World Atlas <br/>
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-blue-400 to-primary bg-[length:200%_auto] animate-shimmer">
                 Unlocked.
               </span>
             </h1>
 
-            {/* Subtext */}
             <p className="text-lg md:text-xl text-gray-500 max-w-xl mx-auto mb-12 leading-relaxed animate-in fade-in slide-in-from-bottom-6 duration-1000 delay-100">
-              A high-fidelity interactive experience designed to help you master 195 nations through data and exploration.
+              A high-fidelity interactive experience designed to help you master 195 nations and their capitals through data and exploration.
             </p>
 
-            {/* Primary Action Group */}
              <div className="flex flex-col sm:flex-row gap-4 justify-center items-center animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-200">
                 <Link to="/games" className="w-full sm:w-auto">
-                   <Button variant="primary" size="lg" className="w-full h-14 px-12 text-lg">
+                   <Button variant="primary" size="lg" className="w-full h-14 px-12 text-lg" title="Play Geography Games">
                      Start Journey <ArrowRight className="ml-2" size={20} />
                    </Button>
                 </Link>
                 <Link to="/map" className="w-full sm:w-auto">
-                   <Button variant="secondary" size="lg" className="w-full h-14 px-12 text-lg bg-white/40 border border-white/60 backdrop-blur-md hover:bg-white/80">
+                   <Button variant="secondary" size="lg" className="w-full h-14 px-12 text-lg bg-white/40 border border-white/60 backdrop-blur-md hover:bg-white/80" title="View World Map">
                      Explore Map
                    </Button>
                 </Link>
              </div>
              
-             {/* Institutional Trust Bar - Minimalized */}
              <div className="mt-20 pt-10 border-t border-gray-200/40 flex flex-wrap justify-center gap-10 md:gap-20 opacity-0 animate-in fade-in slide-in-from-bottom-4 duration-1000 delay-400 fill-mode-forwards">
                  <div className="flex flex-col items-center">
-                    <div className="text-3xl md:text-4xl font-display font-bold text-text">195</div>
-                    <div className="text-[9px] font-bold uppercase tracking-widest text-gray-400 mt-1">Nations</div>
+                    <span className="text-3xl md:text-4xl font-display font-bold text-text">195</span>
+                    <span className="text-[9px] font-bold uppercase tracking-widest text-gray-400 mt-1">Nations</span>
                  </div>
                  <div className="flex flex-col items-center">
-                    <div className="text-3xl md:text-4xl font-display font-bold text-text">7</div>
-                    <div className="text-[9px] font-bold uppercase tracking-widest text-gray-400 mt-1">Modules</div>
+                    <span className="text-3xl md:text-4xl font-display font-bold text-text">7</span>
+                    <span className="text-[9px] font-bold uppercase tracking-widest text-gray-400 mt-1">Modules</span>
                  </div>
                  <div className="flex flex-col items-center">
-                    <div className="text-3xl md:text-4xl font-display font-bold text-text">60s</div>
-                    <div className="text-[9px] font-bold uppercase tracking-widest text-gray-400 mt-1">Blitz Quizzes</div>
+                    <span className="text-3xl md:text-4xl font-display font-bold text-text">60s</span>
+                    <span className="text-[9px] font-bold uppercase tracking-widest text-gray-400 mt-1">Blitz Quizzes</span>
                  </div>
              </div>
          </div>
@@ -147,8 +139,8 @@ const Home: React.FC = () => {
          <div className="max-w-7xl mx-auto">
             <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-6">
                 <div className="text-center md:text-left">
-                    <h2 className="text-3xl md:text-4xl font-display font-bold text-text tracking-tight">The Ecosystem</h2>
-                    <p className="text-gray-400 text-lg mt-2 max-w-lg">Mastering geography through design and interaction.</p>
+                    <h2 className="text-3xl md:text-4xl font-display font-bold text-text tracking-tight">The Geography Ecosystem</h2>
+                    <p className="text-gray-400 text-lg mt-2 max-w-lg">Mastering world capitals through high-fidelity interaction.</p>
                 </div>
                 <div className="flex gap-4 justify-center md:justify-start">
                    <div className="flex items-center gap-2 text-[10px] font-bold text-primary bg-primary/5 px-4 py-2 rounded-full border border-primary/10 uppercase tracking-wider">
@@ -161,26 +153,16 @@ const Home: React.FC = () => {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
-                {/* Featured: Map */}
                 <div className="md:col-span-8 bg-surface/30 rounded-[2rem] p-10 md:p-12 border border-gray-100 shadow-premium group overflow-hidden relative min-h-[400px] flex flex-col justify-center">
-                   {/* High-Fidelity Recognized Minimal World Map SVG Background */}
                    <div className="absolute inset-0 z-0 opacity-[0.08] group-hover:opacity-[0.12] transition-opacity duration-700 pointer-events-none flex items-center justify-center p-8">
-                      <svg viewBox="0 0 800 400" xmlns="http://www.w3.org/2000/svg" className="w-full h-full fill-current text-primary">
-                        {/* North America */}
+                      <svg viewBox="0 0 800 400" xmlns="http://www.w3.org/2000/svg" className="w-full h-full fill-current text-primary" aria-hidden="true">
                         <path d="M120,80 L140,70 L180,80 L220,60 L240,80 L230,120 L210,150 L180,180 L150,170 L120,130 Z" />
-                        {/* South America */}
                         <path d="M180,200 L210,190 L240,210 L250,250 L220,320 L190,340 L170,300 L160,240 Z" />
-                        {/* Eurasia */}
                         <path d="M350,60 L450,40 L600,40 L750,60 L780,100 L750,180 L680,220 L580,200 L500,180 L420,200 L380,150 L350,100 Z" />
-                        {/* Africa */}
                         <path d="M380,180 L450,170 L520,190 L530,240 L500,320 L450,340 L410,310 L380,250 Z" />
-                        {/* Australia */}
                         <path d="M680,280 L740,270 L760,300 L740,340 L690,330 L670,300 Z" />
-                        {/* Greenland */}
                         <path d="M220,30 L250,20 L280,35 L260,60 L225,55 Z" />
-                        {/* Madagascar */}
                         <path d="M540,280 L560,285 L555,310 L540,315 Z" />
-                        {/* Island Clusters */}
                         <circle cx="280" cy="180" r="5" />
                         <circle cx="310" cy="200" r="4" />
                         <circle cx="620" cy="240" r="4" />
@@ -192,9 +174,9 @@ const Home: React.FC = () => {
                       <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center mb-6 text-primary shadow-sm border border-gray-50 group-hover:rotate-3 transition-transform duration-500">
                          <Globe2 size={28} />
                       </div>
-                      <h3 className="text-3xl font-display font-bold text-text mb-4">Precision Mapping</h3>
+                      <h3 className="text-3xl font-display font-bold text-text mb-4">Precision World Map</h3>
                       <p className="text-gray-500 text-base leading-relaxed mb-8">
-                        Explore every corner of the globe with our high-fidelity interactive engine. Reveal flags, demographics, and curated reports.
+                        Explore every corner of the globe with our interactive engine. Reveal flags, demographics, and curated geographical reports.
                       </p>
                       <Link to="/map">
                         <Button variant="outline" size="md" className="rounded-xl border-gray-200 text-gray-600 hover:bg-white hover:shadow-sm">
@@ -204,7 +186,6 @@ const Home: React.FC = () => {
                    </div>
                 </div>
 
-                {/* Featured: Games */}
                 <div className="md:col-span-4 bg-primary rounded-[2rem] p-10 text-white shadow-lg group relative overflow-hidden flex flex-col min-h-[400px]">
                     <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-[70px] -mr-20 -mt-20"></div>
                     
@@ -212,9 +193,9 @@ const Home: React.FC = () => {
                        <div className="w-14 h-14 bg-white/20 backdrop-blur-lg rounded-2xl flex items-center justify-center mb-6 text-white border border-white/20 group-hover:rotate-12 transition-transform duration-500">
                           <Trophy size={28} />
                        </div>
-                       <h3 className="text-3xl font-display font-bold mb-4">Arcade Mode</h3>
+                       <h3 className="text-3xl font-display font-bold mb-4">Geography Arcade</h3>
                        <p className="text-blue-50 text-base mb-8 leading-relaxed">
-                         Competitive learning with 7 blitz game modes designed to stick.
+                         Competitive learning with 7 blitz game modes designed for high retention.
                        </p>
                        
                        <div className="space-y-2 mt-auto">
@@ -229,21 +210,20 @@ const Home: React.FC = () => {
                        </div>
                        <Link to="/games" className="mt-8">
                           <Button variant="secondary" size="md" className="w-full">
-                             View Center
+                             View Games
                           </Button>
                        </Link>
                     </div>
                 </div>
 
-                {/* Secondary Features */}
                 <div className="md:col-span-6 bg-white rounded-[2rem] p-10 border border-gray-100 shadow-premium flex flex-col md:flex-row items-center gap-8">
                     <div className="w-20 h-20 bg-accent/15 rounded-2xl flex-shrink-0 flex items-center justify-center text-accent">
                         <BookOpen size={36} />
                     </div>
                     <div>
-                        <h3 className="text-xl font-display font-bold text-text mb-2">Data Directory</h3>
+                        <h3 className="text-xl font-display font-bold text-text mb-2">Country Data Directory</h3>
                         <p className="text-gray-500 text-sm mb-4 leading-relaxed">
-                            Access population, currency, and language data for every nation.
+                            Search and sort population, currency, and language data for 195 nations.
                         </p>
                         <Link to="/directory" className="inline-flex items-center text-xs font-bold text-primary gap-1 group">
                             Open Database <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
@@ -256,9 +236,9 @@ const Home: React.FC = () => {
                         <Compass size={36} />
                     </div>
                     <div>
-                        <h3 className="text-xl font-display font-bold text-text mb-2">Virtual Tours</h3>
+                        <h3 className="text-xl font-display font-bold text-text mb-2">Immersive Virtual Tours</h3>
                         <p className="text-gray-500 text-sm mb-4 leading-relaxed">
-                            Immersive, high-fidelity journeys curated for every sovereign nation.
+                            Curated expeditions through the history and landmarks of every sovereign nation.
                         </p>
                         <Link to="/map" className="inline-flex items-center text-xs font-bold text-primary gap-1 group">
                             Explore Now <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
@@ -269,9 +249,7 @@ const Home: React.FC = () => {
          </div>
       </section>
 
-      {/* Global Action CTA - Clean Background without Dots */}
       <section className="py-32 px-6 bg-[#2D3133] relative overflow-hidden">
-         {/* Glowing Auras - Depth without noise */}
          <div className="absolute -top-24 -left-24 w-96 h-96 bg-primary/20 rounded-full blur-[120px] pointer-events-none"></div>
          <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-accent/10 rounded-full blur-[120px] pointer-events-none"></div>
 
@@ -280,12 +258,12 @@ const Home: React.FC = () => {
                Ready to go global?
             </h2>
             <p className="text-blue-100/60 text-lg md:text-xl mb-12 max-w-2xl mx-auto leading-relaxed">
-               Join a global community of learners mastering the atlas through design-led education and immersive interaction.
+               Join a global community of learners mastering the atlas through design-led education and high-fidelity interaction.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-stretch">
                 <Link to="/games" className="flex">
                    <Button variant="primary" size="lg" className="h-16 px-14 text-xl w-full">
-                      Play Games
+                      Play Now
                    </Button>
                 </Link>
                 <Link to="/about" className="flex">
@@ -294,7 +272,7 @@ const Home: React.FC = () => {
                       size="lg" 
                       className="h-16 px-14 text-xl bg-white/10 border-white/20 text-white shadow-[0_4px_0_rgba(0,0,0,0.3)] hover:bg-white/20 active:shadow-none active:translate-y-[4px] w-full"
                     >
-                        About Project
+                        About Us
                     </Button>
                 </Link>
             </div>

@@ -18,14 +18,13 @@ import CapitalConnection from './pages/CapitalConnection';
 import RegionRoundup from './pages/RegionRoundup';
 import LandmarkLegend from './pages/LandmarkLegend';
 import CountryExploration from './pages/CountryExploration';
+import CountryDetail from './pages/CountryDetail';
 import Footer from './components/Footer';
 import { LayoutProvider, useLayout } from './context/LayoutContext';
 
 /**
  * PageTransitionHandler
  * Detects location changes and manages a multi-stage transition.
- * It waits for the isPageLoading flag to flip to false before opening the curtain.
- * Handles scroll reset invisibly while the curtain is closed.
  */
 const PageTransitionHandler: React.FC<{ children: (location: any) => React.ReactNode }> = ({ children }) => {
   const location = useLocation();
@@ -34,36 +33,27 @@ const PageTransitionHandler: React.FC<{ children: (location: any) => React.React
   const [transitionState, setTransitionState] = useState<'idle' | 'entering' | 'waiting' | 'exiting'>('idle');
   const [navId, setNavId] = useState(0);
 
-  // Transition Phase 1: Navigation Triggered
   useEffect(() => {
-    // Only trigger transition if the path actually changes. 
-    // This prevents the wipe from appearing when just updating search parameters (like closing a country card in the directory).
     if (location.pathname !== displayLocation.pathname) {
       setIsTransitioning(true);
       setPageLoading(true); 
       setTransitionState('entering');
       setNavId(prev => prev + 1);
 
-      // Phase 2: Curtain covers the screen (400ms)
       const enterTimer = setTimeout(() => {
-        // RESET SCROLL HERE: The curtain is now fully covering the viewport
         window.scrollTo(0, 0);
-        
         setDisplayLocation(location);
         setTransitionState('waiting');
       }, 400);
 
       return () => clearTimeout(enterTimer);
     } else if (location.search !== displayLocation.search || location.hash !== displayLocation.hash) {
-      // If only query params or hash changed, update display location immediately without animation
       setDisplayLocation(location);
     }
   }, [location, displayLocation.pathname, displayLocation.search, displayLocation.hash]);
 
-  // Transition Phase 3: Wait for assets to be ready
   useEffect(() => {
     if (transitionState === 'waiting' && !isPageLoading) {
-      // Small buffer to ensure browser render cycle finishes
       const waitTimer = setTimeout(() => {
         setTransitionState('exiting');
       }, 100);
@@ -71,7 +61,6 @@ const PageTransitionHandler: React.FC<{ children: (location: any) => React.React
     }
   }, [transitionState, isPageLoading]);
 
-  // Transition Phase 4: Curtain opens (400ms)
   useEffect(() => {
     if (transitionState === 'exiting') {
       const exitTimer = setTimeout(() => {
@@ -82,7 +71,6 @@ const PageTransitionHandler: React.FC<{ children: (location: any) => React.React
     }
   }, [transitionState]);
 
-  // Safety Timeout: Don't stay stuck forever if something fails
   useEffect(() => {
     if (transitionState === 'waiting') {
       const safetyTimer = setTimeout(() => {
@@ -94,10 +82,7 @@ const PageTransitionHandler: React.FC<{ children: (location: any) => React.React
 
   return (
     <>
-      {/* The visible routes, pointing to the buffered location */}
       {children(displayLocation)}
-
-      {/* Full-screen Wipe Overlay */}
       {isTransitioning && (
         <div 
           key={`wipe-overlay-${navId}`}
@@ -140,6 +125,7 @@ const AppContent: React.FC = () => {
               <Route path="/games/region-roundup" element={<RegionRoundup />} />
               <Route path="/games/landmark-legend" element={<LandmarkLegend />} />
               <Route path="/directory" element={<Directory />} />
+              <Route path="/country/:id" element={<CountryDetail />} />
               <Route path="/map" element={<MapPage />} />
               <Route path="/about" element={<About />} />
               <Route path="/explore/:id" element={<CountryExploration />} />
@@ -165,9 +151,10 @@ const App: React.FC = () => {
 const ConditionalFooter: React.FC = () => {
   const location = useLocation();
   const isExploration = location.pathname.startsWith('/explore/');
+  const isCountryPage = location.pathname.startsWith('/country/');
   const isMap = location.pathname === '/map';
   
-  if (isExploration || isMap) return null;
+  if (isExploration || isMap || isCountryPage) return null;
   
   return <Footer />;
 };

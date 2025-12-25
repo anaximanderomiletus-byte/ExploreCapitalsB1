@@ -1,3 +1,4 @@
+
 import React, { useEffect, useRef, useState } from 'react';
 import { Filter, Compass, Map as MapIcon, Search, X, Plus, Minus, ChevronRight } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
@@ -21,6 +22,9 @@ const MapPage: React.FC = () => {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<any>(null);
   const markersLayerRef = useRef<any>(null);
+  // Store marker instances to manipulate them without re-creating
+  const markerInstancesRef = useRef<Map<string, any>>(new Map());
+  
   const [selectedRegion, setSelectedRegion] = useState('All');
   const [mapReady, setMapReady] = useState(false);
   const navigate = useNavigate();
@@ -89,7 +93,6 @@ const MapPage: React.FC = () => {
         attributionControl: false,
         minZoom: 2,
         worldCopyJump: true, // This allows the map to seamlessly wrap horizontally
-        // preferCanvas: false, // Disabling canvas for markers to use DOM translate3d which is smoother for zoom
       });
 
       // CartoDB Voyager Tiles - Clean and Minimal
@@ -121,7 +124,7 @@ const MapPage: React.FC = () => {
       if (target && target.classList.contains('learn-more-btn')) {
         const countryId = target.getAttribute('data-country-id');
         if (countryId) {
-          navigate(`/directory?country=${countryId}`);
+          navigate(`/country/${countryId}`);
         }
       }
     };
@@ -137,23 +140,23 @@ const MapPage: React.FC = () => {
     };
   }, [navigate, setPageLoading]);
 
-  // Update Markers when Region or active state changes
+  // Effect 1: Create Markers when Region changes
+  // We do NOT include activeCountryId here so markers aren't destroyed on every click
   useEffect(() => {
     const L = (window as any).L;
     if (!mapInstanceRef.current || !markersLayerRef.current || !L) return;
 
-    // Clear existing markers
+    // Clear existing
     markersLayerRef.current.clearLayers();
+    markerInstancesRef.current.clear();
 
     const filteredCountries = selectedRegion === 'All' 
       ? MOCK_COUNTRIES 
       : MOCK_COUNTRIES.filter(c => c.region === selectedRegion);
 
     filteredCountries.forEach(country => {
-      // Create a DOM-based custom icon
-      const isActive = activeCountryId === country.id;
       const icon = L.divIcon({
-        className: `custom-map-marker ${isActive ? 'marker-active' : ''}`,
+        className: `custom-map-marker`,
         html: `<div class="marker-pin"></div>`,
         iconSize: [20, 20],
         iconAnchor: [10, 10]
@@ -161,33 +164,48 @@ const MapPage: React.FC = () => {
 
       const marker = L.marker([country.lat, country.lng], { 
         icon: icon,
-        // No need to wrap lng manually as L.marker handles worldCopyJump effectively
       }).bindPopup(createPopupContent(country), {
           closeButton: false,
           className: 'custom-popup'
       });
 
-      (marker as any).countryId = country.id;
+      // Save reference
+      markerInstancesRef.current.set(country.id, marker);
 
       marker.on('click', () => {
+        // Just update state, bindPopup handles the immediate display
         setActiveCountryId(country.id);
       });
 
       markersLayerRef.current.addLayer(marker);
     });
 
-    // Fit bounds to markers if region is selected
     if (selectedRegion !== 'All' && markersLayerRef.current.getLayers().length > 0) {
       const group = L.featureGroup(markersLayerRef.current.getLayers());
       mapInstanceRef.current.fitBounds(group.getBounds().pad(0.1));
     }
 
-  }, [selectedRegion, mapReady, activeCountryId]);
+  }, [selectedRegion, mapReady]);
+
+  // Effect 2: Update marker styles when activeCountryId changes
+  // This manipulates existing DOM elements rather than re-creating layers
+  useEffect(() => {
+    markerInstancesRef.current.forEach((marker, id) => {
+      const el = marker.getElement();
+      if (el) {
+        if (id === activeCountryId) {
+          el.classList.add('marker-active');
+        } else {
+          el.classList.remove('marker-active');
+        }
+      }
+    });
+  }, [activeCountryId]);
 
   // Handle URL Parameter Navigation
   useEffect(() => {
     const countryId = searchParams.get('country');
-    if (countryId && mapReady && mapInstanceRef.current && markersLayerRef.current) {
+    if (countryId && mapReady && mapInstanceRef.current) {
       const country = MOCK_COUNTRIES.find(c => c.id === countryId);
       
       if (country) {
@@ -198,12 +216,10 @@ const MapPage: React.FC = () => {
         setActiveCountryId(countryId);
         mapInstanceRef.current.flyTo([country.lat, country.lng], 6, { duration: 1.5 });
         
+        // Wait for fly animation to finish then open popup
         setTimeout(() => {
-          markersLayerRef.current.eachLayer((layer: any) => {
-            if (layer.countryId === countryId) {
-              layer.openPopup();
-            }
-          });
+          const marker = markerInstancesRef.current.get(countryId);
+          if (marker) marker.openPopup();
         }, 1600);
       }
     }
@@ -234,11 +250,8 @@ const MapPage: React.FC = () => {
       });
       
       setTimeout(() => {
-        markersLayerRef.current.eachLayer((layer: any) => {
-          if (layer.countryId === randomCountry.id) {
-            layer.openPopup();
-          }
-        });
+        const marker = markerInstancesRef.current.get(randomCountry.id);
+        if (marker) marker.openPopup();
       }, 2200);
     }
   };
@@ -268,11 +281,8 @@ const MapPage: React.FC = () => {
           if (mapInstanceRef.current) {
               mapInstanceRef.current.flyTo([country.lat, country.lng], 6, { duration: 2 });
               setTimeout(() => {
-                  markersLayerRef.current.eachLayer((layer: any) => {
-                      if (layer.countryId === country.id) {
-                          layer.openPopup();
-                      }
-                  });
+                  const marker = markerInstancesRef.current.get(country.id);
+                  if (marker) marker.openPopup();
               }, 2200);
           }
       }, 100);

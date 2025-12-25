@@ -1,9 +1,9 @@
+
 import React, { useState, useMemo, useEffect } from 'react';
 import { Search, ArrowUp, ArrowDown, ArrowUpDown, ChevronRight, Maximize2, Banknote, Languages } from 'lucide-react';
-import { useSearchParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { MOCK_COUNTRIES } from '../constants';
 import { Country } from '../types';
-import CountryModal from '../components/CountryModal';
 import SEO from '../components/SEO';
 import { useLayout } from '../context/LayoutContext';
 
@@ -46,23 +46,17 @@ const getCountryCode = (emoji: string) => {
         .join('');
 };
 
-// Helper component for Flag Icons (using Images for Cross-Platform Consistency)
+// Helper component for Flag Icons
 const FlagIcon = ({ country, size = 'small' }: { country: Country, size?: 'small' | 'large' | 'card' }) => {
   const code = getCountryCode(country.flag);
-  
-  let dims = "w-8 h-6"; // Small (Table)
-  
-  if (size === 'card') {
-      dims = "w-12 h-9"; // Mobile Card
-  } else if (size === 'large') {
-      dims = "w-16 h-12";
-  }
+  let dims = "w-8 h-6"; 
+  if (size === 'card') dims = "w-12 h-9"; 
+  else if (size === 'large') dims = "w-16 h-12";
 
   return (
     <div className={`flex items-center justify-center select-none overflow-hidden shrink-0 ${dims}`}>
       <img 
         src={`https://flagcdn.com/w80/${code}.png`}
-        srcSet={`https://flagcdn.com/w160/${code}.png 2x`}
         alt={`${country.name} Flag`}
         className="w-full h-full object-contain"
         loading="lazy"
@@ -74,32 +68,14 @@ const FlagIcon = ({ country, size = 'small' }: { country: Country, size?: 'small
 const Directory: React.FC = () => {
   const [search, setSearch] = useState('');
   const [sortConfig, setSortConfig] = useState<{ key: SortKey; direction: SortDirection } | null>(null);
-  const [selectedCountry, setSelectedCountry] = useState<Country | null>(null);
-  const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
   const { setPageLoading } = useLayout();
 
   useEffect(() => {
     setPageLoading(false);
   }, [setPageLoading]);
 
-  // Effect to handle URL parameter for deep-linking (e.g., from MapPage)
-  useEffect(() => {
-    const countryId = searchParams.get('country');
-    if (countryId) {
-      const country = MOCK_COUNTRIES.find(c => c.id === countryId);
-      if (country) {
-        setSelectedCountry(country);
-      }
-    }
-  }, [searchParams]);
-
-  // Handler to clear URL param when modal closes
-  const handleCloseModal = () => {
-    setSelectedCountry(null);
-    setSearchParams({});
-  };
-
-  // Helper to parse numeric strings (e.g. "67.3M" or "500K")
+  // Helper to parse numeric strings
   const getNumericValue = (str: string) => {
     const value = parseFloat(str.replace(/[^0-9.]/g, ''));
     if (str.includes('B')) return value * 1_000_000_000;
@@ -108,14 +84,11 @@ const Directory: React.FC = () => {
     return value;
   };
 
-  // Helper to normalize strings for search (removes accents/diacritics)
   const normalizeText = (text: string) => 
     text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
 
   const processedCountries = useMemo(() => {
     let data = [...MOCK_COUNTRIES];
-
-    // 1. Filter
     if (search) {
       const normalizedSearch = normalizeText(search);
       data = data.filter(c => 
@@ -125,15 +98,11 @@ const Directory: React.FC = () => {
         normalizeText(c.currency).includes(normalizedSearch)
       );
     }
-
-    // 2. Sort
     if (sortConfig) {
       data.sort((a, b) => {
         const { key, direction } = sortConfig;
         let aValue: any = a[key];
         let bValue: any = b[key];
-
-        // Special handling for numeric fields (population and area)
         if (key === 'population' || key === 'area') {
           aValue = getNumericValue(a[key]);
           bValue = getNumericValue(b[key]);
@@ -141,18 +110,14 @@ const Directory: React.FC = () => {
           if (aValue > bValue) return direction === 'asc' ? 1 : -1;
           return 0;
         }
-
-        // String sorting with localeCompare
         if (typeof aValue === 'string' && typeof bValue === 'string') {
             return direction === 'asc' 
                 ? aValue.localeCompare(bValue, 'en', { sensitivity: 'base' })
                 : bValue.localeCompare(aValue, 'en', { sensitivity: 'base' });
         }
-
         return 0;
       });
     }
-
     return data;
   }, [search, sortConfig]);
 
@@ -165,12 +130,15 @@ const Directory: React.FC = () => {
     });
   };
 
+  const handleCountryClick = (id: string) => {
+    navigate(`/country/${id}`);
+  };
+
   return (
     <div className="pt-28 pb-20 px-4 md:px-6 bg-surface min-h-screen">
       <SEO 
         title="Country Directory"
-        description="Search and sort data for over 190 nations. View flags, capitals, populations, currencies, and languages in our comprehensive country database."
-        keywords="country list, world population, capitals list, country directory"
+        description="Search and sort data for over 190 nations. View flags, capitals, populations, currencies, and languages."
       />
 
       <div className="max-w-7xl mx-auto">
@@ -212,7 +180,7 @@ const Directory: React.FC = () => {
                 {processedCountries.map((country) => (
                   <tr 
                     key={country.id} 
-                    onClick={() => setSelectedCountry(country)}
+                    onClick={() => handleCountryClick(country.id)}
                     className="group hover:bg-blue-50/50 transition-colors duration-200 cursor-pointer"
                   >
                     <td className="px-6 py-5 whitespace-nowrap">
@@ -233,7 +201,7 @@ const Directory: React.FC = () => {
                     <td className="px-6 py-5 text-gray-600 tabular-nums text-right">{country.area}</td>
                     <td className="px-6 py-5 text-right">
                       <button className="text-sm font-semibold text-accent hover:text-amber-600 transition-colors">
-                        Details
+                        Explore
                       </button>
                     </td>
                   </tr>
@@ -243,12 +211,12 @@ const Directory: React.FC = () => {
           </div>
         </div>
 
-        {/* Mobile/Tablet Card View - Updated for consistency */}
+        {/* Mobile/Tablet Card View */}
         <div className="lg:hidden grid grid-cols-1 md:grid-cols-2 gap-4">
           {processedCountries.map((country) => (
             <div 
               key={country.id}
-              onClick={() => setSelectedCountry(country)}
+              onClick={() => handleCountryClick(country.id)}
               className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 active:scale-[0.98] transition-all hover:shadow-md cursor-pointer flex flex-col transform-gpu backface-hidden"
               style={{ WebkitMaskImage: '-webkit-radial-gradient(white, black)' }}
             >
@@ -278,12 +246,6 @@ const Directory: React.FC = () => {
                    </div>
                    <div className="text-sm font-semibold text-text">{country.area}</div>
                 </div>
-                <div className="bg-surface/50 p-2 rounded-lg col-span-2">
-                   <div className="text-[10px] text-gray-400 uppercase font-bold mb-1 flex items-center gap-1">
-                      <Banknote size={10} /> Currency
-                   </div>
-                   <div className="text-sm font-semibold text-text">{country.currency}</div>
-                </div>
               </div>
 
               <div className="flex flex-wrap gap-1.5 pt-4 border-t border-gray-100">
@@ -307,15 +269,7 @@ const Directory: React.FC = () => {
             <p>We couldn't find any matches for "{search}".</p>
           </div>
         )}
-
       </div>
-
-      {selectedCountry && (
-        <CountryModal 
-          country={selectedCountry} 
-          onClose={handleCloseModal} 
-        />
-      )}
     </div>
   );
 };
