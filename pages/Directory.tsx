@@ -1,8 +1,9 @@
+
 import React, { useState, useMemo, useEffect } from 'react';
-import { Search, ArrowUp, ArrowDown, ArrowUpDown, ChevronRight, Maximize2, Banknote, Languages } from 'lucide-react';
+import { Search, ArrowUp, ArrowDown, ArrowUpDown, ChevronRight, Maximize2, Banknote, Languages, Globe } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { MOCK_COUNTRIES } from '../constants';
-import { Country } from '../types';
+import { MOCK_COUNTRIES, TERRITORIES } from '../constants';
+import { Country, Territory } from '../types';
 import SEO from '../components/SEO';
 import { useLayout } from '../context/LayoutContext';
 
@@ -72,6 +73,29 @@ const Directory: React.FC = () => {
 
   useEffect(() => {
     setPageLoading(false);
+
+    // Restore state from session storage if available
+    const savedSearch = sessionStorage.getItem('directorySearch');
+    const savedSort = sessionStorage.getItem('directorySort');
+    const savedScroll = sessionStorage.getItem('directoryScrollY');
+
+    if (savedSearch) setSearch(savedSearch);
+    if (savedSort) setSortConfig(JSON.parse(savedSort));
+
+    if (savedScroll) {
+      // Small timeout to allow render to complete before scrolling
+      setTimeout(() => {
+        window.scrollTo({
+          top: parseInt(savedScroll, 10),
+          behavior: 'instant'
+        });
+        
+        // Clean up after restoring
+        sessionStorage.removeItem('directoryScrollY');
+        sessionStorage.removeItem('directorySearch');
+        sessionStorage.removeItem('directorySort');
+      }, 100);
+    }
   }, [setPageLoading]);
 
   // Helper to parse numeric strings
@@ -86,40 +110,6 @@ const Directory: React.FC = () => {
   const normalizeText = (text: string) => 
     text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
 
-  const processedCountries = useMemo(() => {
-    let data = [...MOCK_COUNTRIES];
-    if (search) {
-      const normalizedSearch = normalizeText(search);
-      data = data.filter(c => 
-        normalizeText(c.name).includes(normalizedSearch) || 
-        normalizeText(c.capital).includes(normalizedSearch) ||
-        normalizeText(c.region).includes(normalizedSearch) ||
-        normalizeText(c.currency).includes(normalizedSearch)
-      );
-    }
-    if (sortConfig) {
-      data.sort((a, b) => {
-        const { key, direction } = sortConfig;
-        let aValue: any = a[key];
-        let bValue: any = b[key];
-        if (key === 'population' || key === 'area') {
-          aValue = getNumericValue(a[key]);
-          bValue = getNumericValue(b[key]);
-          if (aValue < bValue) return direction === 'asc' ? -1 : 1;
-          if (aValue > bValue) return direction === 'asc' ? 1 : -1;
-          return 0;
-        }
-        if (typeof aValue === 'string' && typeof bValue === 'string') {
-            return direction === 'asc' 
-                ? aValue.localeCompare(bValue, 'en', { sensitivity: 'base' })
-                : bValue.localeCompare(aValue, 'en', { sensitivity: 'base' });
-        }
-        return 0;
-      });
-    }
-    return data;
-  }, [search, sortConfig]);
-
   const handleSort = (key: SortKey) => {
     setSortConfig(current => {
       if (current?.key === key) {
@@ -130,10 +120,54 @@ const Directory: React.FC = () => {
   };
 
   const handleCountryClick = (id: string) => {
+    // Save current state and scroll position
+    sessionStorage.setItem('directoryScrollY', window.scrollY.toString());
+    sessionStorage.setItem('directorySearch', search);
+    sessionStorage.setItem('directorySort', JSON.stringify(sortConfig));
+
     // DISCLOSURE: Premium "Cartographic Zoom" transition
     setTransitionStyle('cartographic');
     navigate(`/country/${id}`);
   };
+
+  const processList = <T extends Country>(list: T[]) => {
+      let data = [...list];
+      if (search) {
+        const normalizedSearch = normalizeText(search);
+        data = data.filter(c => 
+          normalizeText(c.name).includes(normalizedSearch) || 
+          normalizeText(c.capital).includes(normalizedSearch) ||
+          normalizeText(c.region).includes(normalizedSearch) ||
+          normalizeText(c.currency).includes(normalizedSearch)
+        );
+      }
+      if (sortConfig) {
+        data.sort((a, b) => {
+          const { key, direction } = sortConfig;
+          // @ts-ignore
+          let aValue: any = a[key];
+          // @ts-ignore
+          let bValue: any = b[key];
+          if (key === 'population' || key === 'area') {
+            aValue = getNumericValue(a[key]);
+            bValue = getNumericValue(b[key]);
+            if (aValue < bValue) return direction === 'asc' ? -1 : 1;
+            if (aValue > bValue) return direction === 'asc' ? 1 : -1;
+            return 0;
+          }
+          if (typeof aValue === 'string' && typeof bValue === 'string') {
+              return direction === 'asc' 
+                  ? aValue.localeCompare(bValue, 'en', { sensitivity: 'base' })
+                  : bValue.localeCompare(aValue, 'en', { sensitivity: 'base' });
+          }
+          return 0;
+        });
+      }
+      return data;
+  };
+
+  const processedCountries = useMemo(() => processList(MOCK_COUNTRIES), [search, sortConfig]);
+  const processedTerritories = useMemo(() => processList(TERRITORIES), [search, sortConfig]);
 
   return (
     <div className="pt-28 pb-20 px-4 md:px-6 bg-surface min-h-screen">
@@ -163,8 +197,8 @@ const Directory: React.FC = () => {
           </div>
         </div>
 
-        {/* Desktop Table View */}
-        <div className="hidden lg:block bg-white rounded-2xl shadow-premium overflow-hidden border border-gray-100">
+        {/* --- Sovereign Countries Section --- */}
+        <div className="bg-white rounded-2xl shadow-premium overflow-hidden border border-gray-100 mb-16">
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
@@ -210,69 +244,141 @@ const Directory: React.FC = () => {
               </tbody>
             </table>
           </div>
+          {/* Mobile Card View for Countries */}
+          <div className="lg:hidden p-4 grid grid-cols-1 md:grid-cols-2 gap-4 bg-surface">
+            {processedCountries.map((country) => (
+               <MobileCountryCard key={country.id} country={country} onClick={() => handleCountryClick(country.id)} />
+            ))}
+          </div>
         </div>
 
-        {/* Mobile/Tablet Card View */}
-        <div className="lg:hidden grid grid-cols-1 md:grid-cols-2 gap-4">
-          {processedCountries.map((country) => (
-            <div 
-              key={country.id}
-              onClick={() => handleCountryClick(country.id)}
-              className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 active:scale-[0.98] transition-all hover:shadow-md cursor-pointer flex flex-col transform-gpu backface-hidden"
-              style={{ WebkitMaskImage: '-webkit-radial-gradient(white, black)' }}
-            >
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex items-center gap-3">
-                  <div className="flex-shrink-0">
-                    <FlagIcon country={country} size="card" />
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-text text-lg leading-tight">{country.name}</h3>
-                    <div className="text-sm text-gray-500">{country.capital}</div>
-                  </div>
+        {/* --- Officially Recognized Territories Section --- */}
+        <div className="mb-8">
+            <div className="flex items-center gap-3 mb-6">
+                <div className="p-2 bg-green-100 rounded-lg text-green-700">
+                    <Globe size={24} />
                 </div>
-                <div className="text-gray-300">
-                  <ChevronRight size={20} />
+                <div>
+                    <h2 className="text-2xl font-display font-bold text-text">Officially Recognized Territories</h2>
+                    <p className="text-sm text-gray-500">Major non-sovereign dependencies and autonomous regions.</p>
                 </div>
+            </div>
+            
+            <div className="bg-white rounded-2xl shadow-premium overflow-hidden border border-gray-100">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="bg-green-50/50 border-b border-gray-100">
+                      <SortHeader label="Territory" field="name" sortConfig={sortConfig} onSort={handleSort} />
+                      <th className="px-6 py-5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">Sovereignty</th>
+                      <SortHeader label="Capital" field="capital" sortConfig={sortConfig} onSort={handleSort} />
+                      <SortHeader label="Region" field="region" sortConfig={sortConfig} onSort={handleSort} />
+                      <SortHeader label="Pop." field="population" sortConfig={sortConfig} onSort={handleSort} align="right" />
+                      <th className="px-6 py-5 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {processedTerritories.map((territory) => (
+                      <tr 
+                        key={territory.id} 
+                        onClick={() => handleCountryClick(territory.id)}
+                        className="group hover:bg-green-50/30 transition-colors duration-200 cursor-pointer"
+                      >
+                        <td className="px-6 py-5 whitespace-nowrap">
+                          <div className="flex items-center">
+                            <div className="mr-4 shrink-0 w-12 text-center">
+                                <FlagIcon country={territory} size="small" />
+                            </div>
+                            <span className="font-medium text-text group-hover:text-green-700 transition-colors">{territory.name}</span>
+                          </div>
+                        </td>
+                        <td className="px-6 py-5 text-gray-500 font-medium text-xs uppercase tracking-wide">
+                            {territory.sovereignty}
+                        </td>
+                        <td className="px-6 py-5 text-gray-600">{territory.capital}</td>
+                        <td className="px-6 py-5">
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-surface-dark/60 text-text/80 border border-secondary/40 whitespace-nowrap">
+                            {territory.region}
+                          </span>
+                        </td>
+                        <td className="px-6 py-5 text-gray-600 tabular-nums text-right">{territory.population}</td>
+                        <td className="px-6 py-5 text-right">
+                          <button className="text-sm font-semibold text-green-600 hover:text-green-800 transition-colors">
+                            Explore
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
-
-              <div className="grid grid-cols-2 gap-2 mb-4">
-                <div className="bg-surface/50 p-2 rounded-lg">
-                   <div className="text-[10px] text-gray-400 uppercase font-bold mb-1">Population</div>
-                   <div className="text-sm font-semibold text-text">{country.population}</div>
-                </div>
-                <div className="bg-surface/50 p-2 rounded-lg">
-                   <div className="text-[10px] text-gray-400 uppercase font-bold mb-1 flex items-center gap-1">
-                      <Maximize2 size={10} /> Area (km²)
-                   </div>
-                   <div className="text-sm font-semibold text-text">{country.area}</div>
-                </div>
-              </div>
-
-              <div className="flex flex-wrap gap-1.5 pt-4 border-t border-gray-100">
-                 {country.languages.slice(0, 3).map((lang, idx) => (
-                   <span key={idx} className="text-[10px] font-medium px-2 py-1 bg-gray-100 text-gray-600 rounded-full flex items-center gap-1">
-                     <Languages size={10} className="opacity-50" /> {lang}
-                   </span>
+               {/* Mobile Card View for Territories */}
+               <div className="lg:hidden p-4 grid grid-cols-1 md:grid-cols-2 gap-4 bg-surface">
+                 {processedTerritories.map((territory) => (
+                    <MobileCountryCard key={territory.id} country={territory} onClick={() => handleCountryClick(territory.id)} isTerritory sovereignty={territory.sovereignty} />
                  ))}
-                 {country.languages.length > 3 && (
-                   <span className="text-[10px] font-medium px-2 py-1 bg-gray-50 text-gray-400 rounded-full">+{country.languages.length - 3}</span>
-                 )}
               </div>
             </div>
-          ))}
         </div>
 
-        {processedCountries.length === 0 && (
+        {processedCountries.length === 0 && processedTerritories.length === 0 && (
           <div className="bg-white rounded-xl p-12 text-center text-gray-500 border border-gray-100 mt-4 shadow-sm">
             <Search className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-lg font-bold text-text mb-1">No countries found</h3>
-            <p>We couldn't find any matches for "{search}".</p>
+            <h3 className="text-lg font-bold text-text mb-1">No matches found</h3>
+            <p>We couldn't find any countries or territories matching "{search}".</p>
           </div>
         )}
       </div>
     </div>
   );
 };
+
+const MobileCountryCard = ({ country, onClick, isTerritory, sovereignty }: { country: Country, onClick: () => void, isTerritory?: boolean, sovereignty?: string }) => (
+    <div 
+      onClick={onClick}
+      className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 active:scale-[0.98] transition-all hover:shadow-md cursor-pointer flex flex-col transform-gpu backface-hidden"
+      style={{ WebkitMaskImage: '-webkit-radial-gradient(white, black)' }}
+    >
+      <div className="flex items-start justify-between mb-4">
+        <div className="flex items-center gap-3">
+          <div className="flex-shrink-0">
+            <FlagIcon country={country} size="card" />
+          </div>
+          <div>
+            <h3 className={`font-bold text-lg leading-tight ${isTerritory ? 'text-green-800' : 'text-text'}`}>{country.name}</h3>
+            <div className="text-sm text-gray-500">{country.capital}</div>
+            {isTerritory && <div className="text-[10px] uppercase font-bold text-gray-400 mt-0.5">{sovereignty}</div>}
+          </div>
+        </div>
+        <div className="text-gray-300">
+          <ChevronRight size={20} />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-2 mb-4">
+        <div className="bg-surface/50 p-2 rounded-lg">
+           <div className="text-[10px] text-gray-400 uppercase font-bold mb-1">Population</div>
+           <div className="text-sm font-semibold text-text">{country.population}</div>
+        </div>
+        <div className="bg-surface/50 p-2 rounded-lg">
+           <div className="text-[10px] text-gray-400 uppercase font-bold mb-1 flex items-center gap-1">
+              <Maximize2 size={10} /> Area (km²)
+           </div>
+           <div className="text-sm font-semibold text-text">{country.area}</div>
+        </div>
+      </div>
+
+      <div className="flex flex-wrap gap-1.5 pt-4 border-t border-gray-100">
+         {country.languages.slice(0, 3).map((lang, idx) => (
+           <span key={idx} className="text-[10px] font-medium px-2 py-1 bg-gray-100 text-gray-600 rounded-full flex items-center gap-1">
+             <Languages size={10} className="opacity-50" /> {lang}
+           </span>
+         ))}
+         {country.languages.length > 3 && (
+           <span className="text-[10px] font-medium px-2 py-1 bg-gray-50 text-gray-400 rounded-full">+{country.languages.length - 3}</span>
+         )}
+      </div>
+    </div>
+);
 
 export default Directory;

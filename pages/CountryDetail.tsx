@@ -4,9 +4,9 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { 
   ArrowLeft, Map, Compass, Navigation, Scroll, MapPin, 
   Clock, Phone, Car, Users, Maximize2, Banknote, 
-  TrendingUp, Languages, Building2 
+  TrendingUp, Languages, Building2, Quote, Globe
 } from 'lucide-react';
-import { MOCK_COUNTRIES } from '../constants';
+import { MOCK_COUNTRIES, TERRITORIES } from '../constants';
 import { STATIC_IMAGES } from '../data/images';
 import Button from '../components/Button';
 import SEO from '../components/SEO';
@@ -17,7 +17,13 @@ const CountryDetail: React.FC = () => {
   const navigate = useNavigate();
   const { setPageLoading, setTransitionStyle } = useLayout();
   
-  const country = useMemo(() => MOCK_COUNTRIES.find(c => c.id === id), [id]);
+  const country = useMemo(() => MOCK_COUNTRIES.find(c => c.id === id) || TERRITORIES.find(t => t.id === id), [id]);
+  const isTerritory = useMemo(() => TERRITORIES.some(t => t.id === id), [id]);
+
+  const controlledTerritories = useMemo(() => {
+    if (!country || isTerritory) return [];
+    return TERRITORIES.filter(t => t.sovereignty === country.name).sort((a, b) => a.name.localeCompare(b.name));
+  }, [country, isTerritory]);
 
   useEffect(() => {
     setPageLoading(false);
@@ -26,7 +32,7 @@ const CountryDetail: React.FC = () => {
   if (!country) {
     return (
       <div className="pt-32 pb-20 px-6 text-center">
-        <h2 className="text-2xl font-bold text-text">Country not found.</h2>
+        <h2 className="text-2xl font-bold text-text">Location not found.</h2>
         <Link to="/directory" className="text-primary hover:underline mt-4 inline-block">Back to Directory</Link>
       </div>
     );
@@ -48,6 +54,24 @@ const CountryDetail: React.FC = () => {
     }
   };
 
+  const handleTerritoryClick = (territoryId: string) => {
+    setTransitionStyle('cartographic');
+    navigate(`/country/${territoryId}`);
+  };
+
+  const handleSovereigntyClick = (sovereigntyName: string) => {
+    if (sovereigntyName === 'Disputed') return;
+    
+    const sovereignId = getCountryIdByName(sovereigntyName);
+    if (sovereignId) {
+      setTransitionStyle('cartographic');
+      navigate(`/country/${sovereignId}`);
+    } else {
+      setTransitionStyle('default');
+      navigate(`/directory?search=${sovereigntyName}`);
+    }
+  };
+
   // Calculate ISO code for the flag image
   const countryCode = Array.from(country.flag)
     .map((char: any) => String.fromCharCode(char.codePointAt(0)! - 127397).toLowerCase())
@@ -57,9 +81,9 @@ const CountryDetail: React.FC = () => {
 
   // Reusable Stat Component for the card
   const StatItem = ({ label, value, icon: Icon }: { label: string, value: string | React.ReactNode, icon: any }) => (
-    <div className="flex flex-col gap-1.5 group/stat">
+    <div className="flex flex-col gap-1.5">
       <div className="flex items-center gap-2">
-        <div className="p-1.5 bg-primary/5 rounded-lg text-primary group-hover/stat:bg-primary group-hover/stat:text-white transition-colors duration-300">
+        <div className="p-1.5 bg-primary/5 rounded-lg text-primary">
           <Icon size={14} />
         </div>
         <span className="text-[9px] font-black text-gray-400 uppercase tracking-[0.15em]">{label}</span>
@@ -71,7 +95,7 @@ const CountryDetail: React.FC = () => {
   return (
     <main className="min-h-screen bg-surface pt-24 pb-12 px-4 md:px-8 relative overflow-hidden text-text">
       <SEO 
-        title={`${country.name} - Country Profile`} 
+        title={`${country.name} - ${isTerritory ? 'Territory' : 'Country'} Profile`} 
         description={`Explore detailed demographics, history, and travel insights for ${country.name}. Start your virtual expedition to its capital, ${country.capital}.`} 
       />
 
@@ -81,7 +105,7 @@ const CountryDetail: React.FC = () => {
         <div className="mb-10 flex items-center justify-between">
             <button 
                 onClick={() => navigate('/directory')}
-                className="group flex items-center gap-2 text-gray-500 hover:text-text transition-colors font-display font-bold uppercase tracking-widest text-xs"
+                className="group flex items-center gap-2 text-gray-500 hover:text-text transition-colors font-display font-bold text-sm"
             >
                 <div className="p-2 bg-gray-200/50 rounded-full group-hover:bg-gray-200 transition-colors">
                     <ArrowLeft size={18} className="text-text" />
@@ -115,9 +139,23 @@ const CountryDetail: React.FC = () => {
                     <div className="mt-6 flex justify-between items-end px-2">
                         <div>
                             <h1 className="text-4xl font-display font-black text-gray-800 tracking-tighter uppercase">{country.name}</h1>
-                            <p className="text-primary font-bold tracking-widest text-xs uppercase flex items-center gap-1 mt-1">
-                                <MapPin size={12} /> {country.region}
-                            </p>
+                            <div className="flex flex-col gap-1 mt-1">
+                                <p className="text-primary font-bold tracking-widest text-xs uppercase flex items-center gap-1">
+                                    <MapPin size={12} /> {country.region}
+                                </p>
+                                {isTerritory && (
+                                   <div className="text-green-600 font-bold tracking-widest text-[10px] uppercase flex items-center gap-1">
+                                       <Globe size={10} /> Territory of 
+                                       <button 
+                                           onClick={() => handleSovereigntyClick((country as any).sovereignty)}
+                                           className="hover:underline decoration-green-600 underline-offset-2 transition-all cursor-pointer focus:outline-none uppercase"
+                                           disabled={(country as any).sovereignty === 'Disputed'}
+                                       >
+                                           {(country as any).sovereignty}
+                                       </button>
+                                   </div>
+                                )}
+                            </div>
                         </div>
                         <div className="text-right">
                              <span className="text-4xl grayscale opacity-50 select-none" role="img" aria-label="flag icon">{country.flag}</span>
@@ -148,6 +186,17 @@ const CountryDetail: React.FC = () => {
                         <StatItem label="Time Zone" value={country.timeZone || 'N/A'} icon={Clock} />
                         <StatItem label="Calling Code" value={country.callingCode || 'N/A'} icon={Phone} />
                         <StatItem label="Road Traffic" value={`${country.driveSide || 'Right'}-hand`} icon={Car} />
+                        
+                        {/* New "Also Known As" Stat */}
+                        {country.alsoKnownAs && country.alsoKnownAs.length > 0 && (
+                           <div className="col-span-2 md:col-span-1">
+                             <StatItem 
+                               label="Also Known As" 
+                               value={country.alsoKnownAs.join(', ')} 
+                               icon={Quote} 
+                             />
+                           </div>
+                        )}
                      </div>
 
                      <div className="mb-8 p-4 bg-white/40 rounded-2xl border border-white/60">
@@ -177,7 +226,7 @@ const CountryDetail: React.FC = () => {
                                     <button 
                                         key={border} 
                                         onClick={() => handleNeighborClick(border)}
-                                        className="text-xs font-bold px-3 py-1.5 bg-white text-primary rounded-full border border-primary/20 shadow-sm hover:border-primary hover:bg-primary/5 hover:scale-105 active:scale-95 transition-all duration-200"
+                                        className="text-xs font-bold px-3 py-1.5 bg-white text-primary rounded-full border border-primary/20 shadow-sm hover:border-primary hover:bg-blue-50 hover:scale-105 active:scale-95 transition-all duration-200"
                                     >
                                         {border}
                                     </button>
@@ -186,19 +235,44 @@ const CountryDetail: React.FC = () => {
                         </div>
                      )}
 
-                     {/* Action Block - Centered */}
-                     <div className="pt-10 border-t border-gray-200 flex flex-col items-center gap-6 shrink-0 text-center">
-                        <div className="space-y-4 max-w-xl">
-                            <p className="text-sm text-gray-500 font-medium leading-relaxed">
-                                Begin a high-fidelity guided tour of {country.name}'s key geographic features, historical monuments, and landmarks.
-                            </p>
-                            <Link to={`/explore/${country.id}`} className="inline-block w-full sm:w-auto">
-                                <Button variant="primary" size="lg" className="w-full sm:w-auto group px-12 text-white">
-                                    Start Expedition <Compass className="ml-2 group-hover:rotate-45 transition-transform" />
-                                </Button>
-                            </Link>
+                     {/* Territories */}
+                     {controlledTerritories.length > 0 && (
+                        <div className="mb-12 shrink-0">
+                             <p className="text-[10px] font-black text-green-600 uppercase tracking-[0.2em] mb-3">Territories</p>
+                             <div className="flex flex-wrap gap-2">
+                                {controlledTerritories.map(t => (
+                                    <button 
+                                        key={t.id} 
+                                        onClick={() => handleTerritoryClick(t.id)}
+                                        className="text-xs font-bold px-3 py-1.5 bg-white text-green-700 rounded-full border border-green-200 shadow-sm hover:border-green-600 hover:bg-green-50 hover:scale-105 active:scale-95 transition-all duration-200"
+                                    >
+                                        {t.name}
+                                    </button>
+                                ))}
+                             </div>
                         </div>
-                     </div>
+                     )}
+
+                     {!isTerritory ? (
+                        <div className="pt-10 border-t border-gray-200 flex flex-col items-center gap-6 shrink-0 text-center">
+                            <div className="space-y-4 max-w-xl">
+                                <p className="text-sm text-gray-500 font-medium leading-relaxed">
+                                    Begin a high-fidelity guided tour of {country.name}'s key geographic features, historical monuments, and landmarks.
+                                </p>
+                                <Link to={`/explore/${country.id}`} className="inline-block w-full sm:w-auto">
+                                    <Button variant="primary" size="lg" className="w-full sm:w-auto group px-12 text-white">
+                                        Start Expedition <Compass className="ml-2 group-hover:rotate-45 transition-transform" />
+                                    </Button>
+                                </Link>
+                            </div>
+                        </div>
+                     ) : (
+                         <div className="pt-10 border-t border-gray-200 flex flex-col items-center gap-4 shrink-0 text-center">
+                             <p className="text-xs text-gray-400 font-bold uppercase tracking-widest">
+                                 Virtual expeditions are currently available for sovereign nations only.
+                             </p>
+                         </div>
+                     )}
 
                      {/* White Coordinate Bubble */}
                      <div className="mt-auto pt-16 flex justify-center">

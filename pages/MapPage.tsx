@@ -1,7 +1,8 @@
+
 import React, { useEffect, useRef, useState } from 'react';
-import { Filter, Compass, Map as MapIcon, Search, X, Plus, Minus, ChevronRight } from 'lucide-react';
+import { Filter, Compass, Map as MapIcon, Search, X, Plus, Minus, Globe } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { MOCK_COUNTRIES } from '../constants';
+import { MOCK_COUNTRIES, TERRITORIES } from '../constants';
 import Button from '../components/Button';
 import { Country } from '../types';
 import SEO from '../components/SEO';
@@ -21,10 +22,13 @@ const MapPage: React.FC = () => {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<any>(null);
   const markersLayerRef = useRef<any>(null);
+  const territoriesLayerRef = useRef<any>(null);
+  
   // Store marker instances to manipulate them without re-creating
   const markerInstancesRef = useRef<Map<string, any>>(new Map());
   
   const [selectedRegion, setSelectedRegion] = useState('All');
+  const [showTerritories, setShowTerritories] = useState(true);
   const [mapReady, setMapReady] = useState(false);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -40,7 +44,7 @@ const MapPage: React.FC = () => {
   const mobileResultsRef = useRef<HTMLDivElement>(null);
 
   // Function to create custom HTML content for popups
-  const createPopupContent = (country: Country) => {
+  const createPopupContent = (country: Country, isTerritory = false) => {
     const flagCode = getCountryCode(country.flag);
     const flagUrl = `https://flagcdn.com/w80/${flagCode}.png`;
     
@@ -53,6 +57,8 @@ const MapPage: React.FC = () => {
            <h3 class="font-display font-bold text-lg text-gray-800 leading-tight m-0">${country.name}</h3>
         </div>
         
+        ${isTerritory ? `<div class="text-[10px] font-bold text-green-600 uppercase tracking-widest mb-2">Territory of ${(country as any).sovereignty}</div>` : ''}
+
         <p class="text-xs text-gray-500 mb-3 mt-1 leading-relaxed line-clamp-3 pt-0">
           ${country.description}
         </p>
@@ -71,7 +77,7 @@ const MapPage: React.FC = () => {
         <div class="text-left">
           <button 
             data-country-id="${country.id}" 
-            class="learn-more-btn text-primary text-xs font-bold uppercase tracking-wider hover:underline text-left outline-none"
+            class="learn-more-btn ${isTerritory ? 'text-green-600' : 'text-primary'} text-xs font-bold uppercase tracking-wider hover:underline text-left outline-none"
           >
             Learn More
           </button>
@@ -110,8 +116,10 @@ const MapPage: React.FC = () => {
         zIndex: 10
       }).addTo(map);
 
-      // Create a layer group for markers
+      // Create layer groups
       markersLayerRef.current = L.layerGroup().addTo(map);
+      territoriesLayerRef.current = L.layerGroup().addTo(map); // Separate layer for territories
+
       mapInstanceRef.current = map;
       setMapReady(true);
       setPageLoading(false);
@@ -143,16 +151,17 @@ const MapPage: React.FC = () => {
     };
   }, [navigate, setPageLoading, setHideFooter]);
 
-  // Effect 1: Create Markers when Region changes
-  // We do NOT include activeCountryId here so markers aren't destroyed on every click
+  // Effect 1: Create Markers (Countries & Territories)
   useEffect(() => {
     const L = (window as any).L;
-    if (!mapInstanceRef.current || !markersLayerRef.current || !L) return;
+    if (!mapInstanceRef.current || !markersLayerRef.current || !territoriesLayerRef.current || !L) return;
 
     // Clear existing
     markersLayerRef.current.clearLayers();
+    territoriesLayerRef.current.clearLayers();
     markerInstancesRef.current.clear();
 
+    // 1. Add Sovereign Countries
     const filteredCountries = selectedRegion === 'All' 
       ? MOCK_COUNTRIES 
       : MOCK_COUNTRIES.filter(c => c.region === selectedRegion);
@@ -167,31 +176,54 @@ const MapPage: React.FC = () => {
 
       const marker = L.marker([country.lat, country.lng], { 
         icon: icon,
-      }).bindPopup(createPopupContent(country), {
+      }).bindPopup(createPopupContent(country, false), {
           closeButton: false,
           className: 'custom-popup'
       });
 
-      // Save reference
       markerInstancesRef.current.set(country.id, marker);
-
-      marker.on('click', () => {
-        // Just update state, bindPopup handles the immediate display
-        setActiveCountryId(country.id);
-      });
-
+      marker.on('click', () => setActiveCountryId(country.id));
       markersLayerRef.current.addLayer(marker);
     });
 
+    // 2. Add Territories (if toggle is on)
+    if (showTerritories) {
+      const filteredTerritories = selectedRegion === 'All'
+        ? TERRITORIES
+        : TERRITORIES.filter(t => t.region === selectedRegion);
+
+      filteredTerritories.forEach(territory => {
+         const icon = L.divIcon({
+            className: `custom-map-marker territory-marker`, // Add class for territory styling
+            html: `<div class="marker-pin territory"></div>`,
+            iconSize: [20, 20],
+            iconAnchor: [10, 10]
+         });
+
+         const marker = L.marker([territory.lat, territory.lng], { 
+            icon: icon,
+            zIndexOffset: -100 // Territories slightly behind sovereign nations if overlapping
+         }).bindPopup(createPopupContent(territory, true), {
+             closeButton: false,
+             className: 'custom-popup'
+         });
+
+         markerInstancesRef.current.set(territory.id, marker);
+         marker.on('click', () => setActiveCountryId(territory.id));
+         territoriesLayerRef.current.addLayer(marker);
+      });
+    }
+
+    // Adjust bounds if necessary (only if user changed region, otherwise keep view)
+    // We only fit bounds based on Sovereign countries to avoid skewing too much with tiny islands
     if (selectedRegion !== 'All' && markersLayerRef.current.getLayers().length > 0) {
       const group = L.featureGroup(markersLayerRef.current.getLayers());
       mapInstanceRef.current.fitBounds(group.getBounds().pad(0.1));
     }
 
-  }, [selectedRegion, mapReady]);
+  }, [selectedRegion, showTerritories, mapReady]);
 
   // Effect 2: Update marker styles when activeCountryId changes
-  // This manipulates existing DOM elements rather than re-creating layers
   useEffect(() => {
     markerInstancesRef.current.forEach((marker, id) => {
       const el = marker.getElement();
@@ -209,17 +241,24 @@ const MapPage: React.FC = () => {
   useEffect(() => {
     const countryId = searchParams.get('country');
     if (countryId && mapReady && mapInstanceRef.current) {
-      const country = MOCK_COUNTRIES.find(c => c.id === countryId);
+      // Check both lists
+      const entity = MOCK_COUNTRIES.find(c => c.id === countryId) || TERRITORIES.find(t => t.id === countryId);
       
-      if (country) {
-        if (selectedRegion !== 'All' && country.region !== selectedRegion) {
+      if (entity) {
+        // If it's a territory, ensure they are shown
+        const isTerritory = TERRITORIES.some(t => t.id === entity.id);
+        if (isTerritory && !showTerritories) {
+           setShowTerritories(true);
+        }
+
+        if (selectedRegion !== 'All' && entity.region !== selectedRegion) {
           setSelectedRegion('All'); 
         }
 
         setActiveCountryId(countryId);
-        mapInstanceRef.current.flyTo([country.lat, country.lng], 6, { duration: 1.5 });
+        mapInstanceRef.current.flyTo([entity.lat, entity.lng], 6, { duration: 1.5 });
         
-        // Wait for fly animation to finish then open popup
+        // Wait for fly animation then open popup
         setTimeout(() => {
           const marker = markerInstancesRef.current.get(countryId);
           if (marker) marker.openPopup();
@@ -238,22 +277,22 @@ const MapPage: React.FC = () => {
   };
 
   const flyToRandom = () => {
-    const visibleCountries = selectedRegion === 'All' 
-      ? MOCK_COUNTRIES 
-      : MOCK_COUNTRIES.filter(c => c.region === selectedRegion);
+    const visibleEntities = selectedRegion === 'All' 
+      ? [...MOCK_COUNTRIES, ...(showTerritories ? TERRITORIES : [])]
+      : [...MOCK_COUNTRIES.filter(c => c.region === selectedRegion), ...(showTerritories ? TERRITORIES.filter(t => t.region === selectedRegion) : [])];
       
-    if (visibleCountries.length === 0) return;
+    if (visibleEntities.length === 0) return;
 
-    const randomCountry = visibleCountries[Math.floor(Math.random() * visibleCountries.length)];
+    const randomEntity = visibleEntities[Math.floor(Math.random() * visibleEntities.length)];
     
-    if (mapInstanceRef.current && randomCountry) {
-      setActiveCountryId(randomCountry.id);
-      mapInstanceRef.current.flyTo([randomCountry.lat, randomCountry.lng], 6, {
+    if (mapInstanceRef.current && randomEntity) {
+      setActiveCountryId(randomEntity.id);
+      mapInstanceRef.current.flyTo([randomEntity.lat, randomEntity.lng], 6, {
         duration: 2
       });
       
       setTimeout(() => {
-        const marker = markerInstancesRef.current.get(randomCountry.id);
+        const marker = markerInstancesRef.current.get(randomEntity.id);
         if (marker) marker.openPopup();
       }, 2200);
     }
@@ -263,7 +302,7 @@ const MapPage: React.FC = () => {
     text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
 
   const filteredSearchResults = searchQuery.length > 0 
-    ? MOCK_COUNTRIES.filter(c => 
+    ? [...MOCK_COUNTRIES, ...TERRITORIES].filter(c => 
         normalizeText(c.name).includes(normalizeText(searchQuery)) || 
         normalizeText(c.capital).includes(normalizeText(searchQuery))
       ).slice(0, 20) 
@@ -277,6 +316,11 @@ const MapPage: React.FC = () => {
       setSearchQuery('');
       setSelectedIndex(-1);
       setActiveCountryId(country.id);
+      
+      // If result is territory, ensure toggle is on
+      const isTerritory = TERRITORIES.some(t => t.id === country.id);
+      if (isTerritory && !showTerritories) setShowTerritories(true);
+
       if (selectedRegion !== 'All') {
           setSelectedRegion('All');
       }
@@ -361,6 +405,7 @@ const MapPage: React.FC = () => {
                           <ul className="py-0">
                               {filteredSearchResults.map((country, index) => {
                                   const flagCode = getCountryCode(country.flag);
+                                  const isTerritory = TERRITORIES.some(t => t.id === country.id);
                                   return (
                                     <li key={country.id}>
                                         <button 
@@ -372,7 +417,7 @@ const MapPage: React.FC = () => {
                                               <img src={`https://flagcdn.com/w40/${flagCode}.png`} alt="" className="w-full h-full object-contain" />
                                             </div>
                                             <div>
-                                                <p className="text-sm font-bold text-text">{country.name}</p>
+                                                <p className={`text-sm font-bold ${isTerritory ? 'text-green-700' : 'text-text'}`}>{country.name}</p>
                                                 <p className="text-xs text-gray-500">{country.region}</p>
                                             </div>
                                         </button>
@@ -397,40 +442,59 @@ const MapPage: React.FC = () => {
               </div>
               <div>
                 <h2 className="font-display font-bold text-text leading-tight text-base">World Explorer</h2>
-                <p className="text-xs text-gray-500 font-medium">{MOCK_COUNTRIES.length} Capitals Mapped</p>
+                <p className="text-xs text-gray-500 font-medium">{MOCK_COUNTRIES.length + TERRITORIES.length} Locations</p>
               </div>
             </div>
 
-            <div className="space-y-3">
-              <div className="flex items-center gap-2 text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">
-                <Filter size={12} />
-                <span>Region Filter</span>
+            <div className="space-y-4">
+              <div className="space-y-3">
+                <div className="flex items-center gap-2 text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">
+                  <Filter size={12} />
+                  <span>Region Filter</span>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {REGIONS.map(region => (
+                    <button
+                      key={region}
+                      onClick={() => setSelectedRegion(region)}
+                      className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all duration-200 ${
+                        selectedRegion === region 
+                          ? 'bg-primary text-white shadow-md shadow-primary/30' 
+                          : 'bg-surface text-gray-600 hover:bg-surface-dark'
+                      }`}
+                    >
+                      {region}
+                    </button>
+                  ))}
+                </div>
               </div>
-              <div className="flex flex-wrap gap-2">
-                {REGIONS.map(region => (
-                  <button
-                    key={region}
-                    onClick={() => setSelectedRegion(region)}
-                    className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all duration-200 ${
-                      selectedRegion === region 
-                        ? 'bg-primary text-white shadow-md shadow-primary/30' 
-                        : 'bg-surface text-gray-600 hover:bg-surface-dark'
-                    }`}
-                  >
-                    {region}
-                  </button>
-                ))}
+
+              <div className="pt-2 border-t border-gray-100">
+                 <button 
+                   onClick={() => setShowTerritories(!showTerritories)}
+                   className={`w-full flex items-center justify-between px-3 py-2 rounded-lg transition-colors text-xs font-bold ${showTerritories ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-surface text-gray-500 border border-transparent hover:bg-gray-100'}`}
+                 >
+                   <span className="flex items-center gap-2">
+                     <Globe size={14} /> Show Territories
+                   </span>
+                   <div className={`w-8 h-4 rounded-full p-0.5 transition-colors ${showTerritories ? 'bg-green-500' : 'bg-gray-300'}`}>
+                      <div className={`w-3 h-3 bg-white rounded-full shadow-sm transform transition-transform ${showTerritories ? 'translate-x-4' : 'translate-x-0'}`}></div>
+                   </div>
+                 </button>
               </div>
             </div>
           </div>
 
           <div className="bg-white/90 backdrop-blur-md p-4 rounded-xl shadow-premium border border-white/50 pointer-events-auto animate-in fade-in slide-in-from-left-4 delay-100 duration-500">
-            <div className="flex items-center gap-3 text-sm text-gray-600">
-               <div className="w-3 h-3 rounded-full bg-primary border-2 border-white shadow-sm"></div>
-               <span>Capital City</span>
-            </div>
-            <div className="mt-2 text-xs text-gray-400 leading-relaxed">
-              Click on any marker to reveal country details, flag, and key statistics.
+            <div className="flex flex-col gap-2 text-xs text-gray-600">
+               <div className="flex items-center gap-2">
+                   <div className="w-2.5 h-2.5 rounded-full bg-primary border border-white shadow-sm"></div>
+                   <span>Country</span>
+               </div>
+               <div className="flex items-center gap-2">
+                   <div className="w-2.5 h-2.5 rounded-full bg-green-500 border border-white shadow-sm"></div>
+                   <span>Territory</span>
+               </div>
             </div>
           </div>
       </div>
@@ -527,7 +591,20 @@ const MapPage: React.FC = () => {
               </div>
 
               <div className="w-full overflow-x-auto no-scrollbar" style={{ scrollbarWidth: 'none' }}>
-                 <div className="flex gap-2.5 px-1 pb-1">
+                 <div className="flex gap-2.5 px-1 pb-1 items-center">
+                   <button 
+                      onClick={() => setShowTerritories(!showTerritories)}
+                      className={`
+                        whitespace-nowrap flex-shrink-0 px-4 py-2 rounded-full text-xs font-bold transition-all duration-200 border select-none active:scale-95 flex items-center gap-2
+                        ${showTerritories 
+                           ? 'bg-green-50 text-green-700 border-green-200 shadow-sm' 
+                           : 'bg-white text-gray-400 border-gray-200'
+                         }
+                      `}
+                   >
+                      <Globe size={12} /> Territories
+                   </button>
+                   <div className="w-px h-6 bg-gray-200 flex-shrink-0 mx-1"></div>
                    {REGIONS.map(region => (
                      <button
                        key={region}

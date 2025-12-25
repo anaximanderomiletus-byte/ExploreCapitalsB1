@@ -17,6 +17,11 @@ export interface Country {
   timeZone?: string;  // e.g. "UTC +4:30"
   callingCode?: string; // e.g. "+93"
   driveSide?: string;  // e.g. "Right"
+  alsoKnownAs?: string[]; // Array of alternative names
+}
+
+export interface Territory extends Country {
+  sovereignty: string; // The sovereign state claiming the territory
 }
 
 export interface Game {
