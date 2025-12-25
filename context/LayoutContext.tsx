@@ -1,7 +1,7 @@
-
 import React, { createContext, useContext, useState } from 'react';
 
 type NavbarMode = 'default' | 'hero';
+type TransitionStyle = 'default' | 'cartographic';
 
 interface LayoutContextType {
   navbarMode: NavbarMode;
@@ -10,8 +10,12 @@ interface LayoutContextType {
   setScrollThreshold: (threshold: number) => void;
   isTransitioning: boolean;
   setIsTransitioning: (val: boolean) => void;
+  transitionStyle: TransitionStyle;
+  setTransitionStyle: (style: TransitionStyle) => void;
   isPageLoading: boolean;
   setPageLoading: (val: boolean) => void;
+  isFooterHidden: boolean;
+  setHideFooter: (val: boolean) => void;
 }
 
 const LayoutContext = createContext<LayoutContextType>({
@@ -21,8 +25,12 @@ const LayoutContext = createContext<LayoutContextType>({
   setScrollThreshold: () => {},
   isTransitioning: false,
   setIsTransitioning: () => {},
+  transitionStyle: 'default',
+  setTransitionStyle: () => {},
   isPageLoading: false,
   setPageLoading: () => {},
+  isFooterHidden: false,
+  setHideFooter: () => {},
 });
 
 export const useLayout = () => useContext(LayoutContext);
@@ -31,7 +39,9 @@ export const LayoutProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const [navbarMode, setNavbarMode] = useState<NavbarMode>('default');
   const [scrollThreshold, setScrollThreshold] = useState<number>(20);
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const [transitionStyle, setTransitionStyle] = useState<TransitionStyle>('default');
   const [isPageLoading, setPageLoading] = useState(false);
+  const [isFooterHidden, setHideFooter] = useState(false);
 
   return (
     <LayoutContext.Provider value={{ 
@@ -41,8 +51,12 @@ export const LayoutProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       setScrollThreshold,
       isTransitioning,
       setIsTransitioning,
+      transitionStyle,
+      setTransitionStyle,
       isPageLoading,
-      setPageLoading
+      setPageLoading,
+      isFooterHidden,
+      setHideFooter
     }}>
       {children}
     </LayoutContext.Provider>

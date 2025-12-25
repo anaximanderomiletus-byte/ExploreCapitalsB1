@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useEffect } from 'react';
 import { Search, ArrowUp, ArrowDown, ArrowUpDown, ChevronRight, Maximize2, Banknote, Languages } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -69,7 +68,7 @@ const Directory: React.FC = () => {
   const [search, setSearch] = useState('');
   const [sortConfig, setSortConfig] = useState<{ key: SortKey; direction: SortDirection } | null>(null);
   const navigate = useNavigate();
-  const { setPageLoading } = useLayout();
+  const { setPageLoading, setTransitionStyle } = useLayout();
 
   useEffect(() => {
     setPageLoading(false);
@@ -131,6 +130,8 @@ const Directory: React.FC = () => {
   };
 
   const handleCountryClick = (id: string) => {
+    // DISCLOSURE: Premium "Cartographic Zoom" transition
+    setTransitionStyle('cartographic');
     navigate(`/country/${id}`);
   };
 

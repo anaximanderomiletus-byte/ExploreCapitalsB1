@@ -75,10 +75,15 @@
               'wipe-out': 'wipe-out 0.4s cubic-bezier(0.65, 0, 0.35, 1) forwards',
               'wipe-forward': 'wipe-forward 1s cubic-bezier(0.65, 0, 0.35, 1) forwards',
               'wipe-backward': 'wipe-backward 1s cubic-bezier(0.65, 0, 0.35, 1) forwards',
+              'curtain-down': 'curtain-down 0.6s cubic-bezier(0.85, 0, 0.15, 1) forwards',
+              'curtain-up': 'curtain-up 0.6s cubic-bezier(0.85, 0, 0.15, 1) forwards',
               'float': 'float 6s ease-in-out infinite',
               'shimmer': 'shimmer 2s linear infinite',
               'shake': 'shake 0.4s cubic-bezier(.36,.07,.19,.97) both',
               'scary-pulse': 'scary-pulse 0.5s ease-in-out infinite',
+              'map-zoom-in': 'map-zoom-in 0.6s cubic-bezier(0.65, 0, 0.35, 1) forwards',
+              'map-zoom-out': 'map-zoom-out 0.6s cubic-bezier(0.65, 0, 0.35, 1) forwards',
+              'depth-scale': 'depth-scale 0.6s cubic-bezier(0.65, 0, 0.35, 1) forwards',
             },
             keyframes: {
               'color-pulse': {
@@ -87,12 +92,34 @@
               },
               'wipe-in': { '0%': { transform: 'translateX(100%)' }, '100%': { transform: 'translateX(0)' } },
               'wipe-out': { '0%': { transform: 'translateX(0)' }, '100%': { transform: 'translateX(-100%)' } },
-              'wipe-forward': { '0%': { transform: 'translateX(100%)' }, '35%': { transform: 'translateX(0)' }, '65%': { transform: 'translateX(0)' }, '100%': { transform: 'translateX(-100%)' } },
-              'wipe-backward': { '0%': { transform: 'translateX(-100%)' }, '35%': { transform: 'translateX(0)' }, '65%': { transform: 'translateX(0)' }, '100%': { transform: 'translateX(100%)' } },
-              'float': { '0%, 100%': { transform: 'translateY(0)' }, '50%': { transform: 'translateY(-20px)' } },
+              'wipe-forward': { 
+                '0%': { transform: 'translateX(100%)' }, 
+                '35%, 65%': { transform: 'translateX(0)' }, 
+                '100%': { transform: 'translateX(-100%)' } 
+              },
+              'wipe-backward': { 
+                '0%': { transform: 'translateX(-100%)' }, 
+                '35%, 65%': { transform: 'translateX(0)' }, 
+                '100%': { transform: 'translateX(100%)' } 
+              },
+              'curtain-down': { '0%': { transform: 'translateY(-100%)' }, '100%': { transform: 'translateY(0)' } },
+              'curtain-up': { '0%': { transform: 'translateY(0)' }, '100%': { transform: 'translateY(-100%)' } },
+              'float': { '0%, 100%': { transform: 'translateY(0)' }, '50%': { transform: 'translateY(-8px)' } },
               'shimmer': { 'from': { backgroundPosition: '0 0' }, 'to': { backgroundPosition: '-200% 0' } },
               'shake': { '10%, 90%': { transform: 'translate3d(-1px, 0, 0)' }, '20%, 80%': { transform: 'translate3d(2px, 0, 0)' }, '30%, 50%, 70%': { transform: 'translate3d(-4px, 0, 0)' }, '40%, 60%': { transform: 'translate3d(4px, 0, 0)' } },
-              'scary-pulse': { '0%, 100%': { transform: 'scale(1)', color: '#dc2626' }, '50%': { transform: 'scale(1.2)', color: '#991b1b' } }
+              'scary-pulse': { '0%, 100%': { transform: 'scale(1)', color: '#dc2626' }, '50%': { transform: 'scale(1.2)', color: '#991b1b' } },
+              'map-zoom-in': { 
+                '0%': { transform: 'scale(1.1) translateX(100%)', opacity: '0' },
+                '100%': { transform: 'scale(1) translateX(0)', opacity: '1' }
+              },
+              'map-zoom-out': {
+                '0%': { transform: 'scale(1) translateX(0)', opacity: '1' },
+                '100%': { transform: 'scale(0.9) translateX(-100%)', opacity: '0' }
+              },
+              'depth-scale': {
+                '0%': { transform: 'scale(1)', opacity: '1' },
+                '100%': { transform: 'scale(0.95)', opacity: '0.5' }
+              }
             }
           }
         }
@@ -133,6 +160,5 @@
 </head>
   <body class="bg-surface text-text antialiased selection:bg-primary selection:text-white">
     <div id="root"></div>
-    <script type="module" src="/index.tsx"></script>
   </body>
 </html>

@@ -1,3 +1,4 @@
+
 import { AlertCircle, ArrowLeft, BrainCircuit, CheckCircle2, ChevronLeft, ChevronRight, Compass, Globe, HelpCircle, ImageOff, MapPin, Plane, RotateCcw, XCircle } from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
@@ -57,7 +58,7 @@ const CountryExploration: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const country = MOCK_COUNTRIES.find(c => c.id === id);
-  const { setNavbarMode, setScrollThreshold } = useLayout();
+  const { setNavbarMode, setScrollThreshold, setHideFooter } = useLayout();
 
   const [loading, setLoading] = useState(true);
   const [tourData, setTourData] = useState<TourData | null>(null);
@@ -83,29 +84,37 @@ const CountryExploration: React.FC = () => {
   const [quizResults, setQuizResults] = useState<Record<number, boolean>>({});
 
   const loadingMessages = [
-    "Curating itinerary...",
-    "Securing local access...",
-    "Reviewing historical archives...",
-    "Finalizing details...",
+    "Locating Destination...",
+    "Securing Flight Path...",
+    "Preparing Itinerary...",
+    "Finalizing Briefing...",
   ];
 
-  // Configure Navbar based on View
+  // Configure Layout based on View
   useEffect(() => {
     if (view === 'tour') {
       setNavbarMode('hero');
       setScrollThreshold(window.innerHeight * 0.5); 
+      setHideFooter(true);
+    } else if (view === 'quiz') {
+      setNavbarMode('default');
+      setScrollThreshold(20);
+      setHideFooter(false);
     } else {
       setNavbarMode('default');
       setScrollThreshold(20);
+      setHideFooter(false);
     }
-  }, [view, setNavbarMode, setScrollThreshold]);
+  }, [view, setNavbarMode, setScrollThreshold, setHideFooter]);
 
+  // Reset layout on unmount
   useEffect(() => {
     return () => {
       setNavbarMode('default');
       setScrollThreshold(20);
+      setHideFooter(false);
     };
-  }, [setNavbarMode, setScrollThreshold]);
+  }, [setNavbarMode, setScrollThreshold, setHideFooter]);
 
   useEffect(() => {
     if (!country) return;
@@ -302,17 +311,45 @@ const CountryExploration: React.FC = () => {
   const renderContent = () => {
     if (view === 'loading' || loading) {
       return (
-        <Container className="flex items-center justify-center px-4 md:px-6">
-          <div className="flex flex-col items-center justify-center text-center w-full animate-in fade-in zoom-in duration-500">
-            <SEO title={`Traveling to ${country.name}...`} description={`Preparing your virtual expedition to ${country.name}. Exploring the geography and history of its capital, ${country.capital}.`} />
-            <LoadingVisual />
-            <h2 className="text-3xl md:text-5xl font-display font-bold text-text mb-6 tracking-tight">
-              Destination: {country.name}
-            </h2>
-            <div className="h-10 flex items-center justify-center w-full">
-              <p key={loadingStep} className="text-gray-400 text-lg font-medium uppercase tracking-widest animate-in fade-in zoom-in duration-300">
-                {loadingMessages[loadingStep]}
-              </p>
+        <Container className="flex items-center justify-center px-4 md:px-6 overflow-hidden">
+          <SEO title={`Traveling to ${country.name}...`} description={`Preparing your virtual expedition to ${country.name}.`} />
+          <div className="absolute inset-0 z-0 opacity-[0.03]" style={{ backgroundImage: 'radial-gradient(#37393A 2px, transparent 2px)', backgroundSize: '32px 32px' }}></div>
+          
+          <div className="relative z-10 w-full max-w-lg">
+            <div className="bg-white rounded-[2.5rem] shadow-premium p-10 md:p-14 text-center border border-secondary/10 relative overflow-hidden animate-in fade-in zoom-in duration-700">
+              <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-primary via-blue-300 to-primary"></div>
+              
+              <div className="mb-10 relative">
+                <div className="text-7xl md:text-8xl mb-4 drop-shadow-sm animate-float inline-block select-none transform-gpu">
+                  {country.flag}
+                </div>
+                <div className="absolute -bottom-2 left-1/2 -translate-x-1/2">
+                   <Plane className="w-8 h-8 text-primary/30 animate-pulse rotate-45" />
+                </div>
+              </div>
+
+              <div className="space-y-3 mb-10">
+                <h2 className="text-[10px] md:text-[11px] font-black text-primary uppercase tracking-[0.4em]">Expedition Gateway</h2>
+                <h1 className="text-3xl md:text-5xl font-display font-bold text-text tracking-tighter leading-none px-2">
+                  {country.name}
+                </h1>
+              </div>
+
+              <div className="w-full h-1 bg-gray-100 rounded-full mb-6 relative overflow-hidden">
+                <div className="absolute inset-0 bg-primary animate-shimmer" style={{ width: '100%', backgroundSize: '200% 100%', backgroundImage: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.6), transparent)' }}></div>
+              </div>
+
+              <div className="h-6 overflow-hidden">
+                <p key={loadingStep} className="text-gray-400 text-xs font-bold uppercase tracking-[0.2em] animate-in slide-in-from-bottom-2 fade-in duration-500">
+                  {loadingMessages[loadingStep]}
+                </p>
+              </div>
+            </div>
+            
+            <div className="mt-8 flex justify-center gap-2 opacity-30">
+               <div className="w-1.5 h-1.5 rounded-full bg-primary animate-bounce delay-0"></div>
+               <div className="w-1.5 h-1.5 rounded-full bg-primary animate-bounce delay-150"></div>
+               <div className="w-1.5 h-1.5 rounded-full bg-primary animate-bounce delay-300"></div>
             </div>
           </div>
         </Container>
@@ -328,7 +365,7 @@ const CountryExploration: React.FC = () => {
             </div>
             <h2 className="text-xl font-bold mb-2 text-text">Connection Issue</h2>
             <p className="text-gray-500 mb-6 max-w-md">We couldn't retrieve the travel data for this location.</p>
-            <Button onClick={() => navigate('/directory')} variant="secondary">Return to Directory</Button>
+            <Button onClick={() => navigate(`/country/${country.id}`)} variant="secondary">Back to Profile</Button>
           </div>
         </Container>
       );
@@ -399,8 +436,8 @@ const CountryExploration: React.FC = () => {
                 </div>
 
                 <div className="flex flex-col gap-3 max-w-sm mx-auto">
-                  <Link to="/directory" className="block w-full">
-                    <Button variant="primary" className="w-full">Return to Directory</Button>
+                  <Link to={`/country/${country.id}`} className="block w-full">
+                    <Button variant="primary" className="w-full">Back to Profile</Button>
                   </Link>
                   <Button variant="secondary" onClick={restartTour} className="w-full flex items-center justify-center gap-2">
                     <RotateCcw size={16} /> Restart Tour
@@ -437,12 +474,12 @@ const CountryExploration: React.FC = () => {
 
                  <div className="absolute top-6 left-6 z-20">
                     <Link 
-                      to="/directory" 
-                      className="inline-flex items-center gap-2 px-4 py-2 bg-white/20 backdrop-blur-md border border-white/30 rounded-full shadow-xl text-white hover:bg-white/40 transition-all duration-300 ease-out group"
-                      title="Back to Country Directory"
+                      to={`/country/${country.id}`} 
+                      className="inline-flex items-center gap-2 px-3 py-1.5 bg-white/20 backdrop-blur-md border border-white/30 rounded-full shadow-xl text-white hover:bg-white/40 transition-all duration-300 ease-out group"
+                      title="Back to Country Profile"
                     >
-                       <ArrowLeft size={18} className="drop-shadow-md" />
-                       <span className="text-[10px] font-bold uppercase tracking-widest drop-shadow-md">Back to Directory</span>
+                       <ArrowLeft size={16} className="drop-shadow-md" />
+                       <span className="text-[9px] font-bold uppercase tracking-widest drop-shadow-md">Back to Profile</span>
                     </Link>
                  </div>
                  
@@ -661,50 +698,53 @@ const CountryExploration: React.FC = () => {
         : 'translate-y-full opacity-0 shadow-none';
 
       return (
-        <Container className="pt-24 md:pt-36 pb-0 px-4 md:px-6">
-           <div className="max-w-4xl mx-auto w-full pb-32">
-              <div className="text-center mb-6 md:mb-10">
-                 <h2 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Knowledge Check</h2>
-                 <div className="flex justify-center gap-1">
-                    {tourData.stops.map((_, i) => (
-                      <div 
-                        key={i} 
-                        className={`h-1 w-6 rounded-full transition-colors duration-75 ${i === stepIndex ? 'bg-primary' : i < stepIndex ? 'bg-green-400' : 'bg-gray-200'}`} 
-                      />
-                    ))}
+        <Container className="min-h-screen flex flex-col pt-12 md:pt-14 px-4 md:px-6 pb-20">
+           <SEO title={`Knowledge Check - ${country.name}`} description={`Select the correct answer about ${currentQuestion.stopName}.`} />
+           
+           <div className="flex-1 flex flex-col max-w-4xl mx-auto w-full min-h-0 py-2">
+              <div className="text-center mb-2 md:mb-4 shrink-0">
+                 <h2 className="text-[10px] md:text-[11px] font-black text-gray-400 uppercase tracking-[0.4em] mb-2">Knowledge Check</h2>
+                 <div className="w-32 md:w-48 h-[3px] bg-gray-200 mx-auto relative rounded-full overflow-hidden">
+                    <div 
+                      className="absolute h-full bg-primary transition-all duration-700 ease-out"
+                      style={{ 
+                        width: `${100 / tourData.stops.length}%`, 
+                        left: `${(stepIndex / tourData.stops.length) * 100}%` 
+                      }}
+                    />
                  </div>
               </div>
 
-              <div className="bg-white rounded-[2rem] shadow-premium overflow-hidden border border-gray-100">
-                 <div className="relative h-44 md:h-64 bg-gray-100">
+              <div className="flex-1 flex flex-col min-h-0 bg-white rounded-[2rem] md:rounded-[2.5rem] shadow-premium overflow-hidden border border-gray-100">
+                 <div className="relative h-[250px] md:h-[350px] bg-gray-100 shrink-0">
                     <ExpeditionVisual src={currentImage} alt={currentQuestion.stopName} />
-                    <div className="absolute bottom-3 left-1/2 -translate-x-1/2 bg-white/90 backdrop-blur px-3 py-1 rounded-full text-[10px] font-bold shadow-sm z-10 text-text">
+                    <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 bg-white/95 backdrop-blur px-5 py-1.5 rounded-xl text-[10px] md:text-xs font-black uppercase tracking-widest shadow-lg z-10 text-text border border-gray-100">
                        {currentQuestion.stopName}
                     </div>
                  </div>
 
-                 <div className="p-4 md:p-6 text-center">
-                    <h3 className="text-lg md:text-xl font-bold text-text mb-4 leading-tight">
+                 <div className="flex-1 flex flex-col p-4 md:p-6 lg:p-8 text-center min-h-0 justify-center">
+                    <h3 className="text-lg md:text-2xl lg:text-3xl font-display font-bold text-text mb-4 md:mb-6 leading-tight tracking-tight max-w-2xl mx-auto shrink-0">
                       {currentQuestion.question}
                     </h3>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2 w-full">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2 w-full max-w-3xl mx-auto mb-8">
                        {currentQuestion.options.map((option, idx) => {
                          const isSelected = selectedOption === option;
-                         let stateStyles = "bg-white border-gray-200 text-gray-600 hover:border-primary/50 hover:bg-blue-50/30";
+                         let stateStyles = "bg-white border-gray-200 text-gray-700 hover:border-primary/50 hover:bg-blue-50/20";
                          let icon = null;
 
                          if (isSelected) {
                            if (isCorrect) {
                              stateStyles = "bg-green-50 border-green-500 text-green-900 ring-1 ring-green-500 shadow-none";
-                             icon = <CheckCircle2 size={18} className="text-green-600" />;
+                             icon = <CheckCircle2 size={20} className="text-green-600" />;
                            } else {
                              stateStyles = "bg-red-50 border-red-600 text-red-900 ring-1 ring-red-600 shadow-none";
-                             icon = <AlertCircle size={18} className="text-red-600" />;
+                             icon = <AlertCircle size={20} className="text-red-600" />;
                            }
                          } else if (selectedOption && option === currentQuestion.answer) {
                             stateStyles = "bg-green-50/50 border-green-300 text-green-800 opacity-70"; 
-                            icon = <CheckCircle2 size={14} className="text-green-600 opacity-50" />;
+                            icon = <CheckCircle2 size={16} className="text-green-600 opacity-50" />;
                          } else if (selectedOption) {
                             stateStyles = "opacity-40 grayscale border-gray-100";
                          }
@@ -714,10 +754,10 @@ const CountryExploration: React.FC = () => {
                              key={idx}
                              onClick={() => handleQuizAnswer(option)}
                              disabled={!!selectedOption}
-                             className={`w-full text-left px-4 py-4 md:py-6 rounded-xl border-2 transition-all duration-500 font-medium text-sm leading-snug flex justify-between items-center min-h-[64px] ${stateStyles}`}
+                             className={`w-full text-left px-5 py-2.5 md:py-4 lg:py-5 rounded-2xl border-2 transition-all duration-500 font-bold text-xs md:text-sm lg:text-base leading-snug flex justify-between items-center ${stateStyles}`}
                              style={{ WebkitTapHighlightColor: 'transparent' }}
                            >
-                             <span className="leading-snug">{option}</span>
+                             <span className="leading-snug pr-4">{option}</span>
                              {icon}
                            </button>
                          );
@@ -727,32 +767,32 @@ const CountryExploration: React.FC = () => {
               </div>
            </div>
 
-           <div className={`fixed bottom-0 left-0 right-0 z-50 bg-white min-h-[20vh] flex flex-col justify-center transition-all duration-300 cubic-bezier(0.32,0.72,0,1) border-t-2 ${bottomSheetClasses} ${isCorrect ? 'border-green-500' : 'border-red-600'}`}>
-              <div className="max-w-4xl mx-auto w-full p-4 md:p-6 flex flex-col md:flex-row items-center justify-between gap-4">
-                  <div className="flex-1 text-center md:text-left">
+           <div className={`fixed bottom-0 left-0 right-0 z-50 bg-white min-h-[12vh] md:min-h-[15vh] flex flex-col justify-center transition-all duration-300 cubic-bezier(0.32,0.72,0,1) border-t-2 ${bottomSheetClasses} ${isCorrect ? 'border-green-500' : 'border-red-600'}`}>
+              <div className="max-w-4xl mx-auto w-full p-4 md:p-6 flex flex-col md:flex-row items-center justify-between gap-3">
+                  <div className="flex-1 text-center md:text-left min-h-0">
                       {selectedOption && (
                         <>
-                          <div className="flex items-center justify-center md:justify-start gap-2 mb-1">
+                          <div className="flex items-center justify-center md:justify-start gap-2 mb-0.5">
                               {isCorrect ? (
-                                  <div className="p-1.5 bg-green-100 rounded-full text-green-600">
-                                      <CheckCircle2 size={20} />
+                                  <div className="p-1 bg-green-100 rounded-full text-green-600">
+                                      <CheckCircle2 size={18} />
                                   </div>
                               ) : (
-                                  <div className="p-1.5 bg-red-100 rounded-full text-red-600">
-                                      <AlertCircle size={20} />
+                                  <div className="p-1 bg-red-100 rounded-full text-red-600">
+                                      <AlertCircle size={18} />
                                   </div>
                               )}
-                              <h3 className={`font-display font-bold text-lg ${isCorrect ? 'text-green-800' : 'text-red-800'}`}>
+                              <h3 className={`font-display font-bold text-base md:text-lg ${isCorrect ? 'text-green-800' : 'text-red-800'}`}>
                                   {isCorrect ? 'Correct!' : 'Incorrect'}
                               </h3>
                           </div>
-                          <p className="text-sm text-gray-600 leading-relaxed max-w-2xl">
+                          <p className="text-xs md:text-sm text-gray-600 leading-tight max-w-2xl line-clamp-2">
                               {feedbackMessage ? feedbackMessage.replace(/^(Correct!|Incorrect\.)\s*/, '') : ''}
                           </p>
                         </>
                       )}
                   </div>
-                  <div className="w-full md:w-auto">
+                  <div className="w-full md:w-auto shrink-0">
                        <Button 
                          onClick={nextQuestion} 
                          className="w-full md:min-w-[180px] flex items-center justify-center gap-2"
@@ -760,7 +800,7 @@ const CountryExploration: React.FC = () => {
                          size="md"
                          disabled={!selectedOption}
                        >
-                         {isLastQuestion ? 'Finish' : 'Next Question'} <ChevronRight size={18} />
+                         {isLastQuestion ? 'Finish' : 'Next Question'} <ChevronRight size={20} />
                        </Button>
                   </div>
               </div>
@@ -774,7 +814,7 @@ const CountryExploration: React.FC = () => {
   return (
     <>
       {isTransitioning && createPortal(
-        <div className={`fixed inset-0 z-[100] bg-primary flex items-center justify-center pointer-events-none ${transitionDirection === 'forward' ? 'animate-wipe-forward' : 'animate-wipe-backward'}`} aria-hidden="true">
+        <div className={`fixed inset-0 z-[5000] bg-primary flex items-center justify-center pointer-events-none ${transitionDirection === 'forward' ? 'animate-wipe-forward' : 'animate-wipe-backward'}`} aria-hidden="true">
           <div className="text-white text-3xl font-display font-bold flex items-center gap-3">
             <Globe className="w-10 h-10 animate-spin" />
           </div>

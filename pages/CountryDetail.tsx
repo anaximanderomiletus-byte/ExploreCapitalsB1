@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Map, Compass, Navigation, Scroll, MapPin } from 'lucide-react';
+import { ArrowLeft, Map, Compass, Navigation, Scroll, MapPin, Globe2, Clock, Phone, Car } from 'lucide-react';
 import { MOCK_COUNTRIES } from '../constants';
 import { STATIC_IMAGES } from '../data/images';
 import Button from '../components/Button';
@@ -10,13 +10,13 @@ import { useLayout } from '../context/LayoutContext';
 const CountryDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { setPageLoading } = useLayout();
+  const { setPageLoading, setTransitionStyle } = useLayout();
   
   const country = useMemo(() => MOCK_COUNTRIES.find(c => c.id === id), [id]);
 
   useEffect(() => {
     setPageLoading(false);
-  }, [setPageLoading]);
+  }, [setPageLoading, id]);
 
   if (!country) {
     return (
@@ -26,6 +26,23 @@ const CountryDetail: React.FC = () => {
       </div>
     );
   }
+
+  // Helper to find country ID by name for bordering nations
+  const getCountryIdByName = (name: string) => {
+    return MOCK_COUNTRIES.find(c => c.name.toLowerCase() === name.toLowerCase())?.id;
+  };
+
+  const handleNeighborClick = (neighborName: string) => {
+    const neighborId = getCountryIdByName(neighborName);
+    if (neighborId) {
+      setTransitionStyle('cartographic');
+      navigate(`/country/${neighborId}`);
+    } else {
+      // If we don't have the neighbor in the database, fallback to directory search
+      setTransitionStyle('default');
+      navigate(`/directory?search=${neighborName}`);
+    }
+  };
 
   // Calculate ISO code for the flag image
   const countryCode = Array.from(country.flag)
@@ -43,7 +60,7 @@ const CountryDetail: React.FC = () => {
 
       <div className="max-w-6xl mx-auto relative z-10">
         
-        {/* Navigation / Header Area - Dark text for light background */}
+        {/* Navigation / Header Area */}
         <div className="mb-10 flex items-center justify-between">
             <button 
                 onClick={() => navigate('/directory')}
@@ -64,7 +81,7 @@ const CountryDetail: React.FC = () => {
         {/* --- TRAVELER'S DESK LAYOUT --- */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
             
-            {/* 1. The "Postcard": Flag & Primary Info (Top on Mobile) */}
+            {/* 1. The "Postcard": Flag & Primary Info */}
             <div className="lg:col-span-5 order-1">
                 <div className="bg-[#FAF9F6] p-4 shadow-premium-hover rounded-sm transform -rotate-1 hover:rotate-0 transition-transform duration-500 border border-gray-200">
                     <div className="border-[12px] border-white shadow-inner bg-gray-50 flex items-center justify-center h-64 md:h-80 overflow-hidden relative group">
@@ -75,7 +92,7 @@ const CountryDetail: React.FC = () => {
                         />
                         <div className="absolute top-4 right-4 rotate-12 bg-white/90 p-2 shadow-md border border-gray-100 flex flex-col items-center">
                              <div className="w-8 h-8 rounded-full border-2 border-primary/20 flex items-center justify-center text-[10px] font-black text-primary">LV</div>
-                             <div className="text-[8px] font-bold text-gray-400 mt-1 uppercase">Stampe</div>
+                             <div className="text-[8px] font-bold text-gray-400 mt-1 uppercase text-center leading-none">Stampe</div>
                         </div>
                     </div>
                     <div className="mt-6 flex justify-between items-end px-2">
@@ -92,17 +109,17 @@ const CountryDetail: React.FC = () => {
                 </div>
             </div>
 
-            {/* 2. The "Field Notes": Official Profile - Rounded Corners */}
+            {/* 2. The "Field Notes": Official Profile & Integrated Coordinates */}
             <div className="lg:col-span-7 order-2 lg:row-span-2">
-                <div className="bg-[#fdf6e3] p-8 md:p-12 shadow-premium rounded-[2rem] border-l-[12px] border-primary/40 relative h-full">
+                <div className="bg-[#fdf6e3] p-8 md:p-12 shadow-premium rounded-[2.5rem] border-l-[12px] border-primary/40 relative h-full flex flex-col">
                      <div className="absolute top-8 right-8">
-                        <Scroll className="text-primary/20 w-16 h-16" />
+                        <Scroll className="text-primary/10 w-16 h-16" />
                      </div>
-                     <h3 className="font-display font-black text-2xl text-gray-800 uppercase tracking-tight mb-8 pb-4 border-b border-gray-200 flex items-center gap-3">
+                     <h3 className="font-display font-black text-2xl text-gray-800 uppercase tracking-tight mb-8 pb-4 border-b border-gray-200 flex items-center gap-3 shrink-0">
                         <Compass className="text-primary" /> Official Profile
                      </h3>
                      
-                     <div className="grid grid-cols-2 md:grid-cols-3 gap-y-10 gap-x-8 mb-12">
+                     <div className="grid grid-cols-2 md:grid-cols-3 gap-y-10 gap-x-8 mb-12 shrink-0">
                         <div>
                             <p className="text-[10px] font-black text-primary uppercase tracking-[0.2em] mb-2">Capital City</p>
                             <p className="text-xl font-display font-bold text-gray-700">{country.capital}</p>
@@ -119,8 +136,24 @@ const CountryDetail: React.FC = () => {
                             <p className="text-[10px] font-black text-primary uppercase tracking-[0.2em] mb-2">Currency</p>
                             <p className="text-xl font-display font-bold text-gray-700">{country.currency}</p>
                         </div>
-                        <div className="col-span-2">
-                            <p className="text-[10px] font-black text-primary uppercase tracking-[0.2em] mb-2">Primary Languages</p>
+                        <div>
+                            <p className="text-[10px] font-black text-primary uppercase tracking-[0.2em] mb-2">GDP (NOMINAL)</p>
+                            <p className="text-xl font-display font-bold text-gray-700">{country.gdp || 'N/A'}</p>
+                        </div>
+                        <div>
+                            <p className="text-[10px] font-black text-primary uppercase tracking-[0.2em] mb-2">Time Zone</p>
+                            <p className="text-xl font-display font-bold text-gray-700 flex items-center gap-1.5"><Clock size={16} /> {country.timeZone || 'N/A'}</p>
+                        </div>
+                        <div className="col-span-1">
+                            <p className="text-[10px] font-black text-primary uppercase tracking-[0.2em] mb-2">Calling Code</p>
+                            <p className="text-xl font-display font-bold text-gray-700 flex items-center gap-1.5"><Phone size={16} /> {country.callingCode || 'N/A'}</p>
+                        </div>
+                        <div className="col-span-1">
+                            <p className="text-[10px] font-black text-primary uppercase tracking-[0.2em] mb-2">Road Traffic</p>
+                            <p className="text-xl font-display font-bold text-gray-700 flex items-center gap-1.5"><Car size={16} /> {country.driveSide || 'Right'}-hand</p>
+                        </div>
+                        <div className="col-span-3 md:col-span-1">
+                            <p className="text-[10px] font-black text-primary uppercase tracking-[0.2em] mb-2">Languages</p>
                             <div className="flex flex-wrap gap-2">
                                 {country.languages.map(lang => (
                                     <span key={lang} className="px-2 py-1 bg-white border border-gray-200 rounded text-xs font-bold text-gray-600 shadow-sm">{lang}</span>
@@ -129,71 +162,83 @@ const CountryDetail: React.FC = () => {
                         </div>
                      </div>
 
-                     <div className="mb-10">
+                     <div className="mb-10 shrink-0">
                         <p className="text-[10px] font-black text-primary uppercase tracking-[0.2em] mb-3">Geographic Field Report</p>
                         <p className="font-serif text-lg leading-relaxed text-gray-600 italic">
                             "{country.description}"
                         </p>
                      </div>
 
-                     {/* Borders - If available */}
+                     {/* Borders - Restored to minimalist old style while staying clickable */}
                      {country.borders && country.borders.length > 0 && (
-                        <div className="mb-12">
+                        <div className="mb-12 shrink-0">
                              <p className="text-[10px] font-black text-primary uppercase tracking-[0.2em] mb-3">Bordering Nations</p>
                              <div className="flex flex-wrap gap-2">
                                 {country.borders.map(border => (
-                                    <span key={border} className="text-xs font-medium px-3 py-1 bg-gray-100 text-gray-500 rounded-full border border-gray-200">{border}</span>
+                                    <button 
+                                        key={border} 
+                                        onClick={() => handleNeighborClick(border)}
+                                        className="text-xs font-bold px-3 py-1.5 bg-white text-primary rounded-full border border-primary/20 shadow-sm hover:border-primary hover:bg-primary/5 hover:scale-105 active:scale-95 transition-all duration-200"
+                                    >
+                                        {border}
+                                    </button>
                                 ))}
                              </div>
                         </div>
                      )}
 
-                     {/* THE ACTION: START EXPEDITION - Standardized to Match App System */}
-                     <div className="pt-8 border-t border-gray-200 flex flex-col sm:flex-row items-center gap-6">
-                        <Link to={`/explore/${country.id}`} className="w-full sm:w-auto">
-                            <Button variant="primary" size="lg" className="w-full group">
-                                Start Expedition <Compass className="ml-2 group-hover:rotate-45 transition-transform" />
-                            </Button>
-                        </Link>
-                        <p className="text-sm text-gray-400 font-medium max-w-[240px] text-center sm:text-left">
-                            Begin a guided interactive tour of {country.name}'s geography and landmarks.
-                        </p>
+                     {/* Action Block - Centered */}
+                     <div className="pt-10 border-t border-gray-200 flex flex-col items-center gap-6 shrink-0 text-center">
+                        <div className="space-y-4 max-w-xl">
+                            <p className="text-sm text-gray-500 font-medium leading-relaxed">
+                                Begin a high-fidelity guided tour of {country.name}'s key geographic features, historical monuments, and landmarks.
+                            </p>
+                            <Link to={`/explore/${country.id}`} className="inline-block w-full sm:w-auto">
+                                <Button variant="primary" size="lg" className="w-full sm:w-auto group px-12 text-white">
+                                    Start Expedition <Compass className="ml-2 group-hover:rotate-45 transition-transform" />
+                                </Button>
+                            </Link>
+                        </div>
+                     </div>
+
+                     {/* White Coordinate Bubble - Updated Visuals */}
+                     <div className="mt-auto pt-16 flex justify-center">
+                        <div className="inline-flex flex-col items-center gap-2">
+                             <div className="text-[10px] font-black text-gray-400 uppercase tracking-[0.4em] mb-1">Coordinates</div>
+                             <div className="inline-flex items-center gap-6 px-8 py-4 bg-white text-text rounded-full shadow-premium-hover border-2 border-gray-100 ring-4 ring-primary/5 group hover:scale-105 transition-transform duration-300">
+                                  <div className="flex items-center gap-2">
+                                     <Navigation size={18} className="rotate-45 text-primary opacity-80 group-hover:rotate-[225deg] transition-transform duration-700" />
+                                     <div className="h-6 w-px bg-gray-200"></div>
+                                  </div>
+                                  <div className="flex gap-10">
+                                     <div className="flex flex-col items-center">
+                                         <span className="text-[8px] font-black uppercase tracking-[0.2em] text-gray-400 mb-0.5">Latitude</span>
+                                         <span className="text-sm font-mono font-black text-gray-700">{country.lat.toFixed(4)}° N</span>
+                                     </div>
+                                     <div className="flex flex-col items-center">
+                                         <span className="text-[8px] font-black uppercase tracking-[0.2em] text-gray-400 mb-0.5">Longitude</span>
+                                         <span className="text-sm font-mono font-black text-gray-700">{country.lng.toFixed(4)}° E</span>
+                                     </div>
+                                  </div>
+                             </div>
+                        </div>
                      </div>
                 </div>
             </div>
 
-            {/* 3. The "Instant Photo": Landscape/Landmark Snapshot (Last on Mobile) */}
+            {/* 3. The "Instant Photo": Landscape/Landmark Snapshot */}
             <div className="lg:col-span-5 order-3">
                 <div className="bg-white p-3 pt-4 pb-12 shadow-premium rounded-sm transform rotate-2 hover:rotate-0 transition-transform duration-500 border border-gray-200 w-full mx-auto">
-                    <div className="aspect-square bg-gray-900 overflow-hidden">
+                    <div className="aspect-square bg-gray-900 overflow-hidden relative">
                         <img 
                             src={landmarkImage}
                             alt={country.name}
                             className="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-700"
                         />
+                        <div className="absolute inset-0 shadow-[inset_0_0_80px_rgba(0,0,0,0.3)] pointer-events-none"></div>
                     </div>
                     <div className="mt-4 px-2">
                          <p className="font-serif italic text-gray-400 text-sm text-center">Field Snapshot: {country.capital}</p>
-                    </div>
-                </div>
-            </div>
-
-            {/* 4. Additional Decorative Paper: "The Map" (Bottom) */}
-            <div className="lg:col-span-7 order-4">
-                <div className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-premium">
-                    <div className="flex items-center gap-4 text-gray-400">
-                        <Navigation size={20} />
-                        <span className="text-xs font-bold uppercase tracking-widest">Cartographic Coordinates</span>
-                    </div>
-                    <div className="mt-4 flex gap-8">
-                         <div>
-                            <span className="block text-[10px] text-gray-400 uppercase font-black">Latitude</span>
-                            <span className="text-lg font-mono text-text">{country.lat.toFixed(4)}°</span>
-                         </div>
-                         <div>
-                            <span className="block text-[10px] text-gray-400 uppercase font-black">Longitude</span>
-                            <span className="text-lg font-mono text-text">{country.lng.toFixed(4)}°</span>
-                         </div>
                     </div>
                 </div>
             </div>

@@ -13,6 +13,10 @@ export interface Country {
   currency: string;   // e.g. "Afghan afghani"
   languages: string[]; // e.g. ["Pashto", "Dari"]
   borders?: string[]; // Array of bordering country names
+  gdp?: string;       // e.g. "$20.1 Billion"
+  timeZone?: string;  // e.g. "UTC +4:30"
+  callingCode?: string; // e.g. "+93"
+  driveSide?: string;  // e.g. "Right"
 }
 
 export interface Game {

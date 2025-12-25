@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef, useState } from 'react';
 import { Filter, Compass, Map as MapIcon, Search, X, Plus, Minus, ChevronRight } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
@@ -29,7 +28,7 @@ const MapPage: React.FC = () => {
   const [mapReady, setMapReady] = useState(false);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { setPageLoading } = useLayout();
+  const { setPageLoading, setHideFooter } = useLayout();
   
   // Search State
   const [searchQuery, setSearchQuery] = useState('');
@@ -84,6 +83,9 @@ const MapPage: React.FC = () => {
   // Initialize Map
   useEffect(() => {
     const L = (window as any).L;
+    
+    // Hide footer for map dashboard
+    setHideFooter(true);
 
     if (mapRef.current && !mapInstanceRef.current && L) {
       const map = L.map(mapRef.current, {
@@ -137,8 +139,9 @@ const MapPage: React.FC = () => {
         mapInstanceRef.current.remove();
         mapInstanceRef.current = null;
       }
+      setHideFooter(false);
     };
-  }, [navigate, setPageLoading]);
+  }, [navigate, setPageLoading, setHideFooter]);
 
   // Effect 1: Create Markers when Region changes
   // We do NOT include activeCountryId here so markers aren't destroyed on every click

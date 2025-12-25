@@ -56,8 +56,8 @@ const Home: React.FC = () => {
         structuredData={structuredData}
       />
 
-      {/* Hero Section */}
-      <section className="relative min-h-[80vh] flex flex-col items-center justify-start overflow-hidden pt-44 pb-20">
+      {/* Hero Section - Balanced min-height and justify-center for vertical impact */}
+      <section className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden pt-48 pb-32">
          <div className="absolute inset-0 bg-gradient-to-b from-blue-50/80 to-surface z-0"></div>
          
          <div 
@@ -69,17 +69,24 @@ const Home: React.FC = () => {
             }}
          ></div>
 
+         {/* Floating Background Continents - Slowed down significantly for a very subtle effect */}
          <div 
             className="absolute inset-0 z-0 opacity-[0.05] pointer-events-none flex items-center justify-center scale-110 select-none will-change-transform"
-            style={{ transform: `translateY(${scrollY * 0.25}px) scale(1.1)` }}
+            style={{ transform: `translateY(${scrollY * 0.2}px) scale(1.1)` }}
          >
             <svg viewBox="0 0 800 400" xmlns="http://www.w3.org/2000/svg" className="w-full h-full fill-current text-text">
-               <path d="M120,80 Q140,70 180,80 T240,80 T230,150 T180,180 T120,130 Z" />
-               <path d="M180,200 Q210,190 240,210 T250,300 T190,340 T160,240 Z" />
-               <path d="M350,60 Q450,40 600,40 T780,100 T750,180 T580,200 T380,150 Z" />
-               <path d="M380,180 Q450,170 520,190 T530,300 T410,310 Z" />
-               <path d="M680,280 Q740,270 760,300 T740,340 T670,300 Z" />
-               <circle cx="220" cy="30" r="15" />
+               {/* North America-ish */}
+               <path className="animate-float" style={{ animationDuration: '22s' }} d="M120,80 Q140,70 180,80 T240,80 T230,150 T180,180 T120,130 Z" />
+               {/* South America-ish */}
+               <path className="animate-float" style={{ animationDuration: '30s', animationDelay: '2s' }} d="M180,200 Q210,190 240,210 T250,300 T190,340 T160,240 Z" />
+               {/* Eurasia-ish */}
+               <path className="animate-float" style={{ animationDuration: '40s', animationDelay: '1s' }} d="M350,60 Q450,40 600,40 T780,100 T750,180 T580,200 T380,150 Z" />
+               {/* Africa-ish */}
+               <path className="animate-float" style={{ animationDuration: '25s', animationDelay: '4s' }} d="M380,180 Q450,170 520,190 T530,300 T410,310 Z" />
+               {/* Australia-ish */}
+               <path className="animate-float" style={{ animationDuration: '35s', animationDelay: '3s' }} d="M680,280 Q740,270 760,300 T740,340 T670,300 Z" />
+               {/* Small Island */}
+               <circle className="animate-float" style={{ animationDuration: '20s' }} cx="220" cy="30" r="15" />
             </svg>
          </div>
          
@@ -154,13 +161,13 @@ const Home: React.FC = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
                 <div className="md:col-span-8 bg-surface/30 rounded-[2rem] p-10 md:p-12 border border-gray-100 shadow-premium group overflow-hidden relative min-h-[400px] flex flex-col justify-center">
-                   <div className="absolute inset-0 z-0 opacity-[0.08] group-hover:opacity-[0.12] transition-opacity duration-700 pointer-events-none flex items-center justify-center p-8">
+                   <div className="absolute inset-0 z-0 opacity-[0.08] group-hover:opacity-[0.12] transition-opacity duration-700 pointer-none flex items-center justify-center p-8">
                       <svg viewBox="0 0 800 400" xmlns="http://www.w3.org/2000/svg" className="w-full h-full fill-current text-primary" aria-hidden="true">
                         <path d="M120,80 L140,70 L180,80 L220,60 L240,80 L230,120 L210,150 L180,180 L150,170 L120,130 Z" />
                         <path d="M180,200 L210,190 L240,210 L250,250 L220,320 L190,340 L170,300 L160,240 Z" />
                         <path d="M350,60 L450,40 L600,40 L750,60 L780,100 L750,180 L680,220 L580,200 L500,180 L420,200 L380,150 L350,100 Z" />
                         <path d="M380,180 L450,170 L520,190 L530,240 L500,320 L450,340 L410,310 L380,250 Z" />
-                        <path d="M680,280 L740,270 L760,300 L740,340 L690,330 L670,300 Z" />
+                        <path d="M680,280 L740,270 L760,300 T740,340 L690,330 L670,300 Z" />
                         <path d="M220,30 L250,20 L280,35 L260,60 L225,55 Z" />
                         <path d="M540,280 L560,285 L555,310 L540,315 Z" />
                         <circle cx="280" cy="180" r="5" />
@@ -250,8 +257,8 @@ const Home: React.FC = () => {
       </section>
 
       <section className="py-32 px-6 bg-[#2D3133] relative overflow-hidden">
-         <div className="absolute -top-24 -left-24 w-96 h-96 bg-primary/20 rounded-full blur-[120px] pointer-events-none"></div>
-         <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-accent/10 rounded-full blur-[120px] pointer-events-none"></div>
+         <div className="absolute -top-24 -left-24 w-96 h-96 bg-primary/20 rounded-full blur-[120px] pointer-none"></div>
+         <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-accent/10 rounded-full blur-[120px] pointer-none"></div>
 
          <div className="max-w-4xl mx-auto text-center relative z-10">
             <h2 className="text-4xl md:text-6xl font-display font-black text-white mb-8 tracking-tighter">
