@@ -119,20 +119,25 @@ const MapPage: React.FC = () => {
       
       // Define UI Obstruction Dimensions
       const topNavHeight = 100; // Navigation bar + search
-      const sidebarWidth = isMobile ? 0 : 360; // Desktop left sidebar
+      
+      // For desktop, we want the marker (and popup) to be visually centered in the viewport.
+      // Even though there is a sidebar, centering on the screen looks more balanced for a focused view.
+      const sidebarWidth = 0; 
+      
       const bottomSheetHeight = isMobile ? 380 : 0; // Mobile bottom panel (approx max height)
       
       const mapSize = map.getSize();
       
       // Calculate "Safe Zone" center relative to the map container
-      // For desktop: Center is shifted right
-      // For mobile: Center is shifted up
+      // For desktop: Center is horizontal center
+      // For mobile: Center is shifted up to avoid bottom sheet
       const targetX = sidebarWidth + ((mapSize.x - sidebarWidth) / 2);
       const targetY = topNavHeight + ((mapSize.y - topNavHeight - bottomSheetHeight) / 2);
 
       // We want the marker to be at (targetX, targetY + offset)
-      // The offset pushes the marker down so the POPUP (above marker) is centered
-      const popupOffset = 120; // Pixel shift down to accommodate popup height
+      // The offset pushes the marker down so the POPUP (which opens above the marker) is centered in the safe zone
+      // Reduced offset (from 150 to 75) to move the popup higher up, closer to the visual center
+      const popupOffset = 75; 
       const desiredMarkerScreenY = targetY + popupOffset;
 
       // Current global pixel position of marker

@@ -4,7 +4,8 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { 
   ArrowLeft, Map, Compass, Navigation, Scroll, MapPin, 
   Clock, Phone, Car, Users, Maximize2, Banknote, 
-  TrendingUp, Languages, Building2, Globe, AlertTriangle
+  TrendingUp, Languages, Building2, Globe, AlertTriangle,
+  ImageOff
 } from 'lucide-react';
 import { MOCK_COUNTRIES, TERRITORIES, DE_FACTO_COUNTRIES } from '../constants';
 import { STATIC_IMAGES } from '../data/images';
@@ -361,11 +362,17 @@ const CountryDetail: React.FC = () => {
             <div className="lg:col-span-5 lg:row-start-2 w-full">
                  <div className="bg-[#FAF9F6] p-4 shadow-premium-hover rounded-sm transform rotate-1 hover:rotate-0 transition-transform duration-500 border border-gray-200">
                     <div className="border-[12px] border-white shadow-inner bg-gray-100 flex items-center justify-center aspect-square overflow-hidden relative group">
-                       <img 
-                          src={scenicData?.image || ''} 
-                          alt="Location Scenery" 
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                       />
+                        {(!isTerritory && !isDeFacto) ? (
+                          <img 
+                              src={scenicData?.image || ''} 
+                              alt="Location Scenery" 
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                           />
+                        ) : (
+                          <div className="flex flex-col items-center justify-center text-gray-300 w-full h-full bg-gray-50">
+                               <ImageOff size={48} strokeWidth={1.5} className="opacity-50" />
+                          </div>
+                        )}
                     </div>
                     <div className="mt-4 px-2 text-center pb-2">
                         <p className="font-serif italic text-gray-600 text-lg">
