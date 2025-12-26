@@ -1,5 +1,5 @@
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import { Filter, Compass, Map as MapIcon, Search, X, Plus, Minus, Globe } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { MOCK_COUNTRIES, TERRITORIES } from '../constants';
@@ -18,14 +18,20 @@ const getCountryCode = (emoji: string) => {
         .join('');
 };
 
+interface StoredMarker {
+  id: string;
+  region: string;
+  isTerritory: boolean;
+  marker: any; // Leaflet Marker
+}
+
 const MapPage: React.FC = () => {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<any>(null);
   const markersLayerRef = useRef<any>(null);
-  const territoriesLayerRef = useRef<any>(null);
   
-  // Store marker instances to manipulate them without re-creating
-  const markerInstancesRef = useRef<Map<string, any>>(new Map());
+  // Store marker instances to manipulate them without re-creating (Object Pooling)
+  const allMarkersRef = useRef<StoredMarker[]>([]);
   
   const [selectedRegion, setSelectedRegion] = useState('All');
   const [showTerritories, setShowTerritories] = useState(true);
@@ -39,12 +45,11 @@ const MapPage: React.FC = () => {
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const [activeCountryId, setActiveCountryId] = useState<string | null>(null);
   
-  // Create refs for both desktop and mobile result containers to handle scrolling if needed
   const desktopResultsRef = useRef<HTMLDivElement>(null);
   const mobileResultsRef = useRef<HTMLDivElement>(null);
 
-  // Function to create custom HTML content for popups
-  const createPopupContent = (country: Country, isTerritory = false) => {
+  // Memoize Popup Content Creator
+  const createPopupContent = useCallback((country: Country, isTerritory = false) => {
     const flagCode = getCountryCode(country.flag);
     const flagUrl = `https://flagcdn.com/w80/${flagCode}.png`;
     
@@ -84,51 +89,86 @@ const MapPage: React.FC = () => {
         </div>
       </div>
     `;
-  };
+  }, []);
 
   // Initialize Map
   useEffect(() => {
     const L = (window as any).L;
     
-    // Hide footer for map dashboard
     setHideFooter(true);
 
     if (mapRef.current && !mapInstanceRef.current && L) {
       const map = L.map(mapRef.current, {
         center: [20, 0],
         zoom: 3,
-        zoomControl: false, // Custom zoom controls
+        zoomControl: false,
         attributionControl: false,
         minZoom: 2,
-        worldCopyJump: true, // This allows the map to seamlessly wrap horizontally
+        worldCopyJump: true, // Smooth wrapping
+        preferCanvas: true, // Performance boost for vectors (though DivIcon is DOM)
+        wheelDebounceTime: 40, // Debounce zoom
+        wheelPxPerZoomLevel: 60, // Slower, smoother zoom
+        updateWhenIdle: true, // Wait until pan ends to load heavy things
       });
 
-      // CartoDB Voyager Tiles - Clean and Minimal
+      // CartoDB Voyager Tiles
       L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager_nolabels/{z}/{x}/{y}{r}.png', {
         subdomains: 'abcd',
         maxZoom: 20
       }).addTo(map);
       
-      // Add Labels layer on top for better visibility
+      // Labels layer
       L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager_only_labels/{z}/{x}/{y}{r}.png', {
         subdomains: 'abcd',
         maxZoom: 20,
         zIndex: 10
       }).addTo(map);
 
-      // Create layer groups
+      // Create a single layer group for all markers
       markersLayerRef.current = L.layerGroup().addTo(map);
-      territoriesLayerRef.current = L.layerGroup().addTo(map); // Separate layer for territories
 
       mapInstanceRef.current = map;
+      
+      // Create Markers ONCE and store them
+      if (allMarkersRef.current.length === 0) {
+          const createMarkers = (list: Country[], isTerr: boolean) => {
+              list.forEach(country => {
+                  const icon = L.divIcon({
+                      className: `custom-map-marker ${isTerr ? 'territory-marker' : ''}`,
+                      html: `<div class="marker-pin ${isTerr ? 'territory' : ''}"></div>`,
+                      iconSize: [20, 20],
+                      iconAnchor: [10, 10]
+                  });
+
+                  const marker = L.marker([country.lat, country.lng], { 
+                      icon: icon,
+                      zIndexOffset: isTerr ? -100 : 0
+                  }).bindPopup(createPopupContent(country, isTerr), {
+                      closeButton: false,
+                      className: 'custom-popup'
+                  });
+
+                  marker.on('click', () => setActiveCountryId(country.id));
+
+                  allMarkersRef.current.push({
+                      id: country.id,
+                      region: country.region,
+                      isTerritory: isTerr,
+                      marker: marker
+                  });
+              });
+          };
+
+          createMarkers(MOCK_COUNTRIES, false);
+          createMarkers(TERRITORIES, true);
+      }
+
       setMapReady(true);
       setPageLoading(false);
 
-      // Clear active state when clicking map background
       map.on('click', () => setActiveCountryId(null));
     }
 
-    // Global click listener for the popup buttons (delegation)
     const handlePopupClick = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
       if (target && target.classList.contains('learn-more-btn')) {
@@ -149,125 +189,85 @@ const MapPage: React.FC = () => {
       }
       setHideFooter(false);
     };
-  }, [navigate, setPageLoading, setHideFooter]);
+  }, [navigate, setPageLoading, setHideFooter, createPopupContent]);
 
-  // Effect 1: Create Markers (Countries & Territories)
+  // Effect: Efficiently filter and update map without recreating markers
   useEffect(() => {
-    const L = (window as any).L;
-    if (!mapInstanceRef.current || !markersLayerRef.current || !territoriesLayerRef.current || !L) return;
+    if (!mapInstanceRef.current || !markersLayerRef.current) return;
 
-    // Clear existing
-    markersLayerRef.current.clearLayers();
-    territoriesLayerRef.current.clearLayers();
-    markerInstancesRef.current.clear();
+    // Use requestAnimationFrame to avoid blocking the main thread during render
+    requestAnimationFrame(() => {
+        markersLayerRef.current.clearLayers();
 
-    // 1. Add Sovereign Countries
-    const filteredCountries = selectedRegion === 'All' 
-      ? MOCK_COUNTRIES 
-      : MOCK_COUNTRIES.filter(c => c.region === selectedRegion);
+        const markersToAdd: any[] = [];
+        
+        allMarkersRef.current.forEach(item => {
+            const regionMatch = selectedRegion === 'All' || item.region === selectedRegion;
+            const typeMatch = item.isTerritory ? showTerritories : true;
 
-    filteredCountries.forEach(country => {
-      const icon = L.divIcon({
-        className: `custom-map-marker`,
-        html: `<div class="marker-pin"></div>`,
-        iconSize: [20, 20],
-        iconAnchor: [10, 10]
-      });
+            if (regionMatch && typeMatch) {
+                markersToAdd.push(item.marker);
+            }
+        });
 
-      const marker = L.marker([country.lat, country.lng], { 
-        icon: icon,
-      }).bindPopup(createPopupContent(country, false), {
-          closeButton: false,
-          className: 'custom-popup'
-      });
+        // Add filtered markers in a batch
+        markersToAdd.forEach(m => m.addTo(markersLayerRef.current));
 
-      markerInstancesRef.current.set(country.id, marker);
-      marker.on('click', () => setActiveCountryId(country.id));
-      markersLayerRef.current.addLayer(marker);
+        // Adjust bounds if filtered (not on 'All')
+        if (selectedRegion !== 'All' && markersToAdd.length > 0) {
+             const L = (window as any).L;
+             const group = L.featureGroup(markersToAdd);
+             mapInstanceRef.current.fitBounds(group.getBounds().pad(0.1));
+        }
     });
-
-    // 2. Add Territories (if toggle is on)
-    if (showTerritories) {
-      const filteredTerritories = selectedRegion === 'All'
-        ? TERRITORIES
-        : TERRITORIES.filter(t => t.region === selectedRegion);
-
-      filteredTerritories.forEach(territory => {
-         const icon = L.divIcon({
-            className: `custom-map-marker territory-marker`, // Add class for territory styling
-            html: `<div class="marker-pin territory"></div>`,
-            iconSize: [20, 20],
-            iconAnchor: [10, 10]
-         });
-
-         const marker = L.marker([territory.lat, territory.lng], { 
-            icon: icon,
-            zIndexOffset: -100 // Territories slightly behind sovereign nations if overlapping
-         }).bindPopup(createPopupContent(territory, true), {
-             closeButton: false,
-             className: 'custom-popup'
-         });
-
-         markerInstancesRef.current.set(territory.id, marker);
-         marker.on('click', () => setActiveCountryId(territory.id));
-         territoriesLayerRef.current.addLayer(marker);
-      });
-    }
-
-    // Adjust bounds if necessary (only if user changed region, otherwise keep view)
-    // We only fit bounds based on Sovereign countries to avoid skewing too much with tiny islands
-    if (selectedRegion !== 'All' && markersLayerRef.current.getLayers().length > 0) {
-      const group = L.featureGroup(markersLayerRef.current.getLayers());
-      mapInstanceRef.current.fitBounds(group.getBounds().pad(0.1));
-    }
 
   }, [selectedRegion, showTerritories, mapReady]);
 
-  // Effect 2: Update marker styles when activeCountryId changes
+  // Effect: Update marker active styles (lightweight DOM manipulation)
   useEffect(() => {
-    markerInstancesRef.current.forEach((marker, id) => {
-      const el = marker.getElement();
-      if (el) {
-        if (id === activeCountryId) {
-          el.classList.add('marker-active');
-        } else {
-          el.classList.remove('marker-active');
-        }
-      }
-    });
-  }, [activeCountryId]);
+    // Only iterate if we have an active ID to save cycles
+    if (mapReady) {
+        allMarkersRef.current.forEach((item) => {
+          const el = item.marker.getElement();
+          if (el) {
+            if (item.id === activeCountryId) {
+              el.classList.add('marker-active');
+            } else {
+              el.classList.remove('marker-active');
+            }
+          }
+        });
+    }
+  }, [activeCountryId, mapReady]);
 
   // Handle URL Parameter Navigation
   useEffect(() => {
     const countryId = searchParams.get('country');
     if (countryId && mapReady && mapInstanceRef.current) {
-      // Check both lists
-      const entity = MOCK_COUNTRIES.find(c => c.id === countryId) || TERRITORIES.find(t => t.id === countryId);
+      const storedItem = allMarkersRef.current.find(m => m.id === countryId);
       
-      if (entity) {
-        // If it's a territory, ensure they are shown
-        const isTerritory = TERRITORIES.some(t => t.id === entity.id);
-        if (isTerritory && !showTerritories) {
+      if (storedItem) {
+        if (storedItem.isTerritory && !showTerritories) {
            setShowTerritories(true);
         }
 
-        if (selectedRegion !== 'All' && entity.region !== selectedRegion) {
+        if (selectedRegion !== 'All' && storedItem.region !== selectedRegion) {
           setSelectedRegion('All'); 
         }
 
         setActiveCountryId(countryId);
-        mapInstanceRef.current.flyTo([entity.lat, entity.lng], 6, { duration: 1.5 });
         
-        // Wait for fly animation then open popup
+        // Wait for state updates to render layers before flying
         setTimeout(() => {
-          const marker = markerInstancesRef.current.get(countryId);
-          if (marker) marker.openPopup();
-        }, 1600);
+             mapInstanceRef.current.flyTo(storedItem.marker.getLatLng(), 6, { duration: 1.5 });
+             setTimeout(() => {
+                storedItem.marker.openPopup();
+             }, 1600);
+        }, 100);
       }
     }
   }, [searchParams, mapReady]);
 
-  // Map Controls
   const handleZoomIn = () => {
     if (mapInstanceRef.current) mapInstanceRef.current.zoomIn();
   };
@@ -277,23 +277,25 @@ const MapPage: React.FC = () => {
   };
 
   const flyToRandom = () => {
-    const visibleEntities = selectedRegion === 'All' 
-      ? [...MOCK_COUNTRIES, ...(showTerritories ? TERRITORIES : [])]
-      : [...MOCK_COUNTRIES.filter(c => c.region === selectedRegion), ...(showTerritories ? TERRITORIES.filter(t => t.region === selectedRegion) : [])];
+    // Filter currently visible markers based on state
+    const visibleMarkers = allMarkersRef.current.filter(item => {
+        const regionMatch = selectedRegion === 'All' || item.region === selectedRegion;
+        const typeMatch = item.isTerritory ? showTerritories : true;
+        return regionMatch && typeMatch;
+    });
       
-    if (visibleEntities.length === 0) return;
+    if (visibleMarkers.length === 0) return;
 
-    const randomEntity = visibleEntities[Math.floor(Math.random() * visibleEntities.length)];
+    const randomMarker = visibleMarkers[Math.floor(Math.random() * visibleMarkers.length)];
     
-    if (mapInstanceRef.current && randomEntity) {
-      setActiveCountryId(randomEntity.id);
-      mapInstanceRef.current.flyTo([randomEntity.lat, randomEntity.lng], 6, {
+    if (mapInstanceRef.current && randomMarker) {
+      setActiveCountryId(randomMarker.id);
+      mapInstanceRef.current.flyTo(randomMarker.marker.getLatLng(), 6, {
         duration: 2
       });
       
       setTimeout(() => {
-        const marker = markerInstancesRef.current.get(randomEntity.id);
-        if (marker) marker.openPopup();
+        randomMarker.marker.openPopup();
       }, 2200);
     }
   };
@@ -301,12 +303,14 @@ const MapPage: React.FC = () => {
   const normalizeText = (text: string) => 
     text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
 
-  const filteredSearchResults = searchQuery.length > 0 
-    ? [...MOCK_COUNTRIES, ...TERRITORIES].filter(c => 
-        normalizeText(c.name).includes(normalizeText(searchQuery)) || 
-        normalizeText(c.capital).includes(normalizeText(searchQuery))
-      ).slice(0, 20) 
-    : [];
+  const filteredSearchResults = useMemo(() => {
+      if (searchQuery.length === 0) return [];
+      const query = normalizeText(searchQuery);
+      return [...MOCK_COUNTRIES, ...TERRITORIES].filter(c => 
+        normalizeText(c.name).includes(query) || 
+        normalizeText(c.capital).includes(query)
+      ).slice(0, 20);
+  }, [searchQuery]);
 
   useEffect(() => {
     setSelectedIndex(-1);
@@ -317,20 +321,22 @@ const MapPage: React.FC = () => {
       setSelectedIndex(-1);
       setActiveCountryId(country.id);
       
-      // If result is territory, ensure toggle is on
       const isTerritory = TERRITORIES.some(t => t.id === country.id);
       if (isTerritory && !showTerritories) setShowTerritories(true);
 
       if (selectedRegion !== 'All') {
           setSelectedRegion('All');
       }
+      
       setTimeout(() => {
           if (mapInstanceRef.current) {
-              mapInstanceRef.current.flyTo([country.lat, country.lng], 6, { duration: 2 });
-              setTimeout(() => {
-                  const marker = markerInstancesRef.current.get(country.id);
-                  if (marker) marker.openPopup();
-              }, 2200);
+              const stored = allMarkersRef.current.find(m => m.id === country.id);
+              if (stored) {
+                  mapInstanceRef.current.flyTo(stored.marker.getLatLng(), 6, { duration: 2 });
+                  setTimeout(() => {
+                      stored.marker.openPopup();
+                  }, 2200);
+              }
           }
       }, 100);
   };

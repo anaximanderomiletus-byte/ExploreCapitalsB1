@@ -65,6 +65,61 @@ const FlagIcon = ({ country, size = 'small' }: { country: Country, size?: 'small
   );
 };
 
+interface MobileCountryCardProps {
+  country: Country;
+  onClick: () => void;
+  isTerritory?: boolean;
+  sovereignty?: string;
+}
+
+const MobileCountryCard: React.FC<MobileCountryCardProps> = ({ country, onClick, isTerritory, sovereignty }) => (
+    <div 
+      onClick={onClick}
+      className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 active:scale-[0.98] transition-all hover:shadow-md cursor-pointer flex flex-col transform-gpu backface-hidden"
+      style={{ WebkitMaskImage: '-webkit-radial-gradient(white, black)' }}
+    >
+      <div className="flex items-start justify-between mb-4">
+        <div className="flex items-center gap-3">
+          <div className="flex-shrink-0">
+            <FlagIcon country={country} size="card" />
+          </div>
+          <div>
+            <h3 className={`font-bold text-lg leading-tight ${isTerritory ? 'text-green-800' : 'text-text'}`}>{country.name}</h3>
+            <div className="text-sm text-gray-500">{country.capital}</div>
+            {isTerritory && <div className="text-[10px] uppercase font-bold text-gray-400 mt-0.5">{sovereignty}</div>}
+          </div>
+        </div>
+        <div className="text-gray-300">
+          <ChevronRight size={20} />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-2 mb-4">
+        <div className="bg-surface/50 p-2 rounded-lg">
+           <div className="text-[10px] text-gray-400 uppercase font-bold mb-1">Population</div>
+           <div className="text-sm font-semibold text-text">{country.population}</div>
+        </div>
+        <div className="bg-surface/50 p-2 rounded-lg">
+           <div className="text-[10px] text-gray-400 uppercase font-bold mb-1 flex items-center gap-1">
+              <Maximize2 size={10} /> Area (km²)
+           </div>
+           <div className="text-sm font-semibold text-text">{country.area}</div>
+        </div>
+      </div>
+
+      <div className="flex flex-wrap gap-1.5 pt-4 border-t border-gray-100">
+         {country.languages.slice(0, 3).map((lang, idx) => (
+           <span key={idx} className="text-[10px] font-medium px-2 py-1 bg-gray-100 text-gray-600 rounded-full flex items-center gap-1">
+             <Languages size={10} className="opacity-50" /> {lang}
+           </span>
+         ))}
+         {country.languages.length > 3 && (
+           <span className="text-[10px] font-medium px-2 py-1 bg-gray-50 text-gray-400 rounded-full">+{country.languages.length - 3}</span>
+         )}
+      </div>
+    </div>
+);
+
 const Directory: React.FC = () => {
   const [search, setSearch] = useState('');
   const [sortConfig, setSortConfig] = useState<{ key: SortKey; direction: SortDirection } | null>(null);
@@ -198,7 +253,9 @@ const Directory: React.FC = () => {
         </div>
 
         {/* --- Sovereign Countries Section --- */}
-        <div className="bg-white rounded-2xl shadow-premium overflow-hidden border border-gray-100 mb-16">
+        
+        {/* DESKTOP TABLE (Hidden on small screens) */}
+        <div className="hidden lg:block bg-white rounded-2xl shadow-premium overflow-hidden border border-gray-100 mb-16">
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
@@ -208,7 +265,6 @@ const Directory: React.FC = () => {
                   <SortHeader label="Region" field="region" sortConfig={sortConfig} onSort={handleSort} />
                   <SortHeader label="Pop." field="population" sortConfig={sortConfig} onSort={handleSort} align="right" />
                   <SortHeader label="Area (km²)" field="area" sortConfig={sortConfig} onSort={handleSort} align="right" />
-                  <th className="px-6 py-5 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Action</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
@@ -234,22 +290,18 @@ const Directory: React.FC = () => {
                     </td>
                     <td className="px-6 py-5 text-gray-600 tabular-nums text-right">{country.population}</td>
                     <td className="px-6 py-5 text-gray-600 tabular-nums text-right">{country.area}</td>
-                    <td className="px-6 py-5 text-right">
-                      <button className="text-sm font-semibold text-accent hover:text-amber-600 transition-colors">
-                        Explore
-                      </button>
-                    </td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
-          {/* Mobile Card View for Countries */}
-          <div className="lg:hidden p-4 grid grid-cols-1 md:grid-cols-2 gap-4 bg-surface">
-            {processedCountries.map((country) => (
-               <MobileCountryCard key={country.id} country={country} onClick={() => handleCountryClick(country.id)} />
-            ))}
-          </div>
+        </div>
+
+        {/* MOBILE GRID (Visible ONLY on small screens) */}
+        <div className="lg:hidden grid grid-cols-1 md:grid-cols-2 gap-4 mb-16">
+          {processedCountries.map((country) => (
+             <MobileCountryCard key={country.id} country={country} onClick={() => handleCountryClick(country.id)} />
+          ))}
         </div>
 
         {/* --- Officially Recognized Territories Section --- */}
@@ -264,7 +316,8 @@ const Directory: React.FC = () => {
                 </div>
             </div>
             
-            <div className="bg-white rounded-2xl shadow-premium overflow-hidden border border-gray-100">
+            {/* DESKTOP TABLE (Hidden on small screens) */}
+            <div className="hidden lg:block bg-white rounded-2xl shadow-premium overflow-hidden border border-gray-100">
               <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse">
                   <thead>
@@ -274,7 +327,6 @@ const Directory: React.FC = () => {
                       <SortHeader label="Capital" field="capital" sortConfig={sortConfig} onSort={handleSort} />
                       <SortHeader label="Region" field="region" sortConfig={sortConfig} onSort={handleSort} />
                       <SortHeader label="Pop." field="population" sortConfig={sortConfig} onSort={handleSort} align="right" />
-                      <th className="px-6 py-5 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Action</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100">
@@ -302,23 +354,19 @@ const Directory: React.FC = () => {
                           </span>
                         </td>
                         <td className="px-6 py-5 text-gray-600 tabular-nums text-right">{territory.population}</td>
-                        <td className="px-6 py-5 text-right">
-                          <button className="text-sm font-semibold text-green-600 hover:text-green-800 transition-colors">
-                            Explore
-                          </button>
-                        </td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
               </div>
-               {/* Mobile Card View for Territories */}
-               <div className="lg:hidden p-4 grid grid-cols-1 md:grid-cols-2 gap-4 bg-surface">
-                 {processedTerritories.map((territory) => (
-                    <MobileCountryCard key={territory.id} country={territory} onClick={() => handleCountryClick(territory.id)} isTerritory sovereignty={territory.sovereignty} />
-                 ))}
-              </div>
             </div>
+
+            {/* MOBILE GRID (Visible ONLY on small screens) */}
+            <div className="lg:hidden grid grid-cols-1 md:grid-cols-2 gap-4">
+              {processedTerritories.map((territory) => (
+                 <MobileCountryCard key={territory.id} country={territory} onClick={() => handleCountryClick(territory.id)} isTerritory sovereignty={territory.sovereignty} />
+              ))}
+           </div>
         </div>
 
         {processedCountries.length === 0 && processedTerritories.length === 0 && (
@@ -332,53 +380,5 @@ const Directory: React.FC = () => {
     </div>
   );
 };
-
-const MobileCountryCard = ({ country, onClick, isTerritory, sovereignty }: { country: Country, onClick: () => void, isTerritory?: boolean, sovereignty?: string }) => (
-    <div 
-      onClick={onClick}
-      className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 active:scale-[0.98] transition-all hover:shadow-md cursor-pointer flex flex-col transform-gpu backface-hidden"
-      style={{ WebkitMaskImage: '-webkit-radial-gradient(white, black)' }}
-    >
-      <div className="flex items-start justify-between mb-4">
-        <div className="flex items-center gap-3">
-          <div className="flex-shrink-0">
-            <FlagIcon country={country} size="card" />
-          </div>
-          <div>
-            <h3 className={`font-bold text-lg leading-tight ${isTerritory ? 'text-green-800' : 'text-text'}`}>{country.name}</h3>
-            <div className="text-sm text-gray-500">{country.capital}</div>
-            {isTerritory && <div className="text-[10px] uppercase font-bold text-gray-400 mt-0.5">{sovereignty}</div>}
-          </div>
-        </div>
-        <div className="text-gray-300">
-          <ChevronRight size={20} />
-        </div>
-      </div>
-
-      <div className="grid grid-cols-2 gap-2 mb-4">
-        <div className="bg-surface/50 p-2 rounded-lg">
-           <div className="text-[10px] text-gray-400 uppercase font-bold mb-1">Population</div>
-           <div className="text-sm font-semibold text-text">{country.population}</div>
-        </div>
-        <div className="bg-surface/50 p-2 rounded-lg">
-           <div className="text-[10px] text-gray-400 uppercase font-bold mb-1 flex items-center gap-1">
-              <Maximize2 size={10} /> Area (km²)
-           </div>
-           <div className="text-sm font-semibold text-text">{country.area}</div>
-        </div>
-      </div>
-
-      <div className="flex flex-wrap gap-1.5 pt-4 border-t border-gray-100">
-         {country.languages.slice(0, 3).map((lang, idx) => (
-           <span key={idx} className="text-[10px] font-medium px-2 py-1 bg-gray-100 text-gray-600 rounded-full flex items-center gap-1">
-             <Languages size={10} className="opacity-50" /> {lang}
-           </span>
-         ))}
-         {country.languages.length > 3 && (
-           <span className="text-[10px] font-medium px-2 py-1 bg-gray-50 text-gray-400 rounded-full">+{country.languages.length - 3}</span>
-         )}
-      </div>
-    </div>
-);
 
 export default Directory;

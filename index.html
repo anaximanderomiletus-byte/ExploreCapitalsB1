@@ -138,15 +138,56 @@
       .leaflet-popup-content-wrapper { border-radius: 1rem; padding: 0; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1); overflow: hidden; }
       .leaflet-popup-content { margin: 0; width: 280px !important; }
       .leaflet-container { font-family: 'Inter', sans-serif; }
-      .custom-map-marker { background: transparent; border: none; display: flex; align-items: center; justify-content: center; }
-      .marker-pin { width: 14px; height: 14px; background: #77B6EA; border: 3px solid #FFFFFF; border-radius: 50%; box-shadow: 0 2px 8px rgba(0,0,0,0.3); transition: all 0.1s cubic-bezier(0, 0, 0.2, 1); cursor: pointer; }
-      .marker-pin.territory { background: #22c55e; } /* Green color for territories */
-      .custom-map-marker:hover .marker-pin { transform: scale(1.4); background: #5ba4e5; box-shadow: 0 4px 12px rgba(119, 182, 234, 0.5); }
-      .custom-map-marker:hover .marker-pin.territory { background: #16a34a; box-shadow: 0 4px 12px rgba(34, 197, 94, 0.5); }
-      .marker-active .marker-pin { transform: scale(1.4); background: #5ba4e5; z-index: 1000; }
+      
+      /* Updated Marker Styles for Performance */
+      .custom-map-marker { 
+        background: transparent; 
+        border: none; 
+        display: flex; 
+        align-items: center; 
+        justify-content: center;
+        /* GPU Acceleration */
+        will-change: transform;
+        transform: translate3d(0,0,0);
+      }
+      
+      .marker-pin { 
+        width: 14px; 
+        height: 14px; 
+        background: #77B6EA; 
+        border: 3px solid #FFFFFF; 
+        border-radius: 50%; 
+        box-shadow: 0 2px 4px rgba(0,0,0,0.2); 
+        transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+        cursor: pointer; 
+        will-change: transform;
+      }
+      
+      .marker-pin.territory { background: #22c55e; } 
+      
+      /* Only apply heavy shadows on hover */
+      .custom-map-marker:hover .marker-pin { 
+        transform: scale(1.4); 
+        background: #5ba4e5; 
+        box-shadow: 0 4px 12px rgba(119, 182, 234, 0.5); 
+      }
+      
+      .custom-map-marker:hover .marker-pin.territory { 
+        background: #16a34a; 
+        box-shadow: 0 4px 12px rgba(34, 197, 94, 0.5); 
+      }
+      
+      .marker-active .marker-pin { 
+        transform: scale(1.4); 
+        background: #5ba4e5; 
+        z-index: 1000; 
+      }
+      
       .marker-active .marker-pin.territory { background: #16a34a; }
+      
       @keyframes marker-ripple { 0% { transform: scale(1); opacity: 0.8; box-shadow: 0 0 0 0 rgba(119, 182, 234, 0.6); } 100% { transform: scale(3); opacity: 0; box-shadow: 0 0 0 15px rgba(119, 182, 234, 0); } }
       @keyframes marker-ripple-green { 0% { transform: scale(1); opacity: 0.8; box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.6); } 100% { transform: scale(3); opacity: 0; box-shadow: 0 0 0 15px rgba(34, 197, 94, 0); } }
+      
       .marker-active::after { content: ''; position: absolute; width: 14px; height: 14px; border-radius: 50%; background: #77B6EA; animation: marker-ripple 1.5s infinite; pointer-events: none; }
       .territory-marker.marker-active::after { background: #22c55e; animation: marker-ripple-green 1.5s infinite; }
     </style>
@@ -166,6 +207,5 @@
 </head>
   <body class="bg-surface text-text antialiased selection:bg-primary selection:text-white">
     <div id="root"></div>
-    <script type="module" src="/index.tsx"></script>
   </body>
 </html>

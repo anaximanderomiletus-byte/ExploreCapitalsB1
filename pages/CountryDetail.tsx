@@ -4,10 +4,11 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { 
   ArrowLeft, Map, Compass, Navigation, Scroll, MapPin, 
   Clock, Phone, Car, Users, Maximize2, Banknote, 
-  TrendingUp, Languages, Building2, Quote, Globe
+  TrendingUp, Languages, Building2, Globe
 } from 'lucide-react';
 import { MOCK_COUNTRIES, TERRITORIES } from '../constants';
 import { STATIC_IMAGES } from '../data/images';
+import { OFFICIAL_NAMES } from '../data/officialNames';
 import Button from '../components/Button';
 import SEO from '../components/SEO';
 import { useLayout } from '../context/LayoutContext';
@@ -78,6 +79,13 @@ const CountryDetail: React.FC = () => {
     .join('');
 
   const landmarkImage = STATIC_IMAGES[country.name] || STATIC_IMAGES[country.capital] || "https://images.unsplash.com/photo-1526778548025-fa2f459cd5c1?q=80&w=1200&auto=format&fit=crop";
+  const officialName = OFFICIAL_NAMES[country.name] || country.name;
+
+  // Filter aliases to exclude the official name and the standard country name to avoid redundancy
+  // Example: DR Congo has alias "Democratic Republic of the Congo", which matches officialName. We remove it.
+  const filteredAliases = country.alsoKnownAs?.filter(alias => 
+    alias !== officialName && alias !== country.name
+  );
 
   // Reusable Stat Component for the card
   const StatItem = ({ label, value, icon: Icon }: { label: string, value: string | React.ReactNode, icon: any }) => (
@@ -171,9 +179,24 @@ const CountryDetail: React.FC = () => {
                         <Scroll className="text-primary/10 w-16 h-16" />
                      </div>
                      
-                     <header className="mb-8 pb-4 border-b border-gray-200 flex items-center gap-3 shrink-0">
-                        <Compass className="text-primary" size={28} />
-                        <h3 className="font-display font-black text-2xl text-gray-800 uppercase tracking-tight">Official Profile</h3>
+                     <header className="mb-8 pb-6 border-b border-gray-200 shrink-0">
+                        <div className="flex items-center gap-3 mb-5">
+                            <Compass className="text-primary" size={28} />
+                            <h3 className="font-display font-black text-2xl text-gray-800 uppercase tracking-tight">Official Profile</h3>
+                        </div>
+                        
+                        <div className="space-y-2 pl-1">
+                            <div>
+                                <span className="font-display font-bold text-lg text-gray-800 leading-tight">{officialName}</span>
+                            </div>
+                            
+                            {filteredAliases && filteredAliases.length > 0 && (
+                                <div className="flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-3">
+                                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] min-w-[160px]">Also Known As:</span>
+                                    <span className="font-serif italic text-gray-600 text-base">{filteredAliases.join(', ')}</span>
+                                </div>
+                            )}
+                        </div>
                      </header>
                      
                      {/* Refined Stats Grid */}
@@ -186,17 +209,6 @@ const CountryDetail: React.FC = () => {
                         <StatItem label="Time Zone" value={country.timeZone || 'N/A'} icon={Clock} />
                         <StatItem label="Calling Code" value={country.callingCode || 'N/A'} icon={Phone} />
                         <StatItem label="Road Traffic" value={`${country.driveSide || 'Right'}-hand`} icon={Car} />
-                        
-                        {/* New "Also Known As" Stat */}
-                        {country.alsoKnownAs && country.alsoKnownAs.length > 0 && (
-                           <div className="col-span-2 md:col-span-1">
-                             <StatItem 
-                               label="Also Known As" 
-                               value={country.alsoKnownAs.join(', ')} 
-                               icon={Quote} 
-                             />
-                           </div>
-                        )}
                      </div>
 
                      <div className="mb-8 p-4 bg-white/40 rounded-2xl border border-white/60">
