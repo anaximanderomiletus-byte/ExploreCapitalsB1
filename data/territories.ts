@@ -801,24 +801,5 @@ export const TERRITORIES: Territory[] = [
     timeZone: 'UTC+12', 
     callingCode: '+681', 
     driveSide: 'Right' 
-  },
-  { 
-    id: 'T-42', 
-    name: 'Western Sahara', 
-    sovereignty: 'Disputed', 
-    capital: 'Laayoune', 
-    population: '576K', 
-    region: 'Africa', 
-    flag: '🇪🇭', 
-    lat: 24.2155, 
-    lng: -12.8858, 
-    description: 'A disputed territory on the northwest coast and in the Maghreb region of North and West Africa. Mostly desert flatlands.', 
-    area: '266K', 
-    currency: 'Moroccan dirham', 
-    languages: ['Arabic', 'Spanish'], 
-    gdp: '$900M', 
-    timeZone: 'UTC+1', 
-    callingCode: '+212', 
-    driveSide: 'Right' 
   }
 ];

@@ -1,8 +1,8 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
-import { Search, ArrowUp, ArrowDown, ArrowUpDown, ChevronRight, Maximize2, Banknote, Languages, Globe } from 'lucide-react';
+import { Search, ArrowUp, ArrowDown, ArrowUpDown, ChevronRight, Maximize2, Banknote, Languages, Globe, AlertTriangle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { MOCK_COUNTRIES, TERRITORIES } from '../constants';
+import { MOCK_COUNTRIES, TERRITORIES, DE_FACTO_COUNTRIES } from '../constants';
 import { Country, Territory } from '../types';
 import SEO from '../components/SEO';
 import { useLayout } from '../context/LayoutContext';
@@ -69,10 +69,16 @@ interface MobileCountryCardProps {
   country: Country;
   onClick: () => void;
   isTerritory?: boolean;
+  isDeFacto?: boolean;
   sovereignty?: string;
 }
 
-const MobileCountryCard: React.FC<MobileCountryCardProps> = ({ country, onClick, isTerritory, sovereignty }) => (
+const MobileCountryCard: React.FC<MobileCountryCardProps> = ({ country, onClick, isTerritory, isDeFacto, sovereignty }) => {
+  let titleColor = 'text-text';
+  if (isTerritory) titleColor = 'text-green-800';
+  if (isDeFacto) titleColor = 'text-yellow-700';
+
+  return (
     <div 
       onClick={onClick}
       className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 active:scale-[0.98] transition-all hover:shadow-md cursor-pointer flex flex-col transform-gpu backface-hidden"
@@ -84,9 +90,10 @@ const MobileCountryCard: React.FC<MobileCountryCardProps> = ({ country, onClick,
             <FlagIcon country={country} size="card" />
           </div>
           <div>
-            <h3 className={`font-bold text-lg leading-tight ${isTerritory ? 'text-green-800' : 'text-text'}`}>{country.name}</h3>
+            <h3 className={`font-bold text-lg leading-tight ${titleColor}`}>{country.name}</h3>
             <div className="text-sm text-gray-500">{country.capital}</div>
             {isTerritory && <div className="text-[10px] uppercase font-bold text-gray-400 mt-0.5">{sovereignty}</div>}
+            {isDeFacto && <div className="text-[10px] uppercase font-bold text-gray-400 mt-0.5">{sovereignty || 'Limited Recognition'}</div>}
           </div>
         </div>
         <div className="text-gray-300">
@@ -118,7 +125,8 @@ const MobileCountryCard: React.FC<MobileCountryCardProps> = ({ country, onClick,
          )}
       </div>
     </div>
-);
+  );
+};
 
 const Directory: React.FC = () => {
   const [search, setSearch] = useState('');
@@ -223,6 +231,7 @@ const Directory: React.FC = () => {
 
   const processedCountries = useMemo(() => processList(MOCK_COUNTRIES), [search, sortConfig]);
   const processedTerritories = useMemo(() => processList(TERRITORIES), [search, sortConfig]);
+  const processedDeFacto = useMemo(() => processList(DE_FACTO_COUNTRIES), [search, sortConfig]);
 
   return (
     <div className="pt-28 pb-20 px-4 md:px-6 bg-surface min-h-screen">
@@ -305,7 +314,7 @@ const Directory: React.FC = () => {
         </div>
 
         {/* --- Officially Recognized Territories Section --- */}
-        <div className="mb-8">
+        <div className="mb-16">
             <div className="flex items-center gap-3 mb-6">
                 <div className="p-2 bg-green-100 rounded-lg text-green-700">
                     <Globe size={24} />
@@ -369,11 +378,76 @@ const Directory: React.FC = () => {
            </div>
         </div>
 
-        {processedCountries.length === 0 && processedTerritories.length === 0 && (
+        {/* --- De Facto States Section --- */}
+        <div className="mb-8">
+            <div className="flex items-center gap-3 mb-6">
+                <div className="p-2 bg-yellow-100 rounded-lg text-yellow-700">
+                    <AlertTriangle size={24} />
+                </div>
+                <div>
+                    <h2 className="text-2xl font-display font-bold text-text">De Facto States & Limited Recognition</h2>
+                    <p className="text-sm text-gray-500">Entities with de facto control but limited international recognition.</p>
+                </div>
+            </div>
+            
+            {/* DESKTOP TABLE (Hidden on small screens) */}
+            <div className="hidden lg:block bg-white rounded-2xl shadow-premium overflow-hidden border border-gray-100">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="bg-yellow-50/50 border-b border-gray-100">
+                      <SortHeader label="State" field="name" sortConfig={sortConfig} onSort={handleSort} />
+                      <th className="px-6 py-5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">Status</th>
+                      <SortHeader label="Capital" field="capital" sortConfig={sortConfig} onSort={handleSort} />
+                      <SortHeader label="Region" field="region" sortConfig={sortConfig} onSort={handleSort} />
+                      <SortHeader label="Pop." field="population" sortConfig={sortConfig} onSort={handleSort} align="right" />
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {processedDeFacto.map((state) => (
+                      <tr 
+                        key={state.id} 
+                        onClick={() => handleCountryClick(state.id)}
+                        className="group hover:bg-yellow-50/30 transition-colors duration-200 cursor-pointer"
+                      >
+                        <td className="px-6 py-5 whitespace-nowrap">
+                          <div className="flex items-center">
+                            <div className="mr-4 shrink-0 w-12 text-center">
+                                <FlagIcon country={state} size="small" />
+                            </div>
+                            <span className="font-medium text-text group-hover:text-yellow-700 transition-colors">{state.name}</span>
+                          </div>
+                        </td>
+                        <td className="px-6 py-5 text-gray-500 font-medium text-xs uppercase tracking-wide">
+                            {state.sovereignty}
+                        </td>
+                        <td className="px-6 py-5 text-gray-600">{state.capital}</td>
+                        <td className="px-6 py-5">
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-surface-dark/60 text-text/80 border border-secondary/40 whitespace-nowrap">
+                            {state.region}
+                          </span>
+                        </td>
+                        <td className="px-6 py-5 text-gray-600 tabular-nums text-right">{state.population}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* MOBILE GRID (Visible ONLY on small screens) */}
+            <div className="lg:hidden grid grid-cols-1 md:grid-cols-2 gap-4">
+              {processedDeFacto.map((state) => (
+                 <MobileCountryCard key={state.id} country={state} onClick={() => handleCountryClick(state.id)} isDeFacto sovereignty={state.sovereignty} />
+              ))}
+           </div>
+        </div>
+
+        {processedCountries.length === 0 && processedTerritories.length === 0 && processedDeFacto.length === 0 && (
           <div className="bg-white rounded-xl p-12 text-center text-gray-500 border border-gray-100 mt-4 shadow-sm">
             <Search className="w-12 h-12 text-gray-300 mx-auto mb-4" />
             <h3 className="text-lg font-bold text-text mb-1">No matches found</h3>
-            <p>We couldn't find any countries or territories matching "{search}".</p>
+            <p>We couldn't find any countries, territories, or states matching "{search}".</p>
           </div>
         )}
       </div>

@@ -1,8 +1,8 @@
 
 import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
-import { Filter, Compass, Map as MapIcon, Search, X, Plus, Minus, Globe } from 'lucide-react';
+import { Filter, Compass, Map as MapIcon, Search, X, Plus, Minus, Globe, AlertTriangle } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { MOCK_COUNTRIES, TERRITORIES } from '../constants';
+import { MOCK_COUNTRIES, TERRITORIES, DE_FACTO_COUNTRIES } from '../constants';
 import Button from '../components/Button';
 import { Country } from '../types';
 import SEO from '../components/SEO';
@@ -21,7 +21,7 @@ const getCountryCode = (emoji: string) => {
 interface StoredMarker {
   id: string;
   region: string;
-  isTerritory: boolean;
+  type: 'sovereign' | 'territory' | 'defacto';
   marker: any; // Leaflet Marker
 }
 
@@ -35,6 +35,7 @@ const MapPage: React.FC = () => {
   
   const [selectedRegion, setSelectedRegion] = useState('All');
   const [showTerritories, setShowTerritories] = useState(true);
+  const [showDeFacto, setShowDeFacto] = useState(true);
   const [mapReady, setMapReady] = useState(false);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -49,9 +50,20 @@ const MapPage: React.FC = () => {
   const mobileResultsRef = useRef<HTMLDivElement>(null);
 
   // Memoize Popup Content Creator
-  const createPopupContent = useCallback((country: Country, isTerritory = false) => {
+  const createPopupContent = useCallback((country: Country, type: 'sovereign' | 'territory' | 'defacto') => {
     const flagCode = getCountryCode(country.flag);
     const flagUrl = `https://flagcdn.com/w80/${flagCode}.png`;
+    
+    let subheader = '';
+    let linkClass = 'text-primary';
+    
+    if (type === 'territory') {
+      subheader = `<div class="text-[10px] font-bold text-green-600 uppercase tracking-widest mb-2">Territory of ${(country as any).sovereignty}</div>`;
+      linkClass = 'text-green-600';
+    } else if (type === 'defacto') {
+      subheader = `<div class="text-[10px] font-bold text-yellow-600 uppercase tracking-widest mb-2">${(country as any).sovereignty}</div>`;
+      linkClass = 'text-yellow-600';
+    }
     
     return `
       <div class="flex flex-col min-w-[240px] font-sans p-5 bg-white">
@@ -62,7 +74,7 @@ const MapPage: React.FC = () => {
            <h3 class="font-display font-bold text-lg text-gray-800 leading-tight m-0">${country.name}</h3>
         </div>
         
-        ${isTerritory ? `<div class="text-[10px] font-bold text-green-600 uppercase tracking-widest mb-2">Territory of ${(country as any).sovereignty}</div>` : ''}
+        ${subheader}
 
         <p class="text-xs text-gray-500 mb-3 mt-1 leading-relaxed line-clamp-3 pt-0">
           ${country.description}
@@ -82,13 +94,56 @@ const MapPage: React.FC = () => {
         <div class="text-left">
           <button 
             data-country-id="${country.id}" 
-            class="learn-more-btn ${isTerritory ? 'text-green-600' : 'text-primary'} text-xs font-bold uppercase tracking-wider hover:underline text-left outline-none"
+            class="learn-more-btn ${linkClass} text-xs font-bold uppercase tracking-wider hover:underline text-left outline-none"
           >
             Learn More
           </button>
         </div>
       </div>
     `;
+  }, []);
+
+  // Smart centering function to handle UI obstructions
+  const centerMapOnMarker = useCallback((marker: any) => {
+      const map = mapInstanceRef.current;
+      const L = (window as any).L;
+      if (!map || !L) return;
+
+      const isMobile = window.innerWidth < 768;
+      
+      // Define UI Obstruction Dimensions
+      const topNavHeight = 100; // Navigation bar + search
+      const sidebarWidth = isMobile ? 0 : 360; // Desktop left sidebar
+      const bottomSheetHeight = isMobile ? 380 : 0; // Mobile bottom panel (approx max height)
+      
+      const mapSize = map.getSize();
+      
+      // Calculate "Safe Zone" center relative to the map container
+      // For desktop: Center is shifted right
+      // For mobile: Center is shifted up
+      const targetX = sidebarWidth + ((mapSize.x - sidebarWidth) / 2);
+      const targetY = topNavHeight + ((mapSize.y - topNavHeight - bottomSheetHeight) / 2);
+
+      // We want the marker to be at (targetX, targetY + offset)
+      // The offset pushes the marker down so the POPUP (above marker) is centered
+      const popupOffset = 120; // Pixel shift down to accommodate popup height
+      const desiredMarkerScreenY = targetY + popupOffset;
+
+      // Current global pixel position of marker
+      const markerGlobal = map.project(marker.getLatLng(), map.getZoom());
+      
+      // Calculate the screen offset from the true center of the map container
+      const screenOffsetX = targetX - (mapSize.x / 2);
+      const screenOffsetY = desiredMarkerScreenY - (mapSize.y / 2);
+      
+      // Calculate new center in global pixels
+      const newCenterGlobal = markerGlobal.subtract(L.point(screenOffsetX, screenOffsetY));
+      const newCenterLatLng = map.unproject(newCenterGlobal, map.getZoom());
+      
+      map.flyTo(newCenterLatLng, map.getZoom(), {
+          duration: 0.5, // Faster duration for snappy feel
+          easeLinearity: 0.5
+      });
   }, []);
 
   // Initialize Map
@@ -104,63 +159,77 @@ const MapPage: React.FC = () => {
         zoomControl: false,
         attributionControl: false,
         minZoom: 2,
-        worldCopyJump: true, // Smooth wrapping
-        preferCanvas: true, // Performance boost for vectors (though DivIcon is DOM)
-        wheelDebounceTime: 40, // Debounce zoom
-        wheelPxPerZoomLevel: 60, // Slower, smoother zoom
-        updateWhenIdle: true, // Wait until pan ends to load heavy things
+        worldCopyJump: true,
+        preferCanvas: true,
+        wheelDebounceTime: 40,
+        wheelPxPerZoomLevel: 60,
+        updateWhenIdle: true,
       });
 
-      // CartoDB Voyager Tiles
       L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager_nolabels/{z}/{x}/{y}{r}.png', {
         subdomains: 'abcd',
         maxZoom: 20
       }).addTo(map);
       
-      // Labels layer
       L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager_only_labels/{z}/{x}/{y}{r}.png', {
         subdomains: 'abcd',
         maxZoom: 20,
         zIndex: 10
       }).addTo(map);
 
-      // Create a single layer group for all markers
       markersLayerRef.current = L.layerGroup().addTo(map);
-
       mapInstanceRef.current = map;
       
-      // Create Markers ONCE and store them
       if (allMarkersRef.current.length === 0) {
-          const createMarkers = (list: Country[], isTerr: boolean) => {
+          const createMarkers = (list: Country[], type: 'sovereign' | 'territory' | 'defacto') => {
               list.forEach(country => {
+                  let markerClass = '';
+                  let pinClass = '';
+                  let zIndex = 0;
+
+                  if (type === 'territory') {
+                    markerClass = 'territory-marker';
+                    pinClass = 'territory';
+                    zIndex = -100;
+                  } else if (type === 'defacto') {
+                    markerClass = 'defacto-marker';
+                    pinClass = 'defacto';
+                    zIndex = -50;
+                  }
+
                   const icon = L.divIcon({
-                      className: `custom-map-marker ${isTerr ? 'territory-marker' : ''}`,
-                      html: `<div class="marker-pin ${isTerr ? 'territory' : ''}"></div>`,
+                      className: `custom-map-marker ${markerClass}`,
+                      html: `<div class="marker-pin ${pinClass}"></div>`,
                       iconSize: [20, 20],
                       iconAnchor: [10, 10]
                   });
 
                   const marker = L.marker([country.lat, country.lng], { 
                       icon: icon,
-                      zIndexOffset: isTerr ? -100 : 0
-                  }).bindPopup(createPopupContent(country, isTerr), {
+                      zIndexOffset: zIndex
+                  }).bindPopup(createPopupContent(country, type), {
                       closeButton: false,
-                      className: 'custom-popup'
+                      className: 'custom-popup',
+                      autoPan: false // We handle panning manually for better UX
                   });
 
-                  marker.on('click', () => setActiveCountryId(country.id));
+                  marker.on('click', () => {
+                      setActiveCountryId(country.id);
+                      centerMapOnMarker(marker);
+                  });
 
                   allMarkersRef.current.push({
                       id: country.id,
                       region: country.region,
-                      isTerritory: isTerr,
+                      type: type,
                       marker: marker
                   });
               });
           };
 
-          createMarkers(MOCK_COUNTRIES, false);
-          createMarkers(TERRITORIES, true);
+          createMarkers(MOCK_COUNTRIES, 'sovereign');
+          createMarkers(TERRITORIES, 'territory');
+          createMarkers(DE_FACTO_COUNTRIES, 'defacto');
       }
 
       setMapReady(true);
@@ -189,43 +258,47 @@ const MapPage: React.FC = () => {
       }
       setHideFooter(false);
     };
-  }, [navigate, setPageLoading, setHideFooter, createPopupContent]);
+  }, [navigate, setPageLoading, setHideFooter, createPopupContent, centerMapOnMarker]);
 
   // Effect: Efficiently filter and update map without recreating markers
   useEffect(() => {
     if (!mapInstanceRef.current || !markersLayerRef.current) return;
 
-    // Use requestAnimationFrame to avoid blocking the main thread during render
     requestAnimationFrame(() => {
         markersLayerRef.current.clearLayers();
-
         const markersToAdd: any[] = [];
         
         allMarkersRef.current.forEach(item => {
             const regionMatch = selectedRegion === 'All' || item.region === selectedRegion;
-            const typeMatch = item.isTerritory ? showTerritories : true;
+            let typeMatch = true;
+            if (item.type === 'territory' && !showTerritories) typeMatch = false;
+            if (item.type === 'defacto' && !showDeFacto) typeMatch = false;
 
             if (regionMatch && typeMatch) {
                 markersToAdd.push(item.marker);
             }
         });
 
-        // Add filtered markers in a batch
         markersToAdd.forEach(m => m.addTo(markersLayerRef.current));
 
-        // Adjust bounds if filtered (not on 'All')
-        if (selectedRegion !== 'All' && markersToAdd.length > 0) {
+        // Adjust bounds/view
+        if (selectedRegion === 'Oceania') {
+             // Special case for Oceania to handle dateline crossing comfortably
+             // Zoom 3 centers well on the Pacific
+             mapInstanceRef.current.setView([-10, 170], 3); 
+        } else if (selectedRegion !== 'All' && markersToAdd.length > 0) {
              const L = (window as any).L;
              const group = L.featureGroup(markersToAdd);
              mapInstanceRef.current.fitBounds(group.getBounds().pad(0.1));
+        } else if (selectedRegion === 'All') {
+             mapInstanceRef.current.setView([20, 0], 2);
         }
     });
 
-  }, [selectedRegion, showTerritories, mapReady]);
+  }, [selectedRegion, showTerritories, showDeFacto, mapReady]);
 
-  // Effect: Update marker active styles (lightweight DOM manipulation)
+  // Effect: Update marker active styles
   useEffect(() => {
-    // Only iterate if we have an active ID to save cycles
     if (mapReady) {
         allMarkersRef.current.forEach((item) => {
           const el = item.marker.getElement();
@@ -247,26 +320,22 @@ const MapPage: React.FC = () => {
       const storedItem = allMarkersRef.current.find(m => m.id === countryId);
       
       if (storedItem) {
-        if (storedItem.isTerritory && !showTerritories) {
-           setShowTerritories(true);
-        }
-
-        if (selectedRegion !== 'All' && storedItem.region !== selectedRegion) {
-          setSelectedRegion('All'); 
-        }
+        if (storedItem.type === 'territory' && !showTerritories) setShowTerritories(true);
+        if (storedItem.type === 'defacto' && !showDeFacto) setShowDeFacto(true);
+        if (selectedRegion !== 'All' && storedItem.region !== selectedRegion) setSelectedRegion('All'); 
 
         setActiveCountryId(countryId);
         
-        // Wait for state updates to render layers before flying
+        // Fast transition
         setTimeout(() => {
-             mapInstanceRef.current.flyTo(storedItem.marker.getLatLng(), 6, { duration: 1.5 });
+             centerMapOnMarker(storedItem.marker);
              setTimeout(() => {
                 storedItem.marker.openPopup();
-             }, 1600);
+             }, 550);
         }, 100);
       }
     }
-  }, [searchParams, mapReady]);
+  }, [searchParams, mapReady, centerMapOnMarker, showTerritories, showDeFacto, selectedRegion]);
 
   const handleZoomIn = () => {
     if (mapInstanceRef.current) mapInstanceRef.current.zoomIn();
@@ -277,26 +346,23 @@ const MapPage: React.FC = () => {
   };
 
   const flyToRandom = () => {
-    // Filter currently visible markers based on state
     const visibleMarkers = allMarkersRef.current.filter(item => {
         const regionMatch = selectedRegion === 'All' || item.region === selectedRegion;
-        const typeMatch = item.isTerritory ? showTerritories : true;
+        let typeMatch = true;
+        if (item.type === 'territory' && !showTerritories) typeMatch = false;
+        if (item.type === 'defacto' && !showDeFacto) typeMatch = false;
         return regionMatch && typeMatch;
     });
       
     if (visibleMarkers.length === 0) return;
-
     const randomMarker = visibleMarkers[Math.floor(Math.random() * visibleMarkers.length)];
     
     if (mapInstanceRef.current && randomMarker) {
       setActiveCountryId(randomMarker.id);
-      mapInstanceRef.current.flyTo(randomMarker.marker.getLatLng(), 6, {
-        duration: 2
-      });
-      
+      centerMapOnMarker(randomMarker.marker);
       setTimeout(() => {
         randomMarker.marker.openPopup();
-      }, 2200);
+      }, 550);
     }
   };
 
@@ -306,7 +372,7 @@ const MapPage: React.FC = () => {
   const filteredSearchResults = useMemo(() => {
       if (searchQuery.length === 0) return [];
       const query = normalizeText(searchQuery);
-      return [...MOCK_COUNTRIES, ...TERRITORIES].filter(c => 
+      return [...MOCK_COUNTRIES, ...TERRITORIES, ...DE_FACTO_COUNTRIES].filter(c => 
         normalizeText(c.name).includes(query) || 
         normalizeText(c.capital).includes(query)
       ).slice(0, 20);
@@ -321,29 +387,26 @@ const MapPage: React.FC = () => {
       setSelectedIndex(-1);
       setActiveCountryId(country.id);
       
-      const isTerritory = TERRITORIES.some(t => t.id === country.id);
-      if (isTerritory && !showTerritories) setShowTerritories(true);
-
-      if (selectedRegion !== 'All') {
-          setSelectedRegion('All');
+      const stored = allMarkersRef.current.find(m => m.id === country.id);
+      if (stored) {
+        if (stored.type === 'territory' && !showTerritories) setShowTerritories(true);
+        if (stored.type === 'defacto' && !showDeFacto) setShowDeFacto(true);
       }
+
+      if (selectedRegion !== 'All') setSelectedRegion('All');
       
       setTimeout(() => {
-          if (mapInstanceRef.current) {
-              const stored = allMarkersRef.current.find(m => m.id === country.id);
-              if (stored) {
-                  mapInstanceRef.current.flyTo(stored.marker.getLatLng(), 6, { duration: 2 });
-                  setTimeout(() => {
-                      stored.marker.openPopup();
-                  }, 2200);
-              }
+          if (mapInstanceRef.current && stored) {
+              centerMapOnMarker(stored.marker);
+              setTimeout(() => {
+                  stored.marker.openPopup();
+              }, 550);
           }
       }, 100);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (filteredSearchResults.length === 0) return;
-
     if (e.key === 'ArrowDown') {
       e.preventDefault();
       setSelectedIndex(prev => (prev < filteredSearchResults.length - 1 ? prev + 1 : prev));
@@ -412,6 +475,11 @@ const MapPage: React.FC = () => {
                               {filteredSearchResults.map((country, index) => {
                                   const flagCode = getCountryCode(country.flag);
                                   const isTerritory = TERRITORIES.some(t => t.id === country.id);
+                                  const isDeFacto = DE_FACTO_COUNTRIES.some(d => d.id === country.id);
+                                  let nameClass = 'text-text';
+                                  if (isTerritory) nameClass = 'text-green-700';
+                                  if (isDeFacto) nameClass = 'text-yellow-700';
+
                                   return (
                                     <li key={country.id}>
                                         <button 
@@ -423,7 +491,7 @@ const MapPage: React.FC = () => {
                                               <img src={`https://flagcdn.com/w40/${flagCode}.png`} alt="" className="w-full h-full object-contain" />
                                             </div>
                                             <div>
-                                                <p className={`text-sm font-bold ${isTerritory ? 'text-green-700' : 'text-text'}`}>{country.name}</p>
+                                                <p className={`text-sm font-bold ${nameClass}`}>{country.name}</p>
                                                 <p className="text-xs text-gray-500">{country.region}</p>
                                             </div>
                                         </button>
@@ -448,7 +516,7 @@ const MapPage: React.FC = () => {
               </div>
               <div>
                 <h2 className="font-display font-bold text-text leading-tight text-base">World Explorer</h2>
-                <p className="text-xs text-gray-500 font-medium">{MOCK_COUNTRIES.length + TERRITORIES.length} Locations</p>
+                <p className="text-xs text-gray-500 font-medium">{MOCK_COUNTRIES.length + TERRITORIES.length + DE_FACTO_COUNTRIES.length} Locations</p>
               </div>
             </div>
 
@@ -475,7 +543,7 @@ const MapPage: React.FC = () => {
                 </div>
               </div>
 
-              <div className="pt-2 border-t border-gray-100">
+              <div className="pt-2 border-t border-gray-100 flex flex-col gap-2">
                  <button 
                    onClick={() => setShowTerritories(!showTerritories)}
                    className={`w-full flex items-center justify-between px-3 py-2 rounded-lg transition-colors text-xs font-bold ${showTerritories ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-surface text-gray-500 border border-transparent hover:bg-gray-100'}`}
@@ -485,6 +553,18 @@ const MapPage: React.FC = () => {
                    </span>
                    <div className={`w-8 h-4 rounded-full p-0.5 transition-colors ${showTerritories ? 'bg-green-500' : 'bg-gray-300'}`}>
                       <div className={`w-3 h-3 bg-white rounded-full shadow-sm transform transition-transform ${showTerritories ? 'translate-x-4' : 'translate-x-0'}`}></div>
+                   </div>
+                 </button>
+
+                 <button 
+                   onClick={() => setShowDeFacto(!showDeFacto)}
+                   className={`w-full flex items-center justify-between px-3 py-2 rounded-lg transition-colors text-xs font-bold ${showDeFacto ? 'bg-yellow-50 text-yellow-700 border border-yellow-200' : 'bg-surface text-gray-500 border border-transparent hover:bg-gray-100'}`}
+                 >
+                   <span className="flex items-center gap-2">
+                     <AlertTriangle size={14} /> Show De Facto States
+                   </span>
+                   <div className={`w-8 h-4 rounded-full p-0.5 transition-colors ${showDeFacto ? 'bg-yellow-500' : 'bg-gray-300'}`}>
+                      <div className={`w-3 h-3 bg-white rounded-full shadow-sm transform transition-transform ${showDeFacto ? 'translate-x-4' : 'translate-x-0'}`}></div>
                    </div>
                  </button>
               </div>
@@ -500,6 +580,10 @@ const MapPage: React.FC = () => {
                <div className="flex items-center gap-2">
                    <div className="w-2.5 h-2.5 rounded-full bg-green-500 border border-white shadow-sm"></div>
                    <span>Territory</span>
+               </div>
+               <div className="flex items-center gap-2">
+                   <div className="w-2.5 h-2.5 rounded-full bg-yellow-500 border border-white shadow-sm"></div>
+                   <span>De Facto State</span>
                </div>
             </div>
           </div>
@@ -596,8 +680,9 @@ const MapPage: React.FC = () => {
                    )}
               </div>
 
+              {/* Added more right padding (pr-20) to ensure last item (Oceania) isn't cut off */}
               <div className="w-full overflow-x-auto no-scrollbar" style={{ scrollbarWidth: 'none' }}>
-                 <div className="flex gap-2.5 px-1 pb-1 items-center">
+                 <div className="flex gap-2.5 px-4 pr-20 pb-1 items-center min-w-max">
                    <button 
                       onClick={() => setShowTerritories(!showTerritories)}
                       className={`
@@ -610,6 +695,18 @@ const MapPage: React.FC = () => {
                    >
                       <Globe size={12} /> Territories
                    </button>
+                   <button 
+                      onClick={() => setShowDeFacto(!showDeFacto)}
+                      className={`
+                        whitespace-nowrap flex-shrink-0 px-4 py-2 rounded-full text-xs font-bold transition-all duration-200 border select-none active:scale-95 flex items-center gap-2
+                        ${showDeFacto 
+                           ? 'bg-yellow-50 text-yellow-700 border-yellow-200 shadow-sm' 
+                           : 'bg-white text-gray-400 border-gray-200'
+                         }
+                      `}
+                   >
+                      <AlertTriangle size={12} /> De Facto
+                   </button>
                    <div className="w-px h-6 bg-gray-200 flex-shrink-0 mx-1"></div>
                    {REGIONS.map(region => (
                      <button
@@ -618,7 +715,7 @@ const MapPage: React.FC = () => {
                        className={`
                          whitespace-nowrap flex-shrink-0 px-4 py-2 rounded-full text-xs font-bold transition-all duration-200 border select-none active:scale-95
                          ${selectedRegion === region 
-                           ? 'bg-primary text-white border-primary shadow-md shadow-primary/25 scale-105' 
+                           ? 'bg-primary text-white border-primary shadow-md shadow-primary/25' // Removed scale-105
                            : 'bg-white text-gray-500 border-gray-200 hover:bg-gray-50 hover:text-gray-700'
                          }
                        `}

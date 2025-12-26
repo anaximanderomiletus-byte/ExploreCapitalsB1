@@ -4,27 +4,58 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { 
   ArrowLeft, Map, Compass, Navigation, Scroll, MapPin, 
   Clock, Phone, Car, Users, Maximize2, Banknote, 
-  TrendingUp, Languages, Building2, Globe
+  TrendingUp, Languages, Building2, Globe, AlertTriangle
 } from 'lucide-react';
-import { MOCK_COUNTRIES, TERRITORIES } from '../constants';
+import { MOCK_COUNTRIES, TERRITORIES, DE_FACTO_COUNTRIES } from '../constants';
 import { STATIC_IMAGES } from '../data/images';
+import { staticTours } from '../data/staticTours';
 import { OFFICIAL_NAMES } from '../data/officialNames';
 import Button from '../components/Button';
 import SEO from '../components/SEO';
 import { useLayout } from '../context/LayoutContext';
+
+const FALLBACK_SCENES = [
+  "https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?auto=format&fit=crop&w=1000&q=80",
+  "https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?auto=format&fit=crop&w=1000&q=80",
+  "https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=1000&q=80",
+  "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1000&q=80"
+];
 
 const CountryDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { setPageLoading, setTransitionStyle } = useLayout();
   
-  const country = useMemo(() => MOCK_COUNTRIES.find(c => c.id === id) || TERRITORIES.find(t => t.id === id), [id]);
+  const country = useMemo(() => MOCK_COUNTRIES.find(c => c.id === id) || TERRITORIES.find(t => t.id === id) || DE_FACTO_COUNTRIES.find(d => d.id === id), [id]);
   const isTerritory = useMemo(() => TERRITORIES.some(t => t.id === id), [id]);
+  const isDeFacto = useMemo(() => DE_FACTO_COUNTRIES.some(d => d.id === id), [id]);
 
   const controlledTerritories = useMemo(() => {
-    if (!country || isTerritory) return [];
+    if (!country || isTerritory || isDeFacto) return [];
     return TERRITORIES.filter(t => t.sovereignty === country.name).sort((a, b) => a.name.localeCompare(b.name));
-  }, [country, isTerritory]);
+  }, [country, isTerritory, isDeFacto]);
+
+  // Determine scenic image and caption for the secondary card
+  const scenicData = useMemo(() => {
+      if (!country) return { image: '', caption: '' };
+      
+      // 1. Try Country Main Image (Usually Capital or Iconic)
+      if (STATIC_IMAGES[country.name]) {
+          return { image: STATIC_IMAGES[country.name], caption: `${country.capital}, ${country.name}` };
+      }
+
+      // 2. Try Tour Stop Image
+      const tourData = staticTours[country.name];
+      if (tourData && tourData.stops.length > 0) {
+          const stop = tourData.stops[0];
+          const img = STATIC_IMAGES[stop.imageKeyword || stop.stopName];
+          if (img) return { image: img, caption: `${stop.stopName}, ${country.name}` };
+      }
+
+      // 3. Fallback
+      const idx = (country.id.charCodeAt(0) + country.name.length) % FALLBACK_SCENES.length;
+      return { image: FALLBACK_SCENES[idx], caption: `${country.capital}, ${country.name}` };
+  }, [country]);
 
   useEffect(() => {
     setPageLoading(false);
@@ -41,7 +72,8 @@ const CountryDetail: React.FC = () => {
 
   // Helper to find country ID by name for bordering nations
   const getCountryIdByName = (name: string) => {
-    return MOCK_COUNTRIES.find(c => c.name.toLowerCase() === name.toLowerCase())?.id;
+    return MOCK_COUNTRIES.find(c => c.name.toLowerCase() === name.toLowerCase())?.id 
+        || DE_FACTO_COUNTRIES.find(d => d.name.toLowerCase() === name.toLowerCase())?.id;
   };
 
   const handleNeighborClick = (neighborName: string) => {
@@ -61,7 +93,7 @@ const CountryDetail: React.FC = () => {
   };
 
   const handleSovereigntyClick = (sovereigntyName: string) => {
-    if (sovereigntyName === 'Disputed') return;
+    if (sovereigntyName === 'Disputed' || sovereigntyName === 'Limited Recognition') return;
     
     const sovereignId = getCountryIdByName(sovereigntyName);
     if (sovereignId) {
@@ -78,11 +110,9 @@ const CountryDetail: React.FC = () => {
     .map((char: any) => String.fromCharCode(char.codePointAt(0)! - 127397).toLowerCase())
     .join('');
 
-  const landmarkImage = STATIC_IMAGES[country.name] || STATIC_IMAGES[country.capital] || "https://images.unsplash.com/photo-1526778548025-fa2f459cd5c1?q=80&w=1200&auto=format&fit=crop";
   const officialName = OFFICIAL_NAMES[country.name] || country.name;
 
   // Filter aliases to exclude the official name and the standard country name to avoid redundancy
-  // Example: DR Congo has alias "Democratic Republic of the Congo", which matches officialName. We remove it.
   const filteredAliases = country.alsoKnownAs?.filter(alias => 
     alias !== officialName && alias !== country.name
   );
@@ -103,7 +133,7 @@ const CountryDetail: React.FC = () => {
   return (
     <main className="min-h-screen bg-surface pt-24 pb-12 px-4 md:px-8 relative overflow-hidden text-text">
       <SEO 
-        title={`${country.name} - ${isTerritory ? 'Territory' : 'Country'} Profile`} 
+        title={`${country.name} - ${isTerritory ? 'Territory' : isDeFacto ? 'State' : 'Country'} Profile`} 
         description={`Explore detailed demographics, history, and travel insights for ${country.name}. Start your virtual expedition to its capital, ${country.capital}.`} 
       />
 
@@ -131,7 +161,8 @@ const CountryDetail: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
             
             {/* 1. The "Postcard": Flag & Primary Info */}
-            <div className="lg:col-span-5 order-1">
+            {/* On Desktop: Top Left (col-span-5). On Mobile: First Item. */}
+            <div className="lg:col-span-5 lg:row-start-1">
                 <div className="bg-[#FAF9F6] p-4 shadow-premium-hover rounded-sm transform -rotate-1 hover:rotate-0 transition-transform duration-500 border border-gray-200">
                     <div className="border-[12px] border-white shadow-inner bg-gray-50 flex items-center justify-center h-64 md:h-80 overflow-hidden relative group">
                         <img 
@@ -163,6 +194,11 @@ const CountryDetail: React.FC = () => {
                                        </button>
                                    </div>
                                 )}
+                                {isDeFacto && (
+                                    <div className="text-yellow-600 font-bold tracking-widest text-[10px] uppercase flex items-center gap-1">
+                                        <AlertTriangle size={10} /> {(country as any).sovereignty || 'Limited Recognition'}
+                                    </div>
+                                )}
                             </div>
                         </div>
                         <div className="text-right">
@@ -173,7 +209,8 @@ const CountryDetail: React.FC = () => {
             </div>
 
             {/* 2. The "Field Notes": Official Profile & Integrated Coordinates */}
-            <div className="lg:col-span-7 order-2 lg:row-span-2">
+            {/* On Desktop: Right Column (col-span-7) spanning 2 rows. On Mobile: Second Item (Order 2). */}
+            <div className="lg:col-span-7 lg:row-start-1 lg:row-span-2">
                 <div className="bg-[#fdf6e3] p-6 md:p-10 lg:p-12 shadow-premium rounded-[2.5rem] border border-gray-200/50 relative h-full flex flex-col overflow-hidden">
                      <div className="absolute top-8 right-8">
                         <Scroll className="text-primary/10 w-16 h-16" />
@@ -265,7 +302,7 @@ const CountryDetail: React.FC = () => {
                         </div>
                      )}
 
-                     {!isTerritory ? (
+                     {!isTerritory && !isDeFacto ? (
                         <div className="pt-10 border-t border-gray-200 flex flex-col items-center gap-6 shrink-0 text-center">
                             <div className="space-y-4 max-w-xl">
                                 <p className="text-sm text-gray-500 font-medium leading-relaxed">
@@ -281,51 +318,61 @@ const CountryDetail: React.FC = () => {
                      ) : (
                          <div className="pt-10 border-t border-gray-200 flex flex-col items-center gap-4 shrink-0 text-center">
                              <p className="text-xs text-gray-400 font-bold uppercase tracking-widest">
-                                 Virtual expeditions are currently available for sovereign nations only.
+                                 Virtual expeditions are currently available for UN sovereign nations only.
                              </p>
                          </div>
                      )}
 
-                     {/* White Coordinate Bubble */}
-                     <div className="mt-auto pt-16 flex justify-center">
+                     {/* White Coordinate Bubble & Map Link */}
+                     <div className="mt-auto pt-16 flex flex-col items-center gap-6">
                         <div className="inline-flex flex-col items-center gap-2">
                              <div className="text-[10px] font-black text-gray-400 uppercase tracking-[0.4em] mb-1">Coordinates</div>
                              <div className="inline-flex items-center gap-6 px-8 py-4 bg-white text-text rounded-full shadow-premium-hover border-2 border-gray-100 ring-4 ring-primary/5 group hover:scale-105 transition-transform duration-300">
                                   <div className="flex items-center gap-2">
                                      <Navigation size={18} className="rotate-45 text-primary opacity-80 group-hover:rotate-[225deg] transition-transform duration-700" />
-                                     <div className="h-6 w-px bg-gray-200"></div>
+                                     <div className="h-6 w-px bg-gray-200 mx-2"></div>
+                                     <span className="font-display font-bold text-sm tracking-wider text-gray-500 tabular-nums">
+                                        {Math.abs(country.lat).toFixed(4)}° {country.lat >= 0 ? 'N' : 'S'}
+                                     </span>
                                   </div>
-                                  <div className="flex gap-10">
-                                     <div className="flex flex-col items-center">
-                                         <span className="text-[8px] font-black uppercase tracking-[0.2em] text-gray-400 mb-0.5">Latitude</span>
-                                         <span className="text-sm font-mono font-black text-gray-700">{country.lat.toFixed(4)}° N</span>
-                                     </div>
-                                     <div className="flex flex-col items-center">
-                                         <span className="text-[8px] font-black uppercase tracking-[0.2em] text-gray-400 mb-0.5">Longitude</span>
-                                         <span className="text-sm font-mono font-black text-gray-700">{country.lng.toFixed(4)}° E</span>
-                                     </div>
+                                  <div className="w-1.5 h-1.5 rounded-full bg-gray-300"></div>
+                                  <div className="flex items-center gap-2">
+                                     <span className="font-display font-bold text-sm tracking-wider text-gray-500 tabular-nums">
+                                        {Math.abs(country.lng).toFixed(4)}° {country.lng >= 0 ? 'E' : 'W'}
+                                     </span>
                                   </div>
                              </div>
                         </div>
+
+                        <Link 
+                            to={`/map?country=${country.id}`}
+                            className="group flex items-center gap-2 text-[10px] font-bold text-gray-400 hover:text-primary transition-colors uppercase tracking-widest"
+                        >
+                             <Map size={12} className="group-hover:scale-110 transition-transform" />
+                             View on Map
+                        </Link>
                      </div>
+
                 </div>
             </div>
 
-            {/* 3. The "Instant Photo": Landscape/Landmark Snapshot */}
-            <div className="lg:col-span-5 order-3">
-                <div className="bg-white p-3 pt-4 pb-12 shadow-premium rounded-sm transform rotate-2 hover:rotate-0 transition-transform duration-500 border border-gray-200 w-full mx-auto">
-                    <div className="aspect-square bg-gray-900 overflow-hidden relative">
-                        <img 
-                            src={landmarkImage}
-                            alt={country.name}
-                            className="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-700"
-                        />
-                        <div className="absolute inset-0 shadow-[inset_0_0_80px_rgba(0,0,0,0.3)] pointer-events-none"></div>
+            {/* 3. Scenic Tour Image Card (Photograph Style) */}
+            {/* On Desktop: Left Column (Row 2), underneath Flag. On Mobile: Third Item (below Field Notes). */}
+            <div className="lg:col-span-5 lg:row-start-2 w-full">
+                 <div className="bg-[#FAF9F6] p-4 shadow-premium-hover rounded-sm transform rotate-1 hover:rotate-0 transition-transform duration-500 border border-gray-200">
+                    <div className="border-[12px] border-white shadow-inner bg-gray-100 flex items-center justify-center aspect-square overflow-hidden relative group">
+                       <img 
+                          src={scenicData?.image || ''} 
+                          alt="Location Scenery" 
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                       />
                     </div>
-                    <div className="mt-4 px-2">
-                         <p className="font-serif italic text-gray-400 text-sm text-center">Field Snapshot: {country.capital}</p>
+                    <div className="mt-4 px-2 text-center pb-2">
+                        <p className="font-serif italic text-gray-600 text-lg">
+                            {scenicData?.caption}
+                        </p>
                     </div>
-                </div>
+                 </div>
             </div>
             
         </div>

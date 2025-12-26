@@ -2,6 +2,7 @@
 import { COUNTRY_ALIASES } from './data/aliases';
 import { Country, Game } from './types';
 export { TERRITORIES } from './data/territories';
+export { DE_FACTO_COUNTRIES } from './data/deFacto';
 
 const RAW_COUNTRIES: Country[] = [
   // --- A ---
