@@ -38,7 +38,7 @@ const MapPage: React.FC = () => {
   const [showDeFacto, setShowDeFacto] = useState(true);
   const [mapReady, setMapReady] = useState(false);
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { setPageLoading, setHideFooter } = useLayout();
   
   // Search State
@@ -48,6 +48,12 @@ const MapPage: React.FC = () => {
   
   const desktopResultsRef = useRef<HTMLDivElement>(null);
   const mobileResultsRef = useRef<HTMLDivElement>(null);
+
+  // Track previous region to determine if we should re-center the map
+  const prevRegionRef = useRef(selectedRegion);
+  
+  // Track processed URL country to prevent loops/locking
+  const processedCountryRef = useRef<string | null>(null);
 
   // Memoize Popup Content Creator
   const createPopupContent = useCallback((country: Country, type: 'sovereign' | 'territory' | 'defacto') => {
@@ -216,6 +222,11 @@ const MapPage: React.FC = () => {
                   marker.on('click', () => {
                       setActiveCountryId(country.id);
                       centerMapOnMarker(marker);
+                      // Explicitly open popup after the flyTo animation duration
+                      // This ensures it appears on the first click even if flyTo momentarily closes it
+                      setTimeout(() => {
+                        marker.openPopup();
+                      }, 550);
                   });
 
                   allMarkersRef.current.push({
@@ -260,13 +271,31 @@ const MapPage: React.FC = () => {
     };
   }, [navigate, setPageLoading, setHideFooter, createPopupContent, centerMapOnMarker]);
 
+  // Handle Region Selection
+  // This explicitly clears the active selection and the URL param to prevent locking
+  const handleRegionSelect = (region: string) => {
+    setSelectedRegion(region);
+    setActiveCountryId(null);
+    if (mapInstanceRef.current) {
+      mapInstanceRef.current.closePopup();
+    }
+    // Remove the country URL param if it exists, so we don't snap back to it
+    if (searchParams.get('country')) {
+       setSearchParams({}, { replace: true });
+    }
+  };
+
   // Effect: Efficiently filter and update map without recreating markers
   useEffect(() => {
     if (!mapInstanceRef.current || !markersLayerRef.current) return;
 
+    // Detect if the region filter has changed since the last render
+    const regionChanged = prevRegionRef.current !== selectedRegion;
+    prevRegionRef.current = selectedRegion;
+
     requestAnimationFrame(() => {
-        markersLayerRef.current.clearLayers();
-        const markersToAdd: any[] = [];
+        const markersForBounds: any[] = [];
+        let activeMarkerVisible = false;
         
         allMarkersRef.current.forEach(item => {
             const regionMatch = selectedRegion === 'All' || item.region === selectedRegion;
@@ -274,28 +303,49 @@ const MapPage: React.FC = () => {
             if (item.type === 'territory' && !showTerritories) typeMatch = false;
             if (item.type === 'defacto' && !showDeFacto) typeMatch = false;
 
-            if (regionMatch && typeMatch) {
-                markersToAdd.push(item.marker);
+            // STRICT filtering: The marker is visible only if it matches the filters.
+            const isVisible = regionMatch && typeMatch;
+
+            if (item.id === activeCountryId && isVisible) {
+                activeMarkerVisible = true;
+            }
+
+            if (isVisible) {
+                if (!markersLayerRef.current.hasLayer(item.marker)) {
+                    markersLayerRef.current.addLayer(item.marker);
+                }
+                // Only include in bounds calculation if it matches filters
+                if (regionMatch && typeMatch) {
+                    markersForBounds.push(item.marker);
+                }
+            } else {
+                if (markersLayerRef.current.hasLayer(item.marker)) {
+                    markersLayerRef.current.removeLayer(item.marker);
+                }
             }
         });
 
-        markersToAdd.forEach(m => m.addTo(markersLayerRef.current));
+        // If the active country is no longer visible due to filtering, clear the selection.
+        if (activeCountryId && !activeMarkerVisible) {
+            setActiveCountryId(null);
+            if (mapInstanceRef.current) mapInstanceRef.current.closePopup();
+        }
 
-        // Adjust bounds/view
-        if (selectedRegion === 'Oceania') {
-             // Special case for Oceania to handle dateline crossing comfortably
-             // Zoom 3 centers well on the Pacific
-             mapInstanceRef.current.setView([-10, 170], 3); 
-        } else if (selectedRegion !== 'All' && markersToAdd.length > 0) {
-             const L = (window as any).L;
-             const group = L.featureGroup(markersToAdd);
-             mapInstanceRef.current.fitBounds(group.getBounds().pad(0.1));
-        } else if (selectedRegion === 'All') {
-             mapInstanceRef.current.setView([20, 0], 2);
+        // Adjust bounds/view only if the region filter changed.
+        if (regionChanged) {
+            if (selectedRegion === 'Oceania') {
+                 mapInstanceRef.current.setView([-10, 170], 3); 
+            } else if (selectedRegion !== 'All' && markersForBounds.length > 0) {
+                 const L = (window as any).L;
+                 const group = L.featureGroup(markersForBounds);
+                 mapInstanceRef.current.fitBounds(group.getBounds().pad(0.1));
+            } else if (selectedRegion === 'All') {
+                 mapInstanceRef.current.setView([20, 0], 2);
+            }
         }
     });
 
-  }, [selectedRegion, showTerritories, showDeFacto, mapReady]);
+  }, [selectedRegion, showTerritories, showDeFacto, mapReady, activeCountryId]);
 
   // Effect: Update marker active styles
   useEffect(() => {
@@ -316,13 +366,24 @@ const MapPage: React.FC = () => {
   // Handle URL Parameter Navigation
   useEffect(() => {
     const countryId = searchParams.get('country');
+    
+    // Only proceed if we have a country ID, map is ready, and it's a NEW country ID we haven't processed yet
+    // OR if it's the same ID but we haven't processed it in this mount lifecycle (initial load)
     if (countryId && mapReady && mapInstanceRef.current) {
+      if (countryId === processedCountryRef.current) return;
+
       const storedItem = allMarkersRef.current.find(m => m.id === countryId);
       
       if (storedItem) {
+        processedCountryRef.current = countryId; // Mark as processed
+
         if (storedItem.type === 'territory' && !showTerritories) setShowTerritories(true);
         if (storedItem.type === 'defacto' && !showDeFacto) setShowDeFacto(true);
-        if (selectedRegion !== 'All' && storedItem.region !== selectedRegion) setSelectedRegion('All'); 
+        
+        // Only force region to ALL if the marker is not in the currently viewed region
+        if (selectedRegion !== 'All' && storedItem.region !== selectedRegion) {
+            setSelectedRegion('All'); 
+        }
 
         setActiveCountryId(countryId);
         
@@ -334,6 +395,9 @@ const MapPage: React.FC = () => {
              }, 550);
         }, 100);
       }
+    } else {
+        // Reset processed ref if no country in URL, so we can re-select it later if needed
+        processedCountryRef.current = null;
     }
   }, [searchParams, mapReady, centerMapOnMarker, showTerritories, showDeFacto, selectedRegion]);
 
@@ -530,7 +594,7 @@ const MapPage: React.FC = () => {
                   {REGIONS.map(region => (
                     <button
                       key={region}
-                      onClick={() => setSelectedRegion(region)}
+                      onClick={() => handleRegionSelect(region)}
                       className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all duration-200 ${
                         selectedRegion === region 
                           ? 'bg-primary text-white shadow-md shadow-primary/30' 
@@ -711,7 +775,7 @@ const MapPage: React.FC = () => {
                    {REGIONS.map(region => (
                      <button
                        key={region}
-                       onClick={() => setSelectedRegion(region)}
+                       onClick={() => handleRegionSelect(region)}
                        className={`
                          whitespace-nowrap flex-shrink-0 px-4 py-2 rounded-full text-xs font-bold transition-all duration-200 border select-none active:scale-95
                          ${selectedRegion === region 
