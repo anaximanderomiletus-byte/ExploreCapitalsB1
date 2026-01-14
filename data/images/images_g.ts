@@ -9,7 +9,7 @@ export const imagesG: Record<string, string> = {
 
   // --- Gambia ---
   "Gambia": "https://anaximanderomiletus-byte.github.io/Explore-Capitals-PNGs/GAMBIA/banjul-gambia.png",
-  "The Gambia River": "https://anaximanderomiletus-byte.github.io/Explore-Capitals-PNGs/GAMBIA/gambia-river.png",
+  "The Gambia River": "https://anaximanderomiletus-byte.github.io/Explore-Capitals-PNGs/GAMBIA/the-gambia-river.png",
   "Kunta Kinteh Island": "https://anaximanderomiletus-byte.github.io/Explore-Capitals-PNGs/GAMBIA/kunta-kinteh-island.png",
   "Kachikally Crocodile Pool": "https://anaximanderomiletus-byte.github.io/Explore-Capitals-PNGs/GAMBIA/kachikally-crocodile-pool.png",
   "Wassu Stone Circles": "https://anaximanderomiletus-byte.github.io/Explore-Capitals-PNGs/GAMBIA/wassu-stone-circles.png",
@@ -19,17 +19,17 @@ export const imagesG: Record<string, string> = {
   "Georgia": "https://anaximanderomiletus-byte.github.io/Explore-Capitals-PNGs/GEORGIA/tbilisi-georgia.png",
   "Ushguli": "https://anaximanderomiletus-byte.github.io/Explore-Capitals-PNGs/GEORGIA/ushguli-svaneti.png",
   "Kakheti Wine Region": "https://anaximanderomiletus-byte.github.io/Explore-Capitals-PNGs/GEORGIA/kakheti-wine-qvevri.png",
-  "Old Tbilisi": "https://anaximanderomiletus-byte.github.io/Explore-Capitals-PNGs/GEORGIA/old-tbilisi-sulfur-baths.png",
+  "Old Tbilisi": "https://anaximanderomiletus-byte.github.io/Explore-Capitals-PNGs/GEORGIA/old-tbilisi.png",
   "Gergeti Trinity Church": "https://anaximanderomiletus-byte.github.io/Explore-Capitals-PNGs/GEORGIA/gergeti-trinity-church.png",
   "Vardzia": "https://anaximanderomiletus-byte.github.io/Explore-Capitals-PNGs/GEORGIA/vardzia-cave-monastery.png",
 
   // --- Germany ---
   "Germany": "https://anaximanderomiletus-byte.github.io/Explore-Capitals-PNGs/GERMANY/berlin-germany.png",
   "Neuschwanstein Castle": "https://anaximanderomiletus-byte.github.io/Explore-Capitals-PNGs/GERMANY/neuschwanstein-castle.png",
-  "The Berlin Wall": "https://anaximanderomiletus-byte.github.io/Explore-Capitals-PNGs/GERMANY/berlin-wall-east-side-gallery.png",
+  "The Berlin Wall": "https://anaximanderomiletus-byte.github.io/Explore-Capitals-PNGs/GERMANY/berlin-wall.png",
   "Cologne Cathedral": "https://anaximanderomiletus-byte.github.io/Explore-Capitals-PNGs/GERMANY/cologne-cathedral.png",
   "Oktoberfest": "https://anaximanderomiletus-byte.github.io/Explore-Capitals-PNGs/GERMANY/oktoberfest-munich.png",
-  "The Black Forest": "https://anaximanderomiletus-byte.github.io/Explore-Capitals-PNGs/GERMANY/black-forest-cuckoo-clock.png",
+  "The Black Forest": "https://anaximanderomiletus-byte.github.io/Explore-Capitals-PNGs/GERMANY/black-forest.png",
 
   // --- Ghana ---
   "Ghana": "https://anaximanderomiletus-byte.github.io/Explore-Capitals-PNGs/GHANA/accra-ghana.png",
